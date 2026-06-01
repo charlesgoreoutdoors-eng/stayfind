@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const PRICE_RANGES = [
-  { label: "Budget",    sub: "~Under $100", value: "budget",   keyword: "budget affordable hotel" },
-  { label: "Mid-range", sub: "~$100–$250",  value: "midrange", keyword: "hotel" },
-  { label: "Upscale",   sub: "~$250–$500",  value: "upscale",  keyword: "upscale boutique hotel" },
-  { label: "Luxury",    sub: "~$500+",       value: "luxury",   keyword: "luxury resort 5 star hotel" },
+  { label: "Budget",    sub: "Under $100",  value: "budget",   keyword: "budget affordable hotel" },
+  { label: "Mid-range", sub: "$100-$250",   value: "midrange", keyword: "hotel" },
+  { label: "Upscale",   sub: "$250-$500",   value: "upscale",  keyword: "upscale boutique hotel" },
+  { label: "Luxury",    sub: "$500+",        value: "luxury",   keyword: "luxury resort 5 star hotel" },
 ];
 
 function Stars({ rating }) {
@@ -65,7 +65,7 @@ function HotelCard({ hotel, index, onSelect, selected }) {
           )}
           {hotel.phone && <a href={`tel:${hotel.phone}`} style={s.phone}>{hotel.phone}</a>}
         </div>
-        {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website ↗</a>}
+        {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
       </div>
     </div>
   );
@@ -75,18 +75,14 @@ function MapView({ hotels, apiKey }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-  const infoWindowRef = useRef(null);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [imgErr, setImgErr] = useState(false);
 
   const initMap = useCallback(() => {
     if (!mapRef.current || !window.google || !hotels.length) return;
-
     const validHotels = hotels.filter(h => h.lat && h.lng);
     if (!validHotels.length) return;
-
     const center = { lat: validHotels[0].lat, lng: validHotels[0].lng };
-
     const map = new window.google.maps.Map(mapRef.current, {
       center,
       zoom: 13,
@@ -94,40 +90,22 @@ function MapView({ hotels, apiKey }) {
         { featureType:"all", elementType:"geometry", stylers:[{ color:"#f8f7f4" }] },
         { featureType:"water", elementType:"geometry", stylers:[{ color:"#c9d8e8" }] },
         { featureType:"road", elementType:"geometry", stylers:[{ color:"#ffffff" }] },
-        { featureType:"road.arterial", elementType:"geometry", stylers:[{ color:"#fafafa" }] },
-        { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#e8f5e9" }] },
-        { featureType:"transit", stylers:[{ visibility:"off" }] },
         { featureType:"poi", elementType:"labels", stylers:[{ visibility:"off" }] },
       ],
-      disableDefaultUI: false,
-      zoomControl: true,
       mapTypeControl: false,
       streetViewControl: false,
-      fullscreenControl: true,
     });
-
     mapInstanceRef.current = map;
-
-    // Clear old markers
     markersRef.current.forEach(m => m.setMap(null));
     markersRef.current = [];
-
-    // Fit bounds
     const bounds = new window.google.maps.LatLngBounds();
-
     validHotels.forEach((hotel, i) => {
       bounds.extend({ lat: hotel.lat, lng: hotel.lng });
-
       const marker = new window.google.maps.Marker({
         position: { lat: hotel.lat, lng: hotel.lng },
         map,
         title: hotel.name,
-        label: {
-          text: String(i + 1),
-          color: "#fff",
-          fontSize: "12px",
-          fontWeight: "700",
-        },
+        label: { text: String(i + 1), color: "#fff", fontSize: "12px", fontWeight: "700" },
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
           scale: 18,
@@ -137,16 +115,13 @@ function MapView({ hotels, apiKey }) {
           strokeWeight: 2,
         },
       });
-
       marker.addListener("click", () => {
         setSelectedHotel(hotel);
         setImgErr(false);
         map.panTo({ lat: hotel.lat, lng: hotel.lng });
       });
-
       markersRef.current.push(marker);
     });
-
     map.fitBounds(bounds);
   }, [hotels]);
 
@@ -156,9 +131,8 @@ function MapView({ hotels, apiKey }) {
     } else {
       const scriptId = "google-maps-script";
       const existing = document.getElementById(scriptId);
-      if (existing) {
-        existing.addEventListener("load", initMap);
-      } else {
+      if (existing) { existing.addEventListener("load", initMap); }
+      else {
         const script = document.createElement("script");
         script.id = scriptId;
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
@@ -171,10 +145,7 @@ function MapView({ hotels, apiKey }) {
 
   return (
     <div style={s.mapWrap}>
-      {/* Map */}
       <div ref={mapRef} style={s.mapEl} />
-
-      {/* Hotel number legend sidebar */}
       <div style={s.mapSidebar}>
         <p style={s.sidebarTitle}>Hotels</p>
         {hotels.filter(h => h.lat && h.lng).map((hotel, i) => (
@@ -208,11 +179,9 @@ function MapView({ hotels, apiKey }) {
           </div>
         ))}
       </div>
-
-      {/* Selected hotel popup */}
       {selectedHotel && (
         <div style={s.mapPopup}>
-          <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>✕</button>
+          <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>X</button>
           {selectedHotel.photoUrl && !imgErr && (
             <img src={selectedHotel.photoUrl} alt={selectedHotel.name} style={s.popupImg} onError={() => setImgErr(true)} />
           )}
@@ -226,9 +195,7 @@ function MapView({ hotels, apiKey }) {
               </div>
             )}
             {selectedHotel.website && (
-              <a href={selectedHotel.website} target="_blank" rel="noreferrer" style={s.popupLink}>
-                Visit website ↗
-              </a>
+              <a href={selectedHotel.website} target="_blank" rel="noreferrer" style={s.popupLink}>Visit website</a>
             )}
           </div>
         </div>
@@ -238,14 +205,14 @@ function MapView({ hotels, apiKey }) {
 }
 
 export default function Home() {
-  const [location, setLocation]       = useState("");
-  const [price, setPrice]             = useState("midrange");
-  const [hotels, setHotels]           = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
-  const [searched, setSearched]       = useState(false);
-  const [searchLabel, setSearchLabel] = useState("");
-  const [view, setView]               = useState("list"); // "list" | "map"
+  const [location, setLocation]           = useState("");
+  const [price, setPrice]                 = useState("midrange");
+  const [hotels, setHotels]               = useState([]);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState("");
+  const [searched, setSearched]           = useState(false);
+  const [searchLabel, setSearchLabel]     = useState("");
+  const [view, setView]                   = useState("list");
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore]     = useState(false);
@@ -285,7 +252,7 @@ export default function Home() {
     setNextPageToken(null);
     const priceObj = PRICE_RANGES.find(p => p.value === price);
     const query = `${priceObj.keyword} in ${location}`;
-    setSearchLabel(`${priceObj.label} hotels · ${location}`);
+    setSearchLabel(`${priceObj.label} hotels in ${location}`);
     try {
       const res = await fetch(`/api/hotels?query=${encodeURIComponent(query)}`);
       const data = await res.json();
@@ -316,25 +283,25 @@ export default function Home() {
       setLoadingMore(false);
     }
   };
-      {/* Header */}
+
+  return (
+    <main>
       <div style={s.header}>
         <div style={s.logoRow}>
-          <span style={s.logoMark}>◈</span>
+          <span style={s.logoMark}>SF</span>
           <span style={s.logoText}>StayFind</span>
         </div>
         <h1 style={s.headline}>Find Your Perfect<br /><em style={s.headlineAccent}>Hotel Partner</em></h1>
         <p style={s.tagline}>Search hotels by location and budget to kickstart your content outreach</p>
       </div>
 
-      {/* Search card */}
       <div style={s.searchCard}>
         <label style={s.fieldLabel}>Location</label>
         <div style={s.inputRow}>
-          <span style={s.inputIcon}>⌖</span>
           <input
             ref={inputRef}
             style={s.input}
-            placeholder="e.g. Malibu, Miami Beach, Santorini…"
+            placeholder="e.g. Malibu, Miami Beach, Santorini"
             value={location}
             onChange={e => setLocation(e.target.value)}
             onKeyDown={e => e.key === "Enter" && search()}
@@ -353,36 +320,36 @@ export default function Home() {
         </div>
         <button
           style={{ ...s.searchBtn, opacity: location.trim() && !loading ? 1 : 0.45 }}
-          onClick={search} disabled={!location.trim() || loading}>
+          onClick={search}
+          disabled={!location.trim() || loading}
+        >
           {loading
-            ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner}/>Searching…</span>
-            : "Search Hotels →"}
+            ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Searching...</span>
+            : "Search Hotels"}
         </button>
-        {error && <div style={s.errorBox}>⚠ {error}</div>}
+        {error && <div style={s.errorBox}>{error}</div>}
       </div>
 
-      {/* Results */}
       <div style={s.resultsWrap}>
         {loading && (
           <div style={s.grid}>
-            {[...Array(12)].map((_,i) => <SkeletonCard key={i}/>)}
+            {[...Array(12)].map((_,i) => <SkeletonCard key={i} />)}
           </div>
         )}
 
         {!loading && searched && hotels.length > 0 && (
           <>
-            {/* Results bar with toggle */}
             <div style={s.resultsBar}>
               <div>
                 <h2 style={s.resultsTitle}>{hotels.length} Hotels Found</h2>
                 <p style={s.resultsSub}>{searchLabel}</p>
               </div>
-              {/* View toggle */}
               <div style={s.viewToggle}>
                 <button
                   style={{ ...s.toggleBtn, ...(view==="list" ? s.toggleBtnActive : {}) }}
-                  onClick={() => setView("list")}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  onClick={() => setView("list")}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                     <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
                   </svg>
@@ -390,8 +357,9 @@ export default function Home() {
                 </button>
                 <button
                   style={{ ...s.toggleBtn, ...(view==="map" ? s.toggleBtnActive : {}) }}
-                  onClick={() => setView("map")}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  onClick={() => setView("map")}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                     <circle cx="12" cy="9" r="2.5"/>
                   </svg>
@@ -418,8 +386,8 @@ export default function Home() {
                   disabled={loadingMore}
                 >
                   {loadingMore
-                    ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner}/>Loading more…</span>
-                    : "Load More Hotels ↓"}
+                    ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Loading more...</span>
+                    : "Load More Hotels"}
                 </button>
                 <p style={{ fontSize:12, color:"#94a3b8", marginTop:10 }}>Showing {hotels.length} hotels so far</p>
               </div>
@@ -440,7 +408,7 @@ export default function Home() {
 
         {!searched && !loading && (
           <div style={s.emptyState}>
-            <span style={{ fontSize:40 }}>◈</span>
+            <span style={{ fontSize:40 }}>🏨</span>
             <p style={s.emptyText}>Enter a location above to discover hotels</p>
           </div>
         )}
@@ -452,30 +420,30 @@ export default function Home() {
 const s = {
   header: { background:"#0f0e17", padding:"44px 24px 68px", textAlign:"center" },
   logoRow: { display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:24 },
-  logoMark: { fontSize:20, color:"#a78bfa" },
-  logoText: { fontFamily:"'Playfair Display',serif", fontSize:17, color:"#e2e8f0", letterSpacing:"0.5px" },
-  headline: { fontFamily:"'Playfair Display',serif", fontSize:"clamp(30px,6vw,50px)", color:"#f1f5f9", fontWeight:700, lineHeight:1.18, marginBottom:14 },
+  logoMark: { fontSize:14, fontWeight:700, color:"#a78bfa", background:"rgba(167,139,250,0.15)", padding:"4px 8px", borderRadius:6 },
+  logoText: { fontFamily:"Georgia, serif", fontSize:17, color:"#e2e8f0", letterSpacing:"0.5px" },
+  headline: { fontFamily:"Georgia, serif", fontSize:"clamp(30px,6vw,50px)", color:"#f1f5f9", fontWeight:700, lineHeight:1.18, marginBottom:14 },
   headlineAccent: { color:"#a78bfa", fontStyle:"italic" },
   tagline: { color:"#94a3b8", fontSize:14, fontWeight:300, maxWidth:360, margin:"0 auto", lineHeight:1.65 },
   searchCard: { background:"#fff", borderRadius:20, padding:"28px 24px 24px", boxShadow:"0 8px 40px rgba(0,0,0,0.11)", maxWidth:640, width:"calc(100% - 32px)", margin:"-34px auto 0", position:"relative", zIndex:10 },
   fieldLabel: { display:"block", fontSize:11, fontWeight:600, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 },
   inputRow: { display:"flex", alignItems:"center", gap:10, border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 16px", marginBottom:4 },
-  inputIcon: { fontSize:17, color:"#a78bfa", flexShrink:0 },
-  input: { flex:1, border:"none", outline:"none", fontSize:15, fontFamily:"'Outfit',sans-serif", color:"#1e293b", background:"transparent", width:"100%" },
+  input: { flex:1, border:"none", outline:"none", fontSize:15, fontFamily:"system-ui,sans-serif", color:"#1e293b", background:"transparent", width:"100%" },
   priceGrid: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:20 },
-  priceBtn: { display:"flex", flexDirection:"column", alignItems:"center", padding:"10px 4px", border:"1.5px solid #e2e8f0", borderRadius:10, background:"#fff", cursor:"pointer", fontFamily:"'Outfit',sans-serif", transition:"all 0.15s" },
+  priceBtn: { display:"flex", flexDirection:"column", alignItems:"center", padding:"10px 4px", border:"1.5px solid #e2e8f0", borderRadius:10, background:"#fff", cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"all 0.15s" },
   priceBtnActive: { border:"1.5px solid #6366f1", background:"#eef2ff" },
   priceBtnLabel: { fontSize:12, fontWeight:600, color:"#1e293b", marginBottom:2 },
   priceBtnSub: { fontSize:10, color:"#94a3b8", textAlign:"center" },
-  searchBtn: { width:"100%", padding:15, background:"#0f0e17", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"'Outfit',sans-serif", transition:"opacity 0.2s", letterSpacing:"0.3px" },
+  searchBtn: { width:"100%", padding:15, background:"#0f0e17", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"opacity 0.2s" },
+  loadMoreBtn: { padding:"14px 40px", background:"#0f0e17", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"opacity 0.2s" },
   spinner: { display:"inline-block", width:16, height:16, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   errorBox: { marginTop:14, padding:"13px 16px", background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, color:"#dc2626", fontSize:13 },
   resultsWrap: { maxWidth:980, margin:"40px auto 80px", padding:"0 16px" },
   resultsBar: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:22, flexWrap:"wrap", gap:12 },
-  resultsTitle: { fontFamily:"'Playfair Display',serif", fontSize:24, fontWeight:700, color:"#0f0e17" },
+  resultsTitle: { fontFamily:"Georgia, serif", fontSize:24, fontWeight:700, color:"#0f0e17" },
   resultsSub: { fontSize:13, color:"#94a3b8", marginTop:3 },
   viewToggle: { display:"flex", background:"#f1f5f9", borderRadius:10, padding:3, gap:3 },
-  toggleBtn: { display:"flex", alignItems:"center", gap:6, padding:"8px 14px", border:"none", borderRadius:8, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"'Outfit',sans-serif", color:"#64748b", background:"transparent", transition:"all 0.15s" },
+  toggleBtn: { display:"flex", alignItems:"center", gap:6, padding:"8px 14px", border:"none", borderRadius:8, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"system-ui,sans-serif", color:"#64748b", background:"transparent", transition:"all 0.15s" },
   toggleBtnActive: { background:"#fff", color:"#0f0e17", boxShadow:"0 1px 4px rgba(0,0,0,0.1)" },
   grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:20 },
   card: { background:"#fff", borderRadius:16, overflow:"hidden", boxShadow:"0 2px 14px rgba(0,0,0,0.07)", cursor:"pointer" },
@@ -483,9 +451,9 @@ const s = {
   img: { width:"100%", height:"100%", objectFit:"cover", display:"block" },
   imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#e0e7ff 0%,#f0fdf4 100%)" },
   imgGradient: { position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent,rgba(0,0,0,0.25))", pointerEvents:"none" },
-  pricePill: { position:"absolute", top:10, right:10, background:"rgba(0,0,0,0.58)", color:"#fff", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, backdropFilter:"blur(6px)", letterSpacing:"0.5px" },
+  pricePill: { position:"absolute", top:10, right:10, background:"rgba(0,0,0,0.58)", color:"#fff", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, letterSpacing:"0.5px" },
   cardBody: { padding:"16px 18px 18px" },
-  hotelName: { fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:700, color:"#0f0e17", marginBottom:5, lineHeight:1.25 },
+  hotelName: { fontFamily:"Georgia, serif", fontSize:17, fontWeight:700, color:"#0f0e17", marginBottom:5, lineHeight:1.25 },
   address: { fontSize:12, color:"#94a3b8", marginBottom:8, lineHeight:1.4 },
   desc: { fontSize:12, color:"#64748b", lineHeight:1.6, marginBottom:12 },
   cardFooter: { display:"flex", flexDirection:"column", gap:5, paddingTop:12, borderTop:"1px solid #f1f5f9" },
@@ -494,7 +462,6 @@ const s = {
   websiteLink: { display:"inline-block", marginTop:10, fontSize:12, color:"#6366f1", fontWeight:600, textDecoration:"none" },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
   emptyText: { color:"#94a3b8", fontSize:15, maxWidth:300, lineHeight:1.6 },
-  loadMoreBtn: { padding:"14px 40px", background:"#0f0e17", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"'Outfit',sans-serif", transition:"opacity 0.2s", letterSpacing:"0.3px" },
   mapWrap: { position:"relative", height:580, borderRadius:16, overflow:"hidden", boxShadow:"0 2px 14px rgba(0,0,0,0.07)" },
   mapEl: { width:"100%", height:"100%" },
   mapSidebar: { position:"absolute", top:12, right:12, width:220, background:"#fff", borderRadius:14, boxShadow:"0 4px 20px rgba(0,0,0,0.12)", padding:"12px 10px", maxHeight:"calc(100% - 24px)", overflowY:"auto", zIndex:10 },
@@ -504,10 +471,10 @@ const s = {
   sidebarName: { fontSize:12, fontWeight:600, color:"#1e293b", lineHeight:1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
   sidebarPrice: { fontSize:11, color:"#6366f1", fontWeight:700, flexShrink:0 },
   mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"#fff", borderRadius:16, boxShadow:"0 8px 32px rgba(0,0,0,0.18)", overflow:"hidden", zIndex:20 },
-  popupClose: { position:"absolute", top:8, right:8, background:"rgba(0,0,0,0.45)", border:"none", color:"#fff", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:12, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
+  popupClose: { position:"absolute", top:8, right:8, background:"rgba(0,0,0,0.45)", border:"none", color:"#fff", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
   popupImg: { width:"100%", height:130, objectFit:"cover", display:"block" },
   popupBody: { padding:"12px 14px 14px" },
-  popupName: { fontFamily:"'Playfair Display',serif", fontSize:15, fontWeight:700, color:"#0f0e17", marginBottom:4 },
+  popupName: { fontFamily:"Georgia, serif", fontSize:15, fontWeight:700, color:"#0f0e17", marginBottom:4 },
   popupAddr: { fontSize:11, color:"#94a3b8", lineHeight:1.4 },
   popupLink: { display:"inline-block", marginTop:8, fontSize:12, color:"#6366f1", fontWeight:600, textDecoration:"none" },
 };
