@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
+import { useAuth } from "../../lib/auth";
 
 export default function ListsPage() {
   const [lists, setLists]             = useState([]);
@@ -15,15 +16,18 @@ export default function ListsPage() {
   const [hotelsLoading, setHotelsLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [dbError, setDbError]         = useState("");
+  const { user } = useAuth();
 
   useEffect(() => { fetchLists(); }, []);
 
   const fetchLists = async () => {
     setLoading(true);
     setDbError("");
+    if (!user) return;
     const { data, error } = await supabase
       .from("lists")
       .select("id, name, description, created_at")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) {
       setDbError("Could not load lists. Make sure your Supabase keys are set correctly.");
@@ -38,7 +42,7 @@ export default function ListsPage() {
     setSaving(true);
     const { data, error } = await supabase
       .from("lists")
-      .insert({ name: newName.trim(), description: newDesc.trim() || null })
+      .insert({ name: newName.trim(), description: newDesc.trim() || null, user_id: user.id })
       .select()
       .single();
     if (error) {
@@ -90,7 +94,7 @@ export default function ListsPage() {
   useEffect(() => {
     if (lists.length === 0) return;
     const fetchCounts = async () => {
-      const { data } = await supabase.from("list_hotels").select("list_id");
+      const { data } = await supabase.from("list_hotels").select("list_id").eq("user_id", user.id);
       if (data) {
         const counts = {};
         data.forEach(row => { counts[row.list_id] = (counts[row.list_id] || 0) + 1; });

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../lib/auth";
 
 export default function PortfolioPage() {
   const [portfolios, setPortfolios]     = useState([]);
@@ -14,14 +15,17 @@ export default function PortfolioPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [dragging, setDragging]         = useState(false);
   const fileInputRef = useRef(null);
+  const { user } = useAuth();
 
   useEffect(() => { fetchPortfolios(); }, []);
 
   const fetchPortfolios = async () => {
     setLoading(true);
+    if (!user) return;
     const { data, error } = await supabase
       .from("portfolios")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) setError("Could not load portfolios.");
     else setPortfolios(data || []);
@@ -75,6 +79,7 @@ export default function PortfolioPage() {
         file_url: fileUrl,
         file_name: selectedFile.name,
         file_size: selectedFile.size,
+        user_id: user.id,
       });
 
       if (dbError) throw new Error(dbError.message);

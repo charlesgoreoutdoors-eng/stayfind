@@ -1,4 +1,6 @@
 import "./globals.css";
+import { AuthProvider } from "../lib/auth";
+import AuthGuard from "../components/AuthGuard";
 import Sidebar from "../components/Sidebar";
 
 export const metadata = {
@@ -10,7 +12,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Sidebar>{children}</Sidebar>
+        <AuthProvider>
+          <AuthGuard>
+            <Sidebar>{children}</Sidebar>
+          </AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );

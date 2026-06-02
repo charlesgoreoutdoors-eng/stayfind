@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../lib/auth";
 import Link from "next/link";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
@@ -29,7 +30,8 @@ function ComposeInner() {
   const [sentIds, setSentIds]               = useState([]);
   const [results, setResults]               = useState([]);
   const [previewHotel, setPreviewHotel]     = useState(null);
-  const [tab, setTab]                       = useState("compose"); // "compose" | "hotels" | "preview"
+  const [tab, setTab]                       = useState("compose");
+  const { user } = useAuth(); // "compose" | "hotels" | "preview"
 
   useEffect(() => { fetchLists(); fetchTemplates(); }, []);
   useEffect(() => { if (selectedListId) fetchHotels(selectedListId); else setHotels([]); }, [selectedListId]);
@@ -37,16 +39,19 @@ function ComposeInner() {
   useEffect(() => { if (hotels.length > 0 && !previewHotel) setPreviewHotel(hotels[0]); }, [hotels]);
 
   const fetchLists = async () => {
-    const { data } = await supabase.from("lists").select("*").order("created_at", { ascending: false });
+    if (!user) return;
+    const { data } = await supabase.from("lists").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setLists(data || []);
   };
   const fetchPortfolios = async () => {
-    const { data } = await supabase.from("portfolios").select("*").order("created_at", { ascending: false });
+    if (!user) return;
+    const { data } = await supabase.from("portfolios").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setPortfolios(data || []);
   };
 
   const fetchTemplates = async () => {
-    const { data } = await supabase.from("templates").select("*").order("created_at", { ascending: false });
+    if (!user) return;
+    const { data } = await supabase.from("templates").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setTemplates(data || []);
   };
   const fetchHotels = async (id) => {

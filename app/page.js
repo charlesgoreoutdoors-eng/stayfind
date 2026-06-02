@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../lib/auth";
 
 const PRICE_RANGES = [
   { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable hotel" },
@@ -273,16 +274,19 @@ export default function Home() {
 
   const inputRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+  const { user } = useAuth();
 
   useEffect(() => { fetchLists(); }, []);
 
   const fetchLists = async () => {
-    const { data } = await supabase.from("lists").select("*").order("created_at", { ascending: false });
+    if (!user) return;
+    const { data } = await supabase.from("lists").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setLists(data || []);
   };
 
   const addToList = async (hotel, listId) => {
     await supabase.from("list_hotels").insert({
+      user_id: user?.id,
       list_id: listId, name: hotel.name, address: hotel.address || null,
       email: hotel.email || null, phone: hotel.phone || null, website: hotel.website || null,
       photo_url: hotel.photoUrl || null, rating: hotel.rating || null,
@@ -294,7 +298,7 @@ export default function Home() {
   };
 
   const createListAndAdd = async (hotel, name) => {
-    const { data } = await supabase.from("lists").insert({ name }).select().single();
+    const { data } = await supabase.from("lists").insert({ name, user_id: user?.id }).select().single();
     if (data) { setLists(prev => [data, ...prev]); await addToList(hotel, data.id); }
   };
 

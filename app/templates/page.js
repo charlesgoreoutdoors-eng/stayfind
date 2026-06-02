@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../lib/auth";
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
@@ -10,13 +11,15 @@ export default function TemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const { user } = useAuth();
   const textareaRef = useRef(null);
 
   useEffect(() => { fetchTemplates(); }, []);
 
   const fetchTemplates = async () => {
     setLoading(true);
-    const { data } = await supabase.from("templates").select("*").order("created_at", { ascending: false });
+    if (!user) return;
+    const { data } = await supabase.from("templates").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setTemplates(data || []);
     if (data && data.length > 0) { setActive(data[0]); setForm({ name:data[0].name, subject:data[0].subject, body:data[0].body }); }
     setLoading(false);
@@ -34,7 +37,7 @@ export default function TemplatesPage() {
     if (!form.name.trim() || !form.body.trim()) return;
     setSaving(true);
     if (isNew) {
-      const { data } = await supabase.from("templates").insert({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim() }).select().single();
+      const { data } = await supabase.from("templates").insert({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), user_id: user.id }).select().single();
       if (data) { setTemplates(prev => [data, ...prev]); setActive(data); setIsNew(false); }
     } else if (active) {
       await supabase.from("templates").update({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim() }).eq("id", active.id);

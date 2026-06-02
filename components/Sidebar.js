@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "../lib/auth";
 
 const NAV = [
   { href: "/",          label: "Search",    icon: "M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" },
@@ -24,6 +25,11 @@ const C = {
 export default function Sidebar({ children }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, profile, signOut } = useAuth();
+
+  // Hide sidebar on login page
+  if (pathname === "/login") return <>{children}</>;
 
   return (
     <>
@@ -114,8 +120,28 @@ export default function Sidebar({ children }) {
             })}
           </nav>
 
-          <div style={{ marginTop:"auto", padding:"16px 8px 0", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
-            <p style={{ fontSize:11, color:"#2D5A8A", lineHeight:1.6 }}>Search hotels, build lists, then compose your outreach.</p>
+          <div style={{ marginTop:"auto", paddingTop:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+            {user && (
+              <div style={{ padding:"10px 8px" }}>
+                <p style={{ fontSize:12, color:"#4A6A8A", fontWeight:500, marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {profile?.full_name || user.email}
+                </p>
+                <p style={{ fontSize:11, color:"#2D5A8A", marginBottom:10, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {profile?.plan === "pro" ? "Pro Plan" : "Free Plan"}
+                </p>
+                <button
+                  onClick={async () => { await signOut(); router.push("/login"); }}
+                  style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"8px 12px", cursor:"pointer", color:"#4A6A8A", fontSize:12, fontFamily:"inherit", width:"100%" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

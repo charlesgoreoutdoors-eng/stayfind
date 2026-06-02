@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../lib/auth";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
 const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email";
@@ -46,15 +47,17 @@ export default function MessagesPage() {
   const [error, setError]                 = useState("");
   const [unread, setUnread]               = useState({});
   const messagesEndRef = useRef(null);
+  const { user } = useAuth();
 
   useEffect(() => { fetchListsAndHotels(); }, []);
   useEffect(() => { if (gmailToken && allHotels.length > 0) fetchThreads(); }, [gmailToken, allHotels]);
   useEffect(() => { if (activeThread) messagesEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [activeThread]);
 
   const fetchListsAndHotels = async () => {
-    const { data: listsData } = await supabase.from("lists").select("*").order("created_at", { ascending: false });
+    if (!user) return;
+    const { data: listsData } = await supabase.from("lists").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setLists(listsData || []);
-    const { data: hotelsData } = await supabase.from("list_hotels").select("*");
+    const { data: hotelsData } = await supabase.from("list_hotels").select("*").eq("user_id", user.id);
     setAllHotels(hotelsData || []);
   };
 
