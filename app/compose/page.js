@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import Link from "next/link";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
 const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email";
@@ -10,67 +11,47 @@ function ComposeInner() {
   const searchParams = useSearchParams();
   const listId = searchParams.get("list");
 
-  const [lists, setLists] = useState([]);
+  const [lists, setLists]                   = useState([]);
   const [selectedListId, setSelectedListId] = useState(listId || "");
-  const [hotels, setHotels] = useState([]);
-  const [templates, setTemplates] = useState([]);
+  const [hotels, setHotels]                 = useState([]);
+  const [templates, setTemplates]           = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
-  const [subject, setSubject] = useState("Content Collaboration Opportunity");
-  const [body, setBody] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [gmailToken, setGmailToken] = useState(null);
-  const [gmailEmail, setGmailEmail] = useState(null);
-  const [gmailLoading, setGmailLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [sentIds, setSentIds] = useState([]);
-  const [results, setResults] = useState([]);
-  const [previewHotel, setPreviewHotel] = useState(null);
+  const [subject, setSubject]               = useState("Content Collaboration Opportunity");
+  const [body, setBody]                     = useState("");
+  const [loading, setLoading]               = useState(false);
+  const [gmailToken, setGmailToken]         = useState(null);
+  const [gmailEmail, setGmailEmail]         = useState(null);
+  const [gmailLoading, setGmailLoading]     = useState(false);
+  const [sending, setSending]               = useState(false);
+  const [sentIds, setSentIds]               = useState([]);
+  const [results, setResults]               = useState([]);
+  const [previewHotel, setPreviewHotel]     = useState(null);
+  const [tab, setTab]                       = useState("compose"); // "compose" | "hotels" | "preview"
 
-  useEffect(() => {
-    fetchLists();
-    fetchTemplates();
-  }, []);
-
-  useEffect(() => {
-    if (selectedListId) fetchHotels(selectedListId);
-    else setHotels([]);
-  }, [selectedListId]);
-
-  useEffect(() => {
-    if (selectedTemplateId) {
-      const t = templates.find(t => t.id === selectedTemplateId);
-      if (t) { setSubject(t.subject); setBody(t.body); }
-    }
-  }, [selectedTemplateId]);
-
-  useEffect(() => {
-    if (hotels.length > 0 && !previewHotel) setPreviewHotel(hotels[0]);
-  }, [hotels]);
+  useEffect(() => { fetchLists(); fetchTemplates(); }, []);
+  useEffect(() => { if (selectedListId) fetchHotels(selectedListId); else setHotels([]); }, [selectedListId]);
+  useEffect(() => { if (selectedTemplateId) { const t = templates.find(t => t.id === selectedTemplateId); if (t) { setSubject(t.subject); setBody(t.body); } } }, [selectedTemplateId, templates]);
+  useEffect(() => { if (hotels.length > 0 && !previewHotel) setPreviewHotel(hotels[0]); }, [hotels]);
 
   const fetchLists = async () => {
     const { data } = await supabase.from("lists").select("*").order("created_at", { ascending: false });
     setLists(data || []);
   };
-
   const fetchTemplates = async () => {
     const { data } = await supabase.from("templates").select("*").order("created_at", { ascending: false });
     setTemplates(data || []);
   };
-
   const fetchHotels = async (id) => {
     setLoading(true);
     const { data } = await supabase.from("list_hotels").select("*").eq("list_id", id).order("created_at", { ascending: false });
     setHotels(data || []);
+    setPreviewHotel(null);
     setLoading(false);
   };
 
   const connectGmail = () => {
     setGmailLoading(true);
-    if (!GMAIL_CLIENT_ID) {
-      alert("Gmail Client ID not configured.");
-      setGmailLoading(false);
-      return;
-    }
+    if (!GMAIL_CLIENT_ID) { alert("Gmail Client ID not configured."); setGmailLoading(false); return; }
     const handleMessage = (event) => {
       if (event.origin !== window.location.origin) return;
       if (event.data && event.data.type === "gmail_token" && event.data.token) {
@@ -84,9 +65,7 @@ function ComposeInner() {
     const redirectUri = window.location.origin + "/api/auth/gmail";
     const params = new URLSearchParams({ client_id: GMAIL_CLIENT_ID, redirect_uri: redirectUri, response_type: "token", scope: GMAIL_SCOPES, prompt: "select_account" });
     const popup = window.open("https://accounts.google.com/o/oauth2/v2/auth?" + params.toString(), "gmail-auth", "width=500,height=600,left=200,top=100");
-    const check = setInterval(() => {
-      if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); }
-    }, 1000);
+    const check = setInterval(() => { if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); } }, 1000);
   };
 
   const fetchProfile = async (token) => {
@@ -103,7 +82,7 @@ function ComposeInner() {
     if (!gmailToken) { alert("Connect your Gmail account first."); return; }
     if (!body.trim()) { alert("Write a message first."); return; }
     const toSend = hotels.filter(h => h.email && !sentIds.includes(h.id));
-    if (toSend.length === 0) { alert("No hotels with email addresses to send to."); return; }
+    if (toSend.length === 0) { alert("No hotels with emails to send to."); return; }
     setSending(true);
     const newResults = [];
     for (const hotel of toSend) {
@@ -128,20 +107,21 @@ function ComposeInner() {
     }
     setResults(prev => [...prev, ...newResults]);
     setSending(false);
+    setTab("preview");
   };
 
   const hotelsWithEmail = hotels.filter(h => h.email);
-  const hotelsNoEmail = hotels.filter(h => !h.email);
   const allSent = hotelsWithEmail.length > 0 && hotelsWithEmail.every(h => sentIds.includes(h.id));
+  const unsent = hotelsWithEmail.filter(h => !sentIds.includes(h.id)).length;
 
   return (
     <div style={s.root}>
-      <div style={s.header}>
+      {/* Page header */}
+      <div style={s.pageHeader}>
         <div>
           <h1 style={s.title}>Compose Outreach</h1>
-          <p style={s.subtitle}>Write one email and send it to every hotel in your list</p>
+          <p style={s.subtitle}>Write one email — send it to your whole list</p>
         </div>
-        {/* Gmail connect */}
         {!gmailToken ? (
           <button style={s.gmailBtn} onClick={connectGmail} disabled={gmailLoading}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
@@ -156,99 +136,121 @@ function ComposeInner() {
         )}
       </div>
 
-      <div style={s.body}>
-        {/* Left: compose */}
-        <div style={s.composePanel}>
-          {/* List selector */}
-          <div style={s.field}>
-            <label style={s.label}>Select List</label>
-            <select style={s.select} value={selectedListId} onChange={e => setSelectedListId(e.target.value)}>
-              <option value="">Choose a list...</option>
-              {lists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
+      {/* Setup row: list + template selectors */}
+      <div style={s.setupRow}>
+        <div style={s.setupField}>
+          <label style={s.label}>List</label>
+          <select style={s.select} value={selectedListId} onChange={e => setSelectedListId(e.target.value)}>
+            <option value="">Choose a list...</option>
+            {lists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        </div>
+        <div style={s.setupField}>
+          <label style={s.label}>Template (optional)</label>
+          <select style={s.select} value={selectedTemplateId} onChange={e => setSelectedTemplateId(e.target.value)}>
+            <option value="">Write from scratch...</option>
+            {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+        {selectedListId && (
+          <div style={s.hotelCount}>
+            <span style={s.hotelCountNum}>{hotels.length}</span>
+            <span style={s.hotelCountLabel}>hotels{hotelsWithEmail.length < hotels.length ? ` - ${hotelsWithEmail.length} with email` : ""}</span>
           </div>
+        )}
+      </div>
 
-          {/* Template selector */}
-          <div style={s.field}>
-            <label style={s.label}>Load Template (optional)</label>
-            <select style={s.select} value={selectedTemplateId} onChange={e => setSelectedTemplateId(e.target.value)}>
-              <option value="">Write from scratch...</option>
-              {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-
-          {/* Subject */}
-          <div style={s.field}>
-            <label style={s.label}>Subject</label>
-            <input style={s.input} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Email subject line" />
-          </div>
-
-          {/* Body */}
-          <div style={s.field}>
-            <label style={s.label}>Message</label>
-            <p style={s.hint}>Use <code style={s.code}>{"{hotel_name}"}</code> to auto-fill each hotel's name</p>
-            <textarea
-              style={s.textarea}
-              rows={16}
-              value={body}
-              onChange={e => setBody(e.target.value)}
-              placeholder={"Hi {hotel_name} team,\n\nMy name is [Your Name] and I'm a content creator...\n\nI'd love to explore a collaboration.\n\nWarm regards,\n[Your Name]"}
-            />
-          </div>
-
-          {/* Send button */}
-          <button
-            style={{ ...s.sendBtn, opacity: sending || !gmailToken || !body.trim() || hotelsWithEmail.length === 0 ? 0.5 : 1 }}
-            onClick={sendAll}
-            disabled={sending || !gmailToken || !body.trim() || hotelsWithEmail.length === 0}
-          >
-            {sending ? (
-              <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-                <span style={s.spinner} />Sending...
-              </span>
-            ) : allSent ? "All Sent!" : `Send to ${hotelsWithEmail.length - sentIds.length} Hotels`}
+      {/* Mobile tabs */}
+      <div style={s.mobileTabs}>
+        {["compose","hotels","preview"].map(t => (
+          <button key={t} style={{ ...s.mobileTab, ...(tab===t ? s.mobileTabActive : {}) }} onClick={() => setTab(t)}>
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === "hotels" && hotels.length > 0 && <span style={s.tabBadge}>{hotels.length}</span>}
+            {t === "preview" && results.length > 0 && <span style={{ ...s.tabBadge, background:"#22c55e" }}>{results.filter(r=>r.success).length}</span>}
           </button>
+        ))}
+      </div>
 
-          {!gmailToken && <p style={s.gmailWarning}>Connect Gmail above to send emails</p>}
+      {/* Main layout */}
+      <div style={s.layout}>
+        {/* Left: compose */}
+        <div style={{ ...s.composeCol, display: tab === "compose" || typeof window !== "undefined" && window.innerWidth >= 900 ? "flex" : "none" }} className="compose-col">
+          <div style={s.card}>
+            <div style={s.field}>
+              <label style={s.label}>Subject Line</label>
+              <input style={s.input} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Content Collaboration Opportunity" />
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>Message</label>
+              <p style={s.hint}>Use <code style={s.code}>{"{hotel_name}"}</code> to auto-fill each hotel name</p>
+              <textarea
+                style={s.textarea}
+                rows={18}
+                value={body}
+                onChange={e => setBody(e.target.value)}
+                placeholder="Hi {hotel_name} team, write your message here..."
+              />
+              <p style={s.charCount}>{body.length} characters</p>
+            </div>
+            <button
+              style={{ ...s.sendBtn, opacity: sending || !gmailToken || !body.trim() || hotelsWithEmail.length === 0 ? 0.45 : 1 }}
+              onClick={sendAll}
+              disabled={sending || !gmailToken || !body.trim() || hotelsWithEmail.length === 0}
+            >
+              {sending
+                ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Sending to {hotelsWithEmail.length} hotels...</span>
+                : allSent ? "All Sent!" : `Send to ${unsent} Hotel${unsent !== 1 ? "s" : ""}`}
+            </button>
+            {!gmailToken && <p style={s.warning}>Connect Gmail above to send</p>}
+            {!selectedListId && <p style={s.warning}>Select a list above to get started</p>}
+          </div>
         </div>
 
-        {/* Right: hotel list + preview */}
-        <div style={s.rightPanel}>
-          {/* Hotel list */}
-          <div style={s.hotelListBox}>
-            <p style={s.sectionLabel}>
-              {selectedListId
-                ? `${hotels.length} hotels in list${hotelsNoEmail.length > 0 ? ` · ${hotelsNoEmail.length} missing email` : ""}`
-                : "Select a list to see hotels"}
+        {/* Right: hotels + preview */}
+        <div style={{ ...s.rightCol }} className="right-col">
+          {/* Hotels */}
+          <div style={{ ...s.card, display: tab === "hotels" || tab === "compose" || typeof window !== "undefined" && window.innerWidth >= 900 ? "block" : "none" }} className="hotels-panel">
+            <p style={s.panelLabel}>
+              {selectedListId ? `Hotels in list (${hotels.length})` : "Select a list to see hotels"}
             </p>
             {loading ? (
               <p style={s.loadingText}>Loading hotels...</p>
+            ) : hotels.length === 0 && selectedListId ? (
+              <div style={s.emptyPanel}>
+                <span style={{ fontSize:28 }}>🏨</span>
+                <p>No hotels in this list yet.</p>
+                <Link href="/search" style={s.emptyLink}>Go to Search</Link>
+              </div>
             ) : (
-              hotels.map(hotel => (
-                <div key={hotel.id}
-                  style={{ ...s.hotelRow, borderColor: previewHotel?.id === hotel.id ? "#6366f1" : "#f1f5f9", background: previewHotel?.id === hotel.id ? "#eef2ff" : "#fff" }}
-                  onClick={() => setPreviewHotel(hotel)}
-                >
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <p style={s.hotelName}>{hotel.name}</p>
-                    {hotel.email
-                      ? <p style={s.hotelEmail}>✉ {hotel.email}</p>
-                      : <p style={s.noEmail}>No email — will be skipped</p>}
+              <div style={s.hotelList}>
+                {hotels.map(hotel => (
+                  <div key={hotel.id}
+                    style={{ ...s.hotelRow, borderColor: previewHotel?.id === hotel.id ? "#6366f1" : "#f1f5f9", background: previewHotel?.id === hotel.id ? "#eef2ff" : "#fff" }}
+                    onClick={() => { setPreviewHotel(hotel); setTab("preview"); }}
+                  >
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={s.hotelName}>{hotel.name}</p>
+                      {hotel.email
+                        ? <p style={s.hotelEmail}>✉ {hotel.email}</p>
+                        : <p style={s.noEmail}>No email — will be skipped</p>}
+                    </div>
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
+                      {sentIds.includes(hotel.id) && <span style={s.sentBadge}>Sent</span>}
+                      {!hotel.email && <span style={s.skipBadge}>Skip</span>}
+                    </div>
                   </div>
-                  {sentIds.includes(hotel.id) && <span style={s.sentBadge}>Sent</span>}
-                  {!hotel.email && <span style={s.skipBadge}>Skip</span>}
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
 
           {/* Email preview */}
           {previewHotel && body && (
-            <div style={s.previewBox}>
-              <p style={s.sectionLabel}>Preview — {previewHotel.name}</p>
-              <div style={s.previewInner}>
-                <div style={s.previewField}><span style={s.previewLabel}>To:</span><span>{previewHotel.email || "No email"}</span></div>
-                <div style={s.previewField}><span style={s.previewLabel}>Subject:</span><span>{subject}</span></div>
+            <div style={{ ...s.card, display: tab === "preview" || tab === "compose" ? "block" : "none" }} className="preview-panel">
+              <p style={s.panelLabel}>Preview — {previewHotel.name}</p>
+              <div style={s.previewBox}>
+                <div style={s.previewField}><span style={s.previewLabel}>To:</span><span style={s.previewValue}>{previewHotel.email || "No email"}</span></div>
+                <div style={s.previewField}><span style={s.previewLabel}>Subject:</span><span style={s.previewValue}>{subject}</span></div>
                 <div style={s.previewDivider} />
                 <pre style={s.previewBody}>{buildBody(previewHotel)}</pre>
               </div>
@@ -257,13 +259,15 @@ function ComposeInner() {
 
           {/* Results */}
           {results.length > 0 && (
-            <div style={s.resultsBox}>
-              <p style={s.sectionLabel}>Send Results</p>
+            <div style={s.card}>
+              <p style={s.panelLabel}>Send Results</p>
+              <div style={{ display:"flex", gap:16, marginBottom:12 }}>
+                <span style={s.resultStat}><strong style={{ color:"#22c55e" }}>{results.filter(r=>r.success).length}</strong> sent</span>
+                <span style={s.resultStat}><strong style={{ color:"#ef4444" }}>{results.filter(r=>!r.success).length}</strong> failed</span>
+              </div>
               {results.map((r, i) => (
                 <div key={i} style={s.resultRow}>
-                  <span style={r.success ? s.resultSuccess : s.resultFail}>
-                    {r.success ? "Sent" : "Failed"}
-                  </span>
+                  <span style={r.success ? s.resultSuccess : s.resultFail}>{r.success ? "Sent" : "Failed"}</span>
                   <span style={s.resultName}>{r.hotel.name}</span>
                   {!r.success && <span style={s.resultError}>{r.error}</span>}
                 </div>
@@ -272,60 +276,83 @@ function ComposeInner() {
           )}
         </div>
       </div>
+
+      <style>{`
+        @media (min-width: 900px) {
+          .compose-col { display: flex !important; }
+          .right-col { display: flex !important; flex-direction: column; gap: 16px; }
+          .hotels-panel { display: block !important; }
+          .preview-panel { display: block !important; }
+        }
+        .hotel-row-item:hover { background: #f8fafc !important; }
+      `}</style>
     </div>
   );
 }
 
 export default function ComposePage() {
   return (
-    <Suspense fallback={<div style={{ padding:40, color:"#94a3b8" }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ padding:40, color:"#94a3b8", textAlign:"center" }}>Loading...</div>}>
       <ComposeInner />
     </Suspense>
   );
 }
 
 const s = {
-  root: { padding:"32px 24px 80px", maxWidth:1200, margin:"0 auto" },
-  header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:28, flexWrap:"wrap", gap:12 },
-  title: { fontFamily:"Georgia,serif", fontSize:28, fontWeight:700, color:"#0f0e17", marginBottom:4 },
+  root: { padding:"28px 20px 80px", maxWidth:1100, margin:"0 auto" },
+  pageHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:24, gap:12, flexWrap:"wrap" },
+  title: { fontFamily:"Georgia,serif", fontSize:26, fontWeight:700, color:"#0f0e17", marginBottom:4 },
   subtitle: { fontSize:14, color:"#94a3b8" },
-  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"10px 18px", background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"#1e293b", boxShadow:"0 2px 8px rgba(0,0,0,0.06)" },
+  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"10px 18px", background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"#1e293b", boxShadow:"0 2px 8px rgba(0,0,0,0.06)", flexShrink:0 },
   gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"8px 14px" },
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#22c55e" },
   gmailText: { fontSize:13, color:"#166534", fontWeight:500 },
   disconnectBtn: { fontSize:11, color:"#16a34a", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
-  body: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:24, alignItems:"start" },
-  composePanel: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", padding:"24px", display:"flex", flexDirection:"column", gap:4 },
-  rightPanel: { display:"flex", flexDirection:"column", gap:16 },
-  field: { marginBottom:16 },
-  label: { display:"block", fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
-  hint: { fontSize:12, color:"#94a3b8", marginBottom:6 },
+  setupRow: { display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"flex-end" },
+  setupField: { display:"flex", flexDirection:"column", gap:6, flex:1, minWidth:200 },
+  label: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase" },
+  select: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", background:"#fff", cursor:"pointer" },
+  hotelCount: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#eef2ff", borderRadius:10, padding:"10px 18px", border:"1.5px solid #c7d2fe" },
+  hotelCountNum: { fontSize:22, fontWeight:700, color:"#6366f1", lineHeight:1 },
+  hotelCountLabel: { fontSize:11, color:"#818cf8", marginTop:2 },
+  mobileTabs: { display:"flex", background:"#f1f5f9", borderRadius:12, padding:4, gap:4, marginBottom:16 },
+  mobileTab: { flex:1, padding:"9px 4px", border:"none", borderRadius:9, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"system-ui,sans-serif", color:"#64748b", background:"transparent", display:"flex", alignItems:"center", justifyContent:"center", gap:6 },
+  mobileTabActive: { background:"#fff", color:"#0f0e17", boxShadow:"0 1px 4px rgba(0,0,0,0.1)", fontWeight:600 },
+  tabBadge: { background:"#6366f1", color:"#fff", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:20, minWidth:18, textAlign:"center" },
+  layout: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignItems:"start" },
+  composeCol: { display:"flex", flexDirection:"column" },
+  rightCol: { display:"flex", flexDirection:"column", gap:16 },
+  card: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", padding:"20px" },
+  field: { marginBottom:18 },
+  hint: { fontSize:12, color:"#94a3b8", marginBottom:8 },
   code: { background:"#f1f5f9", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
-  select: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", background:"#fff", cursor:"pointer" },
   input: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none" },
-  textarea: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"12px 14px", fontSize:13, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", resize:"vertical", lineHeight:1.7 },
-  sendBtn: { width:"100%", padding:14, background:"#6366f1", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", marginTop:4, transition:"opacity 0.2s" },
+  textarea: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"12px 14px", fontSize:13, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", resize:"vertical", lineHeight:1.8 },
+  charCount: { fontSize:11, color:"#cbd5e1", marginTop:4, textAlign:"right" },
+  sendBtn: { width:"100%", padding:14, background:"#6366f1", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"opacity 0.2s" },
   spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  gmailWarning: { fontSize:12, color:"#f59e0b", textAlign:"center", marginTop:4 },
-  sectionLabel: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:10 },
-  hotelListBox: { background:"#fff", borderRadius:14, border:"1.5px solid #e2e8f0", padding:"16px" },
-  loadingText: { fontSize:13, color:"#94a3b8", textAlign:"center", padding:"16px 0" },
-  hotelRow: { display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, border:"1.5px solid #f1f5f9", marginBottom:6, cursor:"pointer", transition:"all 0.15s" },
+  warning: { fontSize:12, color:"#f59e0b", textAlign:"center", marginTop:10 },
+  panelLabel: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:12 },
+  loadingText: { fontSize:13, color:"#94a3b8", textAlign:"center", padding:"20px 0" },
+  emptyPanel: { display:"flex", flexDirection:"column", alignItems:"center", gap:8, padding:"32px 0", color:"#94a3b8", fontSize:13, textAlign:"center" },
+  emptyLink: { color:"#6366f1", fontWeight:600, fontSize:13, textDecoration:"none" },
+  hotelList: { display:"flex", flexDirection:"column", gap:6, maxHeight:320, overflowY:"auto" },
+  hotelRow: { display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, border:"1.5px solid #f1f5f9", cursor:"pointer", transition:"all 0.15s" },
   hotelName: { fontSize:13, fontWeight:600, color:"#1e293b", marginBottom:2 },
   hotelEmail: { fontSize:11, color:"#6366f1" },
   noEmail: { fontSize:11, color:"#cbd5e1" },
-  sentBadge: { background:"#dcfce7", color:"#166534", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20, flexShrink:0 },
-  skipBadge: { background:"#fef3c7", color:"#92400e", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20, flexShrink:0 },
-  previewBox: { background:"#fff", borderRadius:14, border:"1.5px solid #e2e8f0", padding:"16px" },
-  previewInner: { background:"#f8fafc", borderRadius:10, padding:"14px" },
-  previewField: { fontSize:13, color:"#64748b", marginBottom:6, display:"flex", gap:8 },
-  previewLabel: { fontWeight:600, color:"#374151", minWidth:55 },
-  previewDivider: { borderTop:"1px solid #e2e8f0", margin:"10px 0" },
-  previewBody: { fontSize:13, color:"#374151", lineHeight:1.7, whiteSpace:"pre-wrap", fontFamily:"system-ui,sans-serif" },
-  resultsBox: { background:"#fff", borderRadius:14, border:"1.5px solid #e2e8f0", padding:"16px" },
+  sentBadge: { background:"#dcfce7", color:"#166534", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20 },
+  skipBadge: { background:"#fef3c7", color:"#92400e", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20 },
+  previewBox: { background:"#f8fafc", borderRadius:10, padding:"14px", border:"1px solid #e2e8f0" },
+  previewField: { fontSize:13, marginBottom:6, display:"flex", gap:8, alignItems:"flex-start" },
+  previewLabel: { fontWeight:600, color:"#374151", minWidth:58, flexShrink:0 },
+  previewValue: { color:"#64748b", wordBreak:"break-all" },
+  previewDivider: { borderTop:"1px solid #e2e8f0", margin:"12px 0" },
+  previewBody: { fontSize:13, color:"#374151", lineHeight:1.8, whiteSpace:"pre-wrap", fontFamily:"system-ui,sans-serif", margin:0 },
+  resultStat: { fontSize:13, color:"#64748b" },
   resultRow: { display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid #f8fafc", fontSize:13 },
-  resultSuccess: { background:"#dcfce7", color:"#166534", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20 },
-  resultFail: { background:"#fee2e2", color:"#991b1b", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20 },
+  resultSuccess: { background:"#dcfce7", color:"#166534", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0 },
+  resultFail: { background:"#fee2e2", color:"#991b1b", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0 },
   resultName: { color:"#1e293b", fontWeight:500, flex:1 },
   resultError: { fontSize:11, color:"#ef4444" },
 };
