@@ -117,12 +117,6 @@ function HotelCard({ hotel, selected, contacted, onToggleSelect, lists, onAddToL
         <p style={s.address}>📍 {hotel.address}</p>
         {hotel.description && <p style={s.desc}>{hotel.description}</p>}
 
-        <div style={s.emailRow}>
-          {hotel.emailStatus === "finding" && <span style={s.emailFinding}><span style={s.dotSpinner} /> Finding contact...</span>}
-          {hotel.emailStatus === "found" && hotel.email && <span style={s.emailFound}>✉ {hotel.email}</span>}
-          {hotel.emailStatus === "notfound" && <span style={s.emailNotFound}>No email found</span>}
-        </div>
-
         <div style={s.cardFooter}>
           {hotel.rating && (
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -130,7 +124,6 @@ function HotelCard({ hotel, selected, contacted, onToggleSelect, lists, onAddToL
               <span style={s.ratingText}>{hotel.rating}{hotel.ratingCount ? ` (${hotel.ratingCount.toLocaleString()})` : ""}</span>
             </div>
           )}
-          {hotel.phone && <a href={`tel:${hotel.phone}`} style={s.phone}>{hotel.phone}</a>}
         </div>
         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
 
@@ -157,12 +150,28 @@ function HotelCard({ hotel, selected, contacted, onToggleSelect, lists, onAddToL
   );
 }
 
-function MapView({ hotels, apiKey }) {
+function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [imgErr, setImgErr] = useState(false);
+  const [mapDropdown, setMapDropdown] = useState(false);
+  const [mapAddSuccess, setMapAddSuccess] = useState(false);
+
+  const handleMapAdd = async (hotel, listId) => {
+    await onAddToList(hotel, listId);
+    setMapDropdown(false);
+    setMapAddSuccess(true);
+    setTimeout(() => setMapAddSuccess(false), 2500);
+  };
+
+  const handleMapCreateAndAdd = async (hotel, name) => {
+    await onCreateAndAdd(hotel, name);
+    setMapDropdown(false);
+    setMapAddSuccess(true);
+    setTimeout(() => setMapAddSuccess(false), 2500);
+  };
 
   const initMap = useCallback(() => {
     if (!mapRef.current || !window.google || !hotels.length) return;
@@ -237,8 +246,24 @@ function MapView({ hotels, apiKey }) {
           <div style={s.popupBody}>
             <h3 style={s.popupName}>{selectedHotel.name}</h3>
             <p style={s.popupAddr}>📍 {selectedHotel.address}</p>
-            {selectedHotel.email && <p style={{ fontSize:12, color:"#6366f1", marginTop:6 }}>✉ {selectedHotel.email}</p>}
             {selectedHotel.website && <a href={selectedHotel.website} target="_blank" rel="noreferrer" style={s.popupLink}>Visit website</a>}
+            <div style={{ position:"relative", marginTop:10 }}>
+              <button
+                style={{ ...s.addToListBtn, ...(mapAddSuccess ? s.addToListBtnSuccess : {}), width:"100%" }}
+                onClick={() => setMapDropdown(v => !v)}
+              >
+                {mapAddSuccess ? "Added to list!" : "+ Add to List"}
+              </button>
+              {mapDropdown && (
+                <AddToListDropdown
+                  hotel={selectedHotel}
+                  lists={lists}
+                  onAdd={handleMapAdd}
+                  onCreateAndAdd={handleMapCreateAndAdd}
+                  onClose={() => setMapDropdown(false)}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -511,7 +536,7 @@ export default function Home() {
               </div>
             )}
 
-            {view === "map" && <MapView hotels={hotels} apiKey={apiKey} />}
+            {view === "map" && <MapView hotels={hotels} apiKey={apiKey} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd} />}
           </>
         )}
 
