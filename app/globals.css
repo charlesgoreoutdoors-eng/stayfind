@@ -1,74 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap');
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f8f7f4; font-family: system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+::placeholder { color: #b0bac6; }
+a { text-decoration: none; }
+
+@media (min-width: 768px) {
+  .sidebar-el { transform: translateX(0) !important; }
+  .topbar-el { display: none !important; }
+  .main-el { margin-left: 220px !important; padding-top: 0 !important; }
 }
 
-body {
-  background: #f8f7f4;
-  font-family: "Outfit", sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+.pac-container { font-family: system-ui,sans-serif; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 8px 24px rgba(0,0,0,0.1); margin-top:4px; }
+.pac-item { padding:10px 14px; font-size:14px; cursor:pointer; }
+.pac-item:hover { background:#f1f5f9; }
+.pac-item-query { font-size:14px; color:#1e293b; }
 
-::placeholder {
-  color: #b0bac6;
-}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes spin { to{transform:rotate(360deg)} }
 
-/* Google Places autocomplete dropdown styling */
-.pac-container {
-  font-family: "Outfit", sans-serif;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  margin-top: 4px;
-  overflow: hidden;
-}
-
-.pac-item {
-  padding: 11px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  color: #1e293b;
-}
-
-.pac-item:hover {
-  background: #f1f5f9;
-}
-
-.pac-item-query {
-  font-size: 14px;
-  color: #1e293b;
-}
-
-.pac-matched {
-  font-weight: 600;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.fade-up {
-  animation: fadeUp 0.45s ease both;
-}
-
-.hotel-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hotel-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.13) !important;
-}
+.fade-up { animation: fadeUp 0.4s ease both; }
+.hotel-card { transition: transform 0.2s, box-shadow 0.2s; }
+.hotel-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.11) !important; }

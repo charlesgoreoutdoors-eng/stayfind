@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "../lib/supabase";
 
 const PRICE_RANGES = [
   { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable hotel" },
@@ -40,7 +41,50 @@ function SkeletonCard() {
 }
 
 // ---- Hotel Card ----
-function HotelCard({ hotel, selected, contacted, onToggleSelect, onSelect }) {
+function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
+  const [newListName, setNewListName] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  return (
+    <div style={dd.wrap} onClick={e => e.stopPropagation()}>
+      <div style={dd.header}>
+        <span style={dd.title}>Add to List</span>
+        <button style={dd.close} onClick={onClose}>x</button>
+      </div>
+      {lists.length === 0 && !showNew && <p style={dd.empty}>No lists yet</p>}
+      {lists.map(l => (
+        <button key={l.id} style={dd.item} onClick={() => onAdd(hotel, l.id)}>{l.name}</button>
+      ))}
+      {!showNew ? (
+        <button style={dd.newBtn} onClick={() => setShowNew(true)}>+ Create new list</button>
+      ) : (
+        <div style={dd.newForm}>
+          <input style={dd.newInput} placeholder="List name" autoFocus value={newListName}
+            onChange={e => setNewListName(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && newListName.trim()) { onCreateAndAdd(hotel, newListName.trim()); setNewListName(""); setShowNew(false); } }} />
+          <button style={dd.createBtn}
+            onClick={() => { if (newListName.trim()) { onCreateAndAdd(hotel, newListName.trim()); setNewListName(""); setShowNew(false); } }}>
+            Create
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const dd = {
+  wrap: { position:"absolute", bottom:"100%", right:0, marginBottom:6, background:"#fff", borderRadius:12, border:"1.5px solid #e2e8f0", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", padding:"10px", zIndex:100, width:200, maxHeight:240, overflowY:"auto" },
+  header: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 },
+  title: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.5px", textTransform:"uppercase" },
+  close: { background:"none", border:"none", cursor:"pointer", color:"#94a3b8", fontSize:13, fontWeight:700 },
+  empty: { fontSize:12, color:"#94a3b8", padding:"4px 0 8px" },
+  item: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"none", background:"none", cursor:"pointer", fontSize:13, color:"#1e293b", fontFamily:"system-ui,sans-serif", marginBottom:2 },
+  newBtn: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"1.5px dashed #e2e8f0", background:"none", cursor:"pointer", fontSize:12, color:"#6366f1", fontFamily:"system-ui,sans-serif", marginTop:4, fontWeight:600 },
+  newForm: { display:"flex", gap:6, marginTop:6 },
+  newInput: { flex:1, border:"1.5px solid #e2e8f0", borderRadius:7, padding:"6px 10px", fontSize:12, fontFamily:"system-ui,sans-serif", outline:"none", color:"#1e293b" },
+  createBtn: { background:"#6366f1", color:"#fff", border:"none", borderRadius:7, padding:"6px 10px", fontSize:12, cursor:"pointer", fontFamily:"system-ui,sans-serif", fontWeight:600 },
+};
+
+function HotelCard({ hotel, selected, contacted, onToggleSelect, onSelect, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
   const [imgErr, setImgErr] = useState(false);
   return (
     <div
@@ -204,6 +248,25 @@ function MapView({ hotels, apiKey }) {
             <p style={s.popupAddr}>📍 {selectedHotel.address}</p>
             {selectedHotel.email && <p style={{ fontSize:12, color:"#6366f1", marginTop:6 }}>✉ {selectedHotel.email}</p>}
             {selectedHotel.website && <a href={selectedHotel.website} target="_blank" rel="noreferrer" style={s.popupLink}>Visit website</a>}
+
+        {/* Add to list */}
+        <div style={{ position:"relative", marginTop:10 }}>
+          <button
+            style={{ ...s.addToListBtn, background: addSuccess ? "#dcfce7" : "#f8fafc", color: addSuccess ? "#166534" : "#6366f1", borderColor: addSuccess ? "#86efac" : "#e2e8f0" }}
+            onClick={e => { e.stopPropagation(); onToggleDropdown(hotel.placeId); }}
+          >
+            {addSuccess ? "Added to list!" : "+ Add to List"}
+          </button>
+          {showDropdown && (
+            <AddToListDropdown
+              hotel={hotel}
+              lists={lists}
+              onAdd={onAddToList}
+              onCreateAndAdd={onCreateAndAdd}
+              onClose={() => onToggleDropdown(null)}
+            />
+          )}
+        </div>
           </div>
         </div>
       )}
@@ -384,6 +447,48 @@ export default function Home() {
   const [showPreview, setShowPreview]     = useState(false);
   const [sending, setSending]             = useState(false);
   const [sentIds, setSentIds]             = useState([]);
+
+  // Lists
+  const [lists, setLists] = useState([]);
+  const [addingToList, setAddingToList] = useState(null); // hotel placeId
+  const [addListDropdown, setAddListDropdown] = useState(null); // hotel placeId
+  const [addSuccess, setAddSuccess] = useState(null);
+
+  useEffect(() => { fetchLists(); }, []);
+
+  const fetchLists = async () => {
+    const { data } = await supabase.from("lists").select("*").order("created_at", { ascending: false });
+    setLists(data || []);
+  };
+
+  const addToList = async (hotel, listId) => {
+    setAddingToList(hotel.placeId);
+    const payload = {
+      list_id: listId,
+      name: hotel.name,
+      address: hotel.address || null,
+      email: hotel.email || null,
+      phone: hotel.phone || null,
+      website: hotel.website || null,
+      photo_url: hotel.photoUrl || null,
+      rating: hotel.rating || null,
+      price_level: hotel.priceLevel || null,
+      place_id: hotel.placeId || null,
+    };
+    await supabase.from("list_hotels").upsert(payload, { onConflict: "list_id,place_id" });
+    setAddListDropdown(null);
+    setAddingToList(null);
+    setAddSuccess(hotel.placeId);
+    setTimeout(() => setAddSuccess(null), 2000);
+  };
+
+  const createListAndAdd = async (hotel, name) => {
+    const { data } = await supabase.from("lists").insert({ name }).select().single();
+    if (data) {
+      setLists(prev => [data, ...prev]);
+      await addToList(hotel, data.id);
+    }
+  };
 
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
@@ -728,6 +833,12 @@ export default function Home() {
                     contacted={contactedIds.includes(hotel.placeId)}
                     onToggleSelect={toggleSelect}
                     onSelect={() => {}}
+                    lists={lists}
+                    onAddToList={addToList}
+                    onCreateAndAdd={createListAndAdd}
+                    showDropdown={addListDropdown === hotel.placeId}
+                    onToggleDropdown={(id) => setAddListDropdown(prev => prev === id ? null : id)}
+                    addSuccess={addSuccess === hotel.placeId}
                   />
                 ))}
               </div>
@@ -862,6 +973,7 @@ const s = {
   popupName: { fontFamily:"Georgia,serif", fontSize:15, fontWeight:700, color:"#0f0e17", marginBottom:4 },
   popupAddr: { fontSize:11, color:"#94a3b8", lineHeight:1.4 },
   popupLink: { display:"inline-block", marginTop:8, fontSize:12, color:"#6366f1", fontWeight:600, textDecoration:"none" },
+  addToListBtn: { width:"100%", padding:"8px 12px", border:"1.5px solid #e2e8f0", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"all 0.2s" },
   modalOverlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
   modal: { background:"#fff", borderRadius:20, width:"100%", maxWidth:820, maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
   modalHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 24px 16px", borderBottom:"1px solid #f1f5f9" },
