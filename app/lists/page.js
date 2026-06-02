@@ -15,10 +15,19 @@ export default function ListsPage() {
   const [listHotels, setListHotels]   = useState([]);
   const [hotelsLoading, setHotelsLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [igModal, setIgModal] = useState(null); // { hotel, message }
+  const [igTemplates, setIgTemplates] = useState([]);
+  const [igMessage, setIgMessage] = useState("");
+  const [igTemplateId, setIgTemplateId] = useState("");
   const [dbError, setDbError]         = useState("");
   const { user } = useAuth();
 
-  useEffect(() => { fetchLists(); }, []);
+  useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
+
+  const fetchIgTemplates = async () => {
+    const { data } = await supabase.from("templates").select("*").eq("type", "instagram").order("created_at", { ascending: false });
+    setIgTemplates(data || []);
+  };
 
   const fetchLists = async () => {
     setLoading(true);
@@ -61,6 +70,24 @@ export default function ListsPage() {
     setLists(prev => prev.filter(l => l.id !== id));
     if (activeList?.id === id) { setActiveList(null); setListHotels([]); }
     setDeleteConfirm(null);
+  };
+
+  const openIgDm = (hotel) => {
+    const msg = igTemplates[0]?.body?.replace(/\{hotel_name\}/g, hotel.name) || "";
+    setIgMessage(msg);
+    setIgTemplateId(igTemplates[0]?.id || "");
+    setIgModal(hotel);
+  };
+
+  const sendIgDm = (hotel, message) => {
+    const handle = hotel.instagram?.replace("@", "");
+    if (!handle) { alert("No Instagram handle found for this hotel."); return; }
+    // Open Instagram DM - pre-fill with handle
+    const igUrl = `https://www.instagram.com/${handle}/`;
+    window.open(igUrl, "_blank");
+    // Copy message to clipboard so user can paste it
+    navigator.clipboard.writeText(message).catch(() => {});
+    setIgModal(null);
   };
 
   const openList = async (list) => {
@@ -259,6 +286,26 @@ export default function ListsPage() {
                         {hotel.phone && <p style={s.phoneText}>{hotel.phone}</p>}
                         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
                       </div>
+                      {/* Instagram */}
+                      <div style={{ flex:1, paddingRight:12 }}>
+                        {hotel.instagram ? (
+                          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                            <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igHandle}>
+                              {hotel.instagram}
+                            </a>
+                            <button style={s.igDmBtn} onClick={() => openIgDm(hotel)}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                <circle cx="12" cy="12" r="4"/>
+                                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                              </svg>
+                              Send DM
+                            </button>
+                          </div>
+                        ) : (
+                          <p style={s.noEmailText}>No handle found</p>
+                        )}
+                      </div>
                       {/* Status */}
                       <div style={{ flex:1 }}>
                         <button
@@ -287,6 +334,71 @@ export default function ListsPage() {
           )}
         </div>
       </div>
+
+      {/* Instagram DM Modal */}
+      {igModal && (
+        <div style={s.overlay}>
+          <div style={s.modal}>
+            <h3 style={{ fontSize:18, fontWeight:700, color:"#0F2544", marginBottom:4 }}>
+              Send Instagram DM
+            </h3>
+            <p style={{ fontSize:13, color:"#9FB3C8", marginBottom:16 }}>
+              to {igModal.instagram} — {igModal.name}
+            </p>
+
+            {/* Warning */}
+            <div style={s.igWarning}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Use sparingly — Instagram may restrict accounts that send too many DMs. We recommend max 20-30 per day.</span>
+            </div>
+
+            {/* Template picker */}
+            {igTemplates.length > 0 && (
+              <div style={{ marginBottom:14 }}>
+                <label style={s.igLabel}>Load Template</label>
+                <select style={s.igSelect} value={igTemplateId} onChange={e => {
+                  setIgTemplateId(e.target.value);
+                  const t = igTemplates.find(t => t.id === e.target.value);
+                  if (t) setIgMessage(t.body.replace(/\{hotel_name\}/g, igModal.name));
+                }}>
+                  <option value="">Select a template...</option>
+                  {igTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            <div style={{ marginBottom:16 }}>
+              <label style={s.igLabel}>Message</label>
+              <textarea
+                style={s.igTextarea}
+                rows={5}
+                value={igMessage}
+                onChange={e => setIgMessage(e.target.value)}
+                placeholder="Write your Instagram DM here..."
+              />
+              <p style={{ fontSize:11, color: igMessage.length > 1000 ? "#ef4444" : "#9FB3C8", textAlign:"right", marginTop:4 }}>
+                {igMessage.length}/1000 characters
+              </p>
+            </div>
+
+            <p style={s.igNote}>
+              Clicking "Open & Copy" will open their Instagram profile in a new tab and copy your message to clipboard — just paste it into the DM box.
+            </p>
+
+            <div style={s.modalActions}>
+              <button style={s.cancelBtn} onClick={() => setIgModal(null)}>Cancel</button>
+              <button style={s.igSendBtn} onClick={() => sendIgDm(igModal, igMessage)} disabled={!igMessage.trim()}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                </svg>
+                Open & Copy Message
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm */}
       {deleteConfirm && (
@@ -356,5 +468,13 @@ const s = {
   loadingSpinner: { width:24, height:24, border:"2.5px solid #e2e8f0", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
   overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
   modal: { background:"#fff", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
+  igHandle: { fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
+  igDmBtn: { display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#C13584", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
+  igWarning: { display:"flex", alignItems:"flex-start", gap:8, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:10, padding:"10px 12px", marginBottom:16, fontSize:12, color:"#92400e", lineHeight:1.5 },
+  igLabel: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
+  igSelect: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", cursor:"pointer", marginBottom:0 },
+  igTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
+  igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
+  igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
 };

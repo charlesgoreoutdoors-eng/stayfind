@@ -7,7 +7,7 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(null);
-  const [form, setForm] = useState({ name:"", subject:"", body:"" });
+  const [form, setForm] = useState({ name:"", subject:"", body:"", type:"email" });
   const [saving, setSaving] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -25,11 +25,11 @@ export default function TemplatesPage() {
     setLoading(false);
   };
 
-  const selectTemplate = (t) => { setActive(t); setForm({ name:t.name, subject:t.subject, body:t.body }); setIsNew(false); };
+  const selectTemplate = (t) => { setActive(t); setForm({ name:t.name, subject:t.subject, body:t.body, type:t.type||"email" }); setIsNew(false); };
 
   const newTemplate = () => {
     setActive(null);
-    setForm({ name:"", subject:"Content Collaboration Opportunity", body:"" });
+    setForm({ name:"", subject:"Content Collaboration Opportunity", body:"", type:"email" });
     setIsNew(true);
   };
 
@@ -37,10 +37,10 @@ export default function TemplatesPage() {
     if (!form.name.trim() || !form.body.trim()) return;
     setSaving(true);
     if (isNew) {
-      const { data } = await supabase.from("templates").insert({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), user_id: user.id }).select().single();
+      const { data } = await supabase.from("templates").insert({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), type:form.type, user_id: user.id }).select().single();
       if (data) { setTemplates(prev => [data, ...prev]); setActive(data); setIsNew(false); }
     } else if (active) {
-      await supabase.from("templates").update({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim() }).eq("id", active.id);
+      await supabase.from("templates").update({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), type:form.type }).eq("id", active.id);
       setTemplates(prev => prev.map(t => t.id === active.id ? { ...t, ...form } : t));
       setActive(prev => ({ ...prev, ...form }));
     }
@@ -91,8 +91,13 @@ export default function TemplatesPage() {
                 onClick={() => selectTemplate(t)}
               >
                 <div style={{ flex:1, minWidth:0 }}>
-                  <p style={s.templateName}>{t.name}</p>
-                  <p style={s.templateSubject}>{t.subject}</p>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+                    <p style={s.templateName}>{t.name}</p>
+                    <span style={{ ...s.typePill, ...(t.type === "instagram" ? s.typePillIG : {}) }}>
+                      {t.type === "instagram" ? "IG" : "Email"}
+                    </span>
+                  </div>
+                  {t.type === "email" && <p style={s.templateSubject}>{t.subject}</p>}
                   <p style={s.templatePreview}>{t.body.substring(0, 60)}...</p>
                 </div>
                 <button style={s.deleteBtn} onClick={e => { e.stopPropagation(); setDeleteConfirm(t.id); }}>
@@ -151,7 +156,14 @@ export default function TemplatesPage() {
                   onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
                   placeholder={"Write your outreach message here...\n\nExample:\nHi {hotel_name} team,\n\nMy name is [Your Name] and I'm a content creator specialising in travel and lifestyle...\n\nI'd love to discuss a potential collaboration.\n\nWarm regards,\n[Your Name]"}
                 />
-                <p style={s.charCount}>{form.body.length} characters</p>
+                <p style={s.charCount}>
+                  {form.body.length} characters
+                  {form.type === "instagram" && form.body.length > 0 && (
+                    <span style={{ color: form.body.length > 1000 ? "#ef4444" : "#9FB3C8", marginLeft:8 }}>
+                      {form.body.length > 1000 ? "Too long for DM" : "Good length for DM"}
+                    </span>
+                  )}
+                </p>
               </div>
 
               <button
@@ -210,6 +222,12 @@ const s = {
   charCount: { fontSize:11, color:"#cbd5e1", marginTop:4, textAlign:"right" },
   saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:10, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", transition:"opacity 0.2s" },
   emptyState: { display:"flex", flexDirection:"column", alignItems:"center", gap:10, padding:"48px 24px", color:"#9FB3C8", fontSize:14, textAlign:"center" },
+  typeRow: { display:"flex", gap:8, marginBottom:20 },
+  typeBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 16px", border:"1.5px solid #DDD5CC", borderRadius:10, background:"#fff", cursor:"pointer", fontSize:13, fontWeight:500, color:"#4A6A8A", fontFamily:"inherit", transition:"all 0.15s" },
+  typeBtnActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC", color:"#E85D3D" },
+  typeBtnActiveIG: { border:"1.5px solid #C13584", background:"#FDF0F8", color:"#C13584" },
+  typePill: { fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:20, background:"#FEF0EC", color:"#E85D3D" },
+  typePillIG: { background:"#FDF0F8", color:"#C13584" },
   empty: { color:"#9FB3C8", fontSize:14, padding:"24px", textAlign:"center" },
   overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" },
   confirmModal: { background:"#fff", borderRadius:16, padding:"28px", maxWidth:380, width:"90%" },

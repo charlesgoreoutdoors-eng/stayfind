@@ -291,6 +291,7 @@ export default function Home() {
       email: hotel.email || null, phone: hotel.phone || null, website: hotel.website || null,
       photo_url: hotel.photoUrl || null, rating: hotel.rating || null,
       price_level: hotel.priceLevel || null, place_id: hotel.placeId || null,
+      instagram: hotel.instagram || null,
     });
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
@@ -383,7 +384,7 @@ export default function Home() {
         try {
           const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
-          setHotels(prev => prev.map(h => h.placeId === hotel.placeId ? { ...h, email: data.email || null, emailStatus: data.email ? "found" : "notfound" } : h));
+          setHotels(prev => prev.map(h => h.placeId === hotel.placeId ? { ...h, email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : "notfound" } : h));
         } catch {
           setHotels(prev => prev.map(h => h.placeId === hotel.placeId ? { ...h, emailStatus: "notfound" } : h));
         }
