@@ -166,8 +166,8 @@ export default function TemplatesPage() {
       {deleteConfirm && (
         <div style={s.overlay}>
           <div style={s.confirmModal}>
-            <h3 style={{ fontFamily:"Georgia,serif", fontSize:18, marginBottom:8 }}>Delete this template?</h3>
-            <p style={{ fontSize:14, color:"#64748b", marginBottom:20 }}>This cannot be undone.</p>
+            <h3 style={{ fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:18, marginBottom:8 }}>Delete this template?</h3>
+            <p style={{ fontSize:14, color:"#4A6A8A", marginBottom:20 }}>This cannot be undone.</p>
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
               <button style={s.cancelBtn} onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button style={s.deleteConfirmBtn} onClick={() => deleteTemplate(deleteConfirm)}>Delete</button>
@@ -182,34 +182,34 @@ export default function TemplatesPage() {
 const s = {
   root: { padding:"32px 24px 80px", maxWidth:1100, margin:"0 auto" },
   header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:28, flexWrap:"wrap", gap:12 },
-  title: { fontFamily:"Georgia,serif", fontSize:28, fontWeight:700, color:"#0f0e17", marginBottom:4 },
-  subtitle: { fontSize:14, color:"#94a3b8" },
-  newBtn: { background:"#0f0e17", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
+  title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:28, fontWeight:700, color:"#0F2544", marginBottom:4 },
+  subtitle: { fontSize:14, color:"#9FB3C8" },
+  newBtn: { background:"#0F2544", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   body: { display:"grid", gridTemplateColumns:"280px 1fr", gap:20, alignItems:"start" },
   listPanel: { display:"flex", flexDirection:"column", gap:8 },
   templateItem: { padding:"14px", borderRadius:12, border:"1.5px solid #e2e8f0", cursor:"pointer", background:"#fff", transition:"all 0.15s", display:"flex", alignItems:"flex-start", gap:10 },
-  templateItemActive: { border:"1.5px solid #6366f1", background:"#eef2ff" },
-  templateName: { fontSize:14, fontWeight:600, color:"#1e293b", marginBottom:2 },
-  templateSubject: { fontSize:12, color:"#6366f1", marginBottom:3 },
-  templatePreview: { fontSize:11, color:"#94a3b8", lineHeight:1.5 },
+  templateItemActive: { border:"1.5px solid #6366f1", background:"#FEF0EC" },
+  templateName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
+  templateSubject: { fontSize:12, color:"#E85D3D", marginBottom:3 },
+  templatePreview: { fontSize:11, color:"#9FB3C8", lineHeight:1.5 },
   deleteBtn: { background:"none", border:"none", cursor:"pointer", padding:4, flexShrink:0 },
   editor: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", padding:"24px" },
   editorHeader: { marginBottom:20 },
-  editorTitle: { fontFamily:"Georgia,serif", fontSize:20, fontWeight:700, color:"#0f0e17" },
+  editorTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
   field: { marginBottom:18 },
-  label: { display:"block", fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
-  hint: { fontSize:12, color:"#94a3b8", marginBottom:8 },
-  code: { background:"#f1f5f9", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
-  input: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none" },
+  label: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
+  hint: { fontSize:12, color:"#9FB3C8", marginBottom:8 },
+  code: { background:"#F0EBE5", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
+  input: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none" },
   toolbar: { display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" },
-  toolBtn: { padding:"5px 12px", border:"1.5px solid #e2e8f0", borderRadius:7, background:"#fff", fontSize:13, cursor:"pointer", fontFamily:"system-ui,sans-serif", color:"#374151" },
-  textarea: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"12px 14px", fontSize:13, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", resize:"vertical", lineHeight:1.7 },
+  toolBtn: { padding:"5px 12px", border:"1.5px solid #e2e8f0", borderRadius:7, background:"#fff", fontSize:13, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#1E3A5F" },
+  textarea: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"12px 14px", fontSize:13, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none", resize:"vertical", lineHeight:1.7 },
   charCount: { fontSize:11, color:"#cbd5e1", marginTop:4, textAlign:"right" },
-  saveBtn: { background:"#6366f1", color:"#fff", border:"none", borderRadius:10, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"opacity 0.2s" },
-  emptyState: { display:"flex", flexDirection:"column", alignItems:"center", gap:10, padding:"48px 24px", color:"#94a3b8", fontSize:14, textAlign:"center" },
-  empty: { color:"#94a3b8", fontSize:14, padding:"24px", textAlign:"center" },
+  saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:10, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", transition:"opacity 0.2s" },
+  emptyState: { display:"flex", flexDirection:"column", alignItems:"center", gap:10, padding:"48px 24px", color:"#9FB3C8", fontSize:14, textAlign:"center" },
+  empty: { color:"#9FB3C8", fontSize:14, padding:"24px", textAlign:"center" },
   overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" },
   confirmModal: { background:"#fff", borderRadius:16, padding:"28px", maxWidth:380, width:"90%" },
-  cancelBtn: { background:"#fff", color:"#64748b", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
-  deleteConfirmBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
+  cancelBtn: { background:"#fff", color:"#4A6A8A", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
+  deleteConfirmBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
 };

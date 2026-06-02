@@ -155,7 +155,7 @@ export default function ListsPage() {
           ) : lists.length === 0 ? (
             <div style={s.empty}>
               <span style={{ fontSize:40 }}>📋</span>
-              <p style={{ fontWeight:600, color:"#374151" }}>No lists yet</p>
+              <p style={{ fontWeight:600, color:"#1E3A5F" }}>No lists yet</p>
               <p style={{ fontSize:13 }}>Create a list to start organising hotels from your searches.</p>
               <button style={s.saveBtn} onClick={() => setShowNew(true)}>+ Create your first list</button>
             </div>
@@ -163,7 +163,7 @@ export default function ListsPage() {
             lists.map(list => (
               <div
                 key={list.id}
-                style={{ ...s.listItem, background: activeList?.id === list.id ? "#eef2ff" : "#fff", borderColor: activeList?.id === list.id ? "#6366f1" : "#e2e8f0" }}
+                style={{ ...s.listItem, background: activeList?.id === list.id ? "#FEF0EC" : "#fff", borderColor: activeList?.id === list.id ? "#E85D3D" : "#DDD5CC" }}
                 onClick={() => openList(list)}
               >
                 <div style={{ flex:1, minWidth:0 }}>
@@ -174,7 +174,7 @@ export default function ListsPage() {
                 <div style={{ display:"flex", gap:6, flexShrink:0 }} onClick={e => e.stopPropagation()}>
                   <Link href={`/compose?list=${list.id}`}>
                     <button style={s.iconBtn} title="Compose outreach for this list">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2.5">
                         <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                       </svg>
                     </button>
@@ -219,17 +219,17 @@ export default function ListsPage() {
               ) : listHotels.length === 0 ? (
                 <div style={s.empty}>
                   <span style={{ fontSize:36 }}>🏨</span>
-                  <p style={{ fontWeight:600, color:"#374151" }}>No hotels yet</p>
+                  <p style={{ fontWeight:600, color:"#1E3A5F" }}>No hotels yet</p>
                   <p style={{ fontSize:13 }}>Search for hotels and use the "+ Add to List" button to add them here.</p>
-                  <Link href="/" style={{ color:"#6366f1", fontWeight:600, fontSize:13 }}>Go to Search</Link>
+                  <Link href="/" style={{ color:"#E85D3D", fontWeight:600, fontSize:13 }}>Go to Search</Link>
                 </div>
               ) : (
                 <div style={s.tableWrap}>
                   {/* Table header */}
                   <div style={s.tableHead}>
-                    <div style={{ flex:3, fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Hotel</div>
-                    <div style={{ flex:2, fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Contact</div>
-                    <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Status</div>
+                    <div style={{ flex:3, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Hotel</div>
+                    <div style={{ flex:2, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Contact</div>
+                    <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Status</div>
                     <div style={{ width:40 }}></div>
                   </div>
                   {listHotels.map(hotel => (
@@ -288,8 +288,8 @@ export default function ListsPage() {
       {deleteConfirm && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h3 style={{ fontFamily:"Georgia,serif", fontSize:18, marginBottom:8, color:"#0f0e17" }}>Delete this list?</h3>
-            <p style={{ fontSize:14, color:"#64748b", marginBottom:20 }}>All hotels in this list will also be removed. This cannot be undone.</p>
+            <h3 style={{ fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:18, marginBottom:8, color:"#0F2544" }}>Delete this list?</h3>
+            <p style={{ fontSize:14, color:"#4A6A8A", marginBottom:20 }}>All hotels in this list will also be removed. This cannot be undone.</p>
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
               <button style={s.cancelBtn} onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button style={s.deleteBtn} onClick={() => deleteList(deleteConfirm)}>Delete List</button>
@@ -310,47 +310,47 @@ export default function ListsPage() {
 const s = {
   root: { padding:"28px 20px 80px", maxWidth:1100, margin:"0 auto" },
   header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12, flexWrap:"wrap" },
-  title: { fontFamily:"Georgia,serif", fontSize:26, fontWeight:700, color:"#0f0e17", marginBottom:4 },
-  subtitle: { fontSize:14, color:"#94a3b8" },
-  newBtn: { background:"#0f0e17", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", flexShrink:0 },
+  title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:4 },
+  subtitle: { fontSize:14, color:"#9FB3C8" },
+  newBtn: { background:"#0F2544", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", flexShrink:0 },
   errorBox: { background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"12px 16px", color:"#dc2626", fontSize:13, marginBottom:16 },
   newForm: { background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:14, padding:"20px", marginBottom:20, display:"flex", flexDirection:"column", gap:10, maxWidth:500 },
-  newFormTitle: { fontFamily:"Georgia,serif", fontSize:16, fontWeight:700, color:"#0f0e17" },
-  input: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none" },
-  saveBtn: { background:"#6366f1", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
-  cancelBtn: { background:"#fff", color:"#64748b", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
+  newFormTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:16, fontWeight:700, color:"#0F2544" },
+  input: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none" },
+  saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
+  cancelBtn: { background:"#fff", color:"#4A6A8A", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   body: { display:"grid", gridTemplateColumns:"260px 1fr", gap:16, alignItems:"start" },
   listsPanel: { display:"flex", flexDirection:"column", gap:8 },
   listItem: { padding:"14px", borderRadius:12, border:"1.5px solid #e2e8f0", cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:10, background:"#fff" },
-  listName: { fontSize:14, fontWeight:600, color:"#1e293b", marginBottom:2 },
-  listDesc: { fontSize:12, color:"#94a3b8", marginBottom:3 },
-  listMeta: { fontSize:11, color:"#c7d2fe", fontWeight:500 },
+  listName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
+  listDesc: { fontSize:12, color:"#9FB3C8", marginBottom:3 },
+  listMeta: { fontSize:11, color:"#F5A882", fontWeight:500 },
   iconBtn: { width:30, height:30, borderRadius:7, border:"1.5px solid #e2e8f0", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
   detailPanel: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", overflow:"hidden", minHeight:300 },
   detailHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid #f1f5f9" },
-  detailTitle: { fontFamily:"Georgia,serif", fontSize:20, fontWeight:700, color:"#0f0e17" },
-  detailSub: { fontSize:13, color:"#94a3b8", marginTop:2 },
-  composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#6366f1", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
+  detailTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
+  detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
+  composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   tableWrap: { overflowX:"auto" },
-  tableHead: { display:"flex", padding:"10px 20px", background:"#f8fafc", borderBottom:"1px solid #f1f5f9" },
+  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
   tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #f8fafc", alignItems:"center" },
   thumb: { width:44, height:44, borderRadius:8, objectFit:"cover", flexShrink:0 },
-  thumbFallback: { width:44, height:44, borderRadius:8, background:"#f1f5f9", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 },
-  hotelName: { fontSize:14, fontWeight:600, color:"#1e293b", marginBottom:2 },
-  hotelAddr: { fontSize:11, color:"#94a3b8", lineHeight:1.3 },
+  thumbFallback: { width:44, height:44, borderRadius:8, background:"#F0EBE5", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 },
+  hotelName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
+  hotelAddr: { fontSize:11, color:"#9FB3C8", lineHeight:1.3 },
   hotelRating: { fontSize:11, color:"#f59e0b", marginTop:2 },
-  emailText: { fontSize:12, color:"#6366f1", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
+  emailText: { fontSize:12, color:"#E85D3D", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
   noEmailText: { fontSize:12, color:"#cbd5e1", marginBottom:2 },
-  phoneText: { fontSize:11, color:"#64748b", marginBottom:2 },
-  websiteLink: { fontSize:11, color:"#6366f1", textDecoration:"none" },
-  statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"system-ui,sans-serif" },
+  phoneText: { fontSize:11, color:"#4A6A8A", marginBottom:2 },
+  websiteLink: { fontSize:11, color:"#E85D3D", textDecoration:"none" },
+  statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   contacted: { background:"#dcfce7", color:"#166534" },
-  pending: { background:"#f1f5f9", color:"#64748b" },
-  contactedDate: { fontSize:10, color:"#94a3b8", marginTop:4 },
+  pending: { background:"#F0EBE5", color:"#4A6A8A" },
+  contactedDate: { fontSize:10, color:"#9FB3C8", marginTop:4 },
   removeBtn: { background:"none", border:"none", cursor:"pointer", padding:4, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" },
-  empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"48px 24px", color:"#94a3b8", fontSize:14, textAlign:"center" },
-  loadingSpinner: { width:24, height:24, border:"2.5px solid #e2e8f0", borderTopColor:"#6366f1", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
+  empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"48px 24px", color:"#9FB3C8", fontSize:14, textAlign:"center" },
+  loadingSpinner: { width:24, height:24, border:"2.5px solid #e2e8f0", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
   overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
   modal: { background:"#fff", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
-  deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
+  deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
 };

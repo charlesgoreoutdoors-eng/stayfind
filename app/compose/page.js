@@ -225,7 +225,7 @@ function ComposeInner() {
               <div style={s.hotelList}>
                 {hotels.map(hotel => (
                   <div key={hotel.id}
-                    style={{ ...s.hotelRow, borderColor: previewHotel?.id === hotel.id ? "#6366f1" : "#f1f5f9", background: previewHotel?.id === hotel.id ? "#eef2ff" : "#fff" }}
+                    style={{ ...s.hotelRow, borderColor: previewHotel?.id === hotel.id ? "#E85D3D" : "#F0EBE5", background: previewHotel?.id === hotel.id ? "#FEF0EC" : "#fff" }}
                     onClick={() => { setPreviewHotel(hotel); setTab("preview"); }}
                   >
                     <div style={{ flex:1, minWidth:0 }}>
@@ -292,7 +292,7 @@ function ComposeInner() {
 
 export default function ComposePage() {
   return (
-    <Suspense fallback={<div style={{ padding:40, color:"#94a3b8", textAlign:"center" }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ padding:40, color:"#9FB3C8", textAlign:"center" }}>Loading...</div>}>
       <ComposeInner />
     </Suspense>
   );
@@ -301,58 +301,58 @@ export default function ComposePage() {
 const s = {
   root: { padding:"28px 20px 80px", maxWidth:1100, margin:"0 auto" },
   pageHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:24, gap:12, flexWrap:"wrap" },
-  title: { fontFamily:"Georgia,serif", fontSize:26, fontWeight:700, color:"#0f0e17", marginBottom:4 },
-  subtitle: { fontSize:14, color:"#94a3b8" },
-  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"10px 18px", background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"#1e293b", boxShadow:"0 2px 8px rgba(0,0,0,0.06)", flexShrink:0 },
+  title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:4 },
+  subtitle: { fontSize:14, color:"#9FB3C8" },
+  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"10px 18px", background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"#0F2544", boxShadow:"0 2px 8px rgba(0,0,0,0.06)", flexShrink:0 },
   gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"8px 14px" },
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#22c55e" },
   gmailText: { fontSize:13, color:"#166534", fontWeight:500 },
   disconnectBtn: { fontSize:11, color:"#16a34a", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
   setupRow: { display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"flex-end" },
   setupField: { display:"flex", flexDirection:"column", gap:6, flex:1, minWidth:200 },
-  label: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase" },
-  select: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", background:"#fff", cursor:"pointer" },
-  hotelCount: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#eef2ff", borderRadius:10, padding:"10px 18px", border:"1.5px solid #c7d2fe" },
-  hotelCountNum: { fontSize:22, fontWeight:700, color:"#6366f1", lineHeight:1 },
-  hotelCountLabel: { fontSize:11, color:"#818cf8", marginTop:2 },
-  mobileTabs: { display:"flex", background:"#f1f5f9", borderRadius:12, padding:4, gap:4, marginBottom:16 },
-  mobileTab: { flex:1, padding:"9px 4px", border:"none", borderRadius:9, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"system-ui,sans-serif", color:"#64748b", background:"transparent", display:"flex", alignItems:"center", justifyContent:"center", gap:6 },
-  mobileTabActive: { background:"#fff", color:"#0f0e17", boxShadow:"0 1px 4px rgba(0,0,0,0.1)", fontWeight:600 },
-  tabBadge: { background:"#6366f1", color:"#fff", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:20, minWidth:18, textAlign:"center" },
+  label: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase" },
+  select: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none", background:"#fff", cursor:"pointer" },
+  hotelCount: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#FEF0EC", borderRadius:10, padding:"10px 18px", border:"1.5px solid #c7d2fe" },
+  hotelCountNum: { fontSize:22, fontWeight:700, color:"#E85D3D", lineHeight:1 },
+  hotelCountLabel: { fontSize:11, color:"#F5A882", marginTop:2 },
+  mobileTabs: { display:"flex", background:"#F0EBE5", borderRadius:12, padding:4, gap:4, marginBottom:16 },
+  mobileTab: { flex:1, padding:"9px 4px", border:"none", borderRadius:9, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#4A6A8A", background:"transparent", display:"flex", alignItems:"center", justifyContent:"center", gap:6 },
+  mobileTabActive: { background:"#fff", color:"#0F2544", boxShadow:"0 1px 4px rgba(0,0,0,0.1)", fontWeight:600 },
+  tabBadge: { background:"#E85D3D", color:"#fff", fontSize:10, fontWeight:700, padding:"1px 6px", borderRadius:20, minWidth:18, textAlign:"center" },
   layout: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignItems:"start" },
   composeCol: { display:"flex", flexDirection:"column" },
   rightCol: { display:"flex", flexDirection:"column", gap:16 },
   card: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", padding:"20px" },
   field: { marginBottom:18 },
-  hint: { fontSize:12, color:"#94a3b8", marginBottom:8 },
-  code: { background:"#f1f5f9", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
-  input: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none" },
-  textarea: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"12px 14px", fontSize:13, fontFamily:"system-ui,sans-serif", color:"#1e293b", outline:"none", resize:"vertical", lineHeight:1.8 },
+  hint: { fontSize:12, color:"#9FB3C8", marginBottom:8 },
+  code: { background:"#F0EBE5", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
+  input: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none" },
+  textarea: { width:"100%", border:"1.5px solid #e2e8f0", borderRadius:10, padding:"12px 14px", fontSize:13, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none", resize:"vertical", lineHeight:1.8 },
   charCount: { fontSize:11, color:"#cbd5e1", marginTop:4, textAlign:"right" },
-  sendBtn: { width:"100%", padding:14, background:"#6366f1", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"opacity 0.2s" },
+  sendBtn: { width:"100%", padding:14, background:"#E85D3D", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", transition:"opacity 0.2s" },
   spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   warning: { fontSize:12, color:"#f59e0b", textAlign:"center", marginTop:10 },
-  panelLabel: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:12 },
-  loadingText: { fontSize:13, color:"#94a3b8", textAlign:"center", padding:"20px 0" },
-  emptyPanel: { display:"flex", flexDirection:"column", alignItems:"center", gap:8, padding:"32px 0", color:"#94a3b8", fontSize:13, textAlign:"center" },
-  emptyLink: { color:"#6366f1", fontWeight:600, fontSize:13, textDecoration:"none" },
+  panelLabel: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:12 },
+  loadingText: { fontSize:13, color:"#9FB3C8", textAlign:"center", padding:"20px 0" },
+  emptyPanel: { display:"flex", flexDirection:"column", alignItems:"center", gap:8, padding:"32px 0", color:"#9FB3C8", fontSize:13, textAlign:"center" },
+  emptyLink: { color:"#E85D3D", fontWeight:600, fontSize:13, textDecoration:"none" },
   hotelList: { display:"flex", flexDirection:"column", gap:6, maxHeight:320, overflowY:"auto" },
   hotelRow: { display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, border:"1.5px solid #f1f5f9", cursor:"pointer", transition:"all 0.15s" },
-  hotelName: { fontSize:13, fontWeight:600, color:"#1e293b", marginBottom:2 },
-  hotelEmail: { fontSize:11, color:"#6366f1" },
+  hotelName: { fontSize:13, fontWeight:600, color:"#0F2544", marginBottom:2 },
+  hotelEmail: { fontSize:11, color:"#E85D3D" },
   noEmail: { fontSize:11, color:"#cbd5e1" },
   sentBadge: { background:"#dcfce7", color:"#166534", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20 },
   skipBadge: { background:"#fef3c7", color:"#92400e", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20 },
-  previewBox: { background:"#f8fafc", borderRadius:10, padding:"14px", border:"1px solid #e2e8f0" },
+  previewBox: { background:"#FAF8F5", borderRadius:10, padding:"14px", border:"1px solid #e2e8f0" },
   previewField: { fontSize:13, marginBottom:6, display:"flex", gap:8, alignItems:"flex-start" },
-  previewLabel: { fontWeight:600, color:"#374151", minWidth:58, flexShrink:0 },
-  previewValue: { color:"#64748b", wordBreak:"break-all" },
+  previewLabel: { fontWeight:600, color:"#1E3A5F", minWidth:58, flexShrink:0 },
+  previewValue: { color:"#4A6A8A", wordBreak:"break-all" },
   previewDivider: { borderTop:"1px solid #e2e8f0", margin:"12px 0" },
-  previewBody: { fontSize:13, color:"#374151", lineHeight:1.8, whiteSpace:"pre-wrap", fontFamily:"system-ui,sans-serif", margin:0 },
-  resultStat: { fontSize:13, color:"#64748b" },
+  previewBody: { fontSize:13, color:"#1E3A5F", lineHeight:1.8, whiteSpace:"pre-wrap", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", margin:0 },
+  resultStat: { fontSize:13, color:"#4A6A8A" },
   resultRow: { display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid #f8fafc", fontSize:13 },
   resultSuccess: { background:"#dcfce7", color:"#166534", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0 },
   resultFail: { background:"#fee2e2", color:"#991b1b", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0 },
-  resultName: { color:"#1e293b", fontWeight:500, flex:1 },
+  resultName: { color:"#0F2544", fontWeight:500, flex:1 },
   resultError: { fontSize:11, color:"#ef4444" },
 };

@@ -17,7 +17,7 @@ function Stars({ rating }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:3 }}>
       {[1,2,3,4,5].map(i => (
-        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(rating) ? "#f59e0b" : "#e2e8f0"}>
+        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(rating) ? "#E85D3D" : "#DDD5CC"}>
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
       ))}
@@ -28,10 +28,10 @@ function Stars({ rating }) {
 function SkeletonCard() {
   return (
     <div style={s.card}>
-      <div style={{ height:190, background:"linear-gradient(90deg,#f1f5f9 25%,#e8edf2 50%,#f1f5f9 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
+      <div style={{ height:200, background:"linear-gradient(90deg,#EDE8E3 25%,#E2DBD5 50%,#EDE8E3 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite", borderRadius:"14px 14px 0 0" }} />
       <div style={{ padding:"16px 18px" }}>
-        {[80,55,100,60].map((w,i) => (
-          <div key={i} style={{ height:i===0?18:13, width:`${w}%`, borderRadius:6, marginBottom:10, background:"linear-gradient(90deg,#f1f5f9 25%,#e8edf2 50%,#f1f5f9 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }}/>
+        {[75,50,90,55].map((w,i) => (
+          <div key={i} style={{ height:i===0?16:12, width:`${w}%`, borderRadius:6, marginBottom:10, background:"linear-gradient(90deg,#EDE8E3 25%,#E2DBD5 50%,#EDE8E3 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }}/>
         ))}
       </div>
     </div>
@@ -55,66 +55,59 @@ function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
         <span style={dd.title}>Add to List</span>
         <button style={dd.close} onClick={onClose}>x</button>
       </div>
-      {lists.length === 0 && !showNew && <p style={dd.empty}>No lists yet - create one below</p>}
-      <div style={{ maxHeight:140, overflowY:"auto" }}>
+      {lists.length === 0 && !showNew && <p style={dd.empty}>No lists yet</p>}
+      <div style={{ maxHeight:130, overflowY:"auto" }}>
         {lists.map(l => (
           <button key={l.id} style={dd.item} onClick={() => onAdd(hotel, l.id)}>{l.name}</button>
         ))}
       </div>
-      {!showNew ? (
-        <button style={dd.newBtn} onClick={() => setShowNew(true)}>+ Create new list</button>
-      ) : (
-        <div style={dd.newForm}>
-          <input style={dd.newInput} placeholder="e.g. Malibu Summer" autoFocus
-            value={newListName} onChange={e => setNewListName(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && newListName.trim()) { onCreateAndAdd(hotel, newListName.trim()); }}} />
-          <button style={dd.createBtn}
-            onClick={() => { if (newListName.trim()) onCreateAndAdd(hotel, newListName.trim()); }}>
-            Create
-          </button>
-        </div>
-      )}
+      {!showNew
+        ? <button style={dd.newBtn} onClick={() => setShowNew(true)}>+ Create new list</button>
+        : (
+          <div style={dd.newForm}>
+            <input style={dd.newInput} placeholder="List name" autoFocus value={newListName}
+              onChange={e => setNewListName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && newListName.trim() && onCreateAndAdd(hotel, newListName.trim())} />
+            <button style={dd.createBtn} onClick={() => newListName.trim() && onCreateAndAdd(hotel, newListName.trim())}>Create</button>
+          </div>
+        )}
     </div>
   );
 }
 
 const dd = {
-  wrap: { position:"absolute", bottom:"calc(100% + 6px)", left:0, right:0, background:"#fff", borderRadius:12, border:"1.5px solid #e2e8f0", boxShadow:"0 8px 24px rgba(0,0,0,0.14)", padding:"12px", zIndex:200 },
+  wrap: { position:"absolute", bottom:"calc(100% + 6px)", left:0, right:0, background:"#fff", borderRadius:12, border:"1px solid #DDD5CC", boxShadow:"0 8px 28px rgba(15,37,68,0.14)", padding:"12px", zIndex:200 },
   header: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 },
-  title: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.5px", textTransform:"uppercase" },
-  close: { background:"none", border:"none", cursor:"pointer", color:"#94a3b8", fontSize:14, fontWeight:700, lineHeight:1 },
-  empty: { fontSize:12, color:"#94a3b8", padding:"4px 0 8px" },
-  item: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"none", background:"none", cursor:"pointer", fontSize:13, color:"#1e293b", fontFamily:"system-ui,sans-serif", marginBottom:2 },
-  newBtn: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"1.5px dashed #c7d2fe", background:"none", cursor:"pointer", fontSize:12, color:"#6366f1", fontFamily:"system-ui,sans-serif", marginTop:6, fontWeight:600 },
+  title: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
+  close: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", fontSize:14, fontWeight:700 },
+  empty: { fontSize:12, color:"#9FB3C8", padding:"4px 0 8px" },
+  item: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"none", background:"none", cursor:"pointer", fontSize:13, color:"#1E3A5F", fontFamily:"inherit", marginBottom:2 },
+  newBtn: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"1.5px dashed #F5A882", background:"none", cursor:"pointer", fontSize:12, color:"#E85D3D", fontFamily:"inherit", marginTop:6, fontWeight:600 },
   newForm: { display:"flex", gap:6, marginTop:8 },
-  newInput: { flex:1, border:"1.5px solid #e2e8f0", borderRadius:7, padding:"7px 10px", fontSize:12, fontFamily:"system-ui,sans-serif", outline:"none", color:"#1e293b" },
-  createBtn: { background:"#6366f1", color:"#fff", border:"none", borderRadius:7, padding:"7px 12px", fontSize:12, cursor:"pointer", fontFamily:"system-ui,sans-serif", fontWeight:600 },
+  newInput: { flex:1, border:"1.5px solid #DDD5CC", borderRadius:7, padding:"7px 10px", fontSize:12, fontFamily:"inherit", outline:"none", color:"#1E3A5F" },
+  createBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:7, padding:"7px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
 };
 
-function HotelCard({ hotel, selected, contacted, onToggleSelect, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
+function HotelCard({ hotel, selected, onToggleSelect, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
   const [imgErr, setImgErr] = useState(false);
   return (
-    <div className="hotel-card fade-up" style={{ ...s.card, outline: selected ? "2.5px solid #6366f1" : contacted ? "2.5px solid #22c55e" : "none", position:"relative" }}>
-      {/* Checkbox */}
-      <div style={{ ...s.selectBox, background: selected ? "#6366f1" : contacted ? "#22c55e" : "rgba(255,255,255,0.9)", border: selected||contacted ? "none" : "2px solid #cbd5e1" }}
+    <div className="hotel-card fade-up" style={{ ...s.card, outline: selected ? "2.5px solid #E85D3D" : "none", position:"relative" }}>
+      <div style={{ ...s.selectBox, background: selected ? "#E85D3D" : "rgba(255,255,255,0.92)", border: selected ? "none" : "2px solid #DDD5CC" }}
         onClick={e => { e.stopPropagation(); onToggleSelect(hotel); }}>
-        {(selected||contacted) && (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-        )}
+        {selected && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>}
       </div>
-      {contacted && <div style={s.contactedBadge}>Contacted</div>}
 
       <div style={s.imgBox}>
         {hotel.photoUrl && !imgErr
           ? <img src={hotel.photoUrl} alt={hotel.name} style={s.img} onError={() => setImgErr(true)} />
-          : <div style={s.imgFallback}><span style={{ fontSize:46 }}>🏨</span></div>}
+          : <div style={s.imgFallback}><span style={{ fontSize:44 }}>🏨</span></div>}
         <div style={s.imgGradient} />
         {hotel.priceLevel && <span style={s.pricePill}>{hotel.priceLevel}</span>}
       </div>
 
       <div style={s.cardBody}>
         <h3 style={s.hotelName}>{hotel.name}</h3>
-        <p style={s.address}>📍 {hotel.address}</p>
+        <p style={s.address}>{hotel.address}</p>
         {hotel.description && <p style={s.desc}>{hotel.description}</p>}
 
         <div style={s.cardFooter}>
@@ -127,22 +120,15 @@ function HotelCard({ hotel, selected, contacted, onToggleSelect, lists, onAddToL
         </div>
         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
 
-        {/* Add to list */}
         <div style={{ position:"relative", marginTop:10 }}>
           <button
             style={{ ...s.addToListBtn, ...(addSuccess ? s.addToListBtnSuccess : {}) }}
             onClick={e => { e.stopPropagation(); onToggleDropdown(hotel.placeId); }}
           >
-            {addSuccess ? "✓ Added to list!" : "+ Add to List"}
+            {addSuccess ? "Added to list!" : "+ Add to List"}
           </button>
           {showDropdown && (
-            <AddToListDropdown
-              hotel={hotel}
-              lists={lists}
-              onAdd={onAddToList}
-              onCreateAndAdd={onCreateAndAdd}
-              onClose={() => onToggleDropdown(null)}
-            />
+            <AddToListDropdown hotel={hotel} lists={lists} onAdd={onAddToList} onCreateAndAdd={onCreateAndAdd} onClose={() => onToggleDropdown(null)} />
           )}
         </div>
       </div>
@@ -165,8 +151,7 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
     setMapAddSuccess(true);
     setTimeout(() => setMapAddSuccess(false), 2500);
   };
-
-  const handleMapCreateAndAdd = async (hotel, name) => {
+  const handleMapCreate = async (hotel, name) => {
     await onCreateAndAdd(hotel, name);
     setMapDropdown(false);
     setMapAddSuccess(true);
@@ -181,10 +166,12 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
       center: { lat: validHotels[0].lat, lng: validHotels[0].lng },
       zoom: 13,
       styles: [
-        { featureType:"all", elementType:"geometry", stylers:[{ color:"#f8f7f4" }] },
-        { featureType:"water", elementType:"geometry", stylers:[{ color:"#c9d8e8" }] },
-        { featureType:"road", elementType:"geometry", stylers:[{ color:"#ffffff" }] },
+        { featureType:"all", elementType:"geometry", stylers:[{ color:"#F7F3EF" }] },
+        { featureType:"water", elementType:"geometry", stylers:[{ color:"#B8D4E8" }] },
+        { featureType:"road", elementType:"geometry", stylers:[{ color:"#FFFFFF" }] },
+        { featureType:"road.arterial", elementType:"geometry", stylers:[{ color:"#F0EBE5" }] },
         { featureType:"poi", elementType:"labels", stylers:[{ visibility:"off" }] },
+        { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#D4E8D4" }] },
       ],
       mapTypeControl:false, streetViewControl:false,
     });
@@ -197,9 +184,9 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
       const marker = new window.google.maps.Marker({
         position: { lat: hotel.lat, lng: hotel.lng }, map,
         label: { text: String(i + 1), color: "#fff", fontSize: "12px", fontWeight: "700" },
-        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 18, fillColor: "#6366f1", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 18, fillColor: "#E85D3D", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2.5 },
       });
-      marker.addListener("click", () => { setSelectedHotel(hotel); setImgErr(false); map.panTo({ lat: hotel.lat, lng: hotel.lng }); });
+      marker.addListener("click", () => { setSelectedHotel(hotel); setImgErr(false); setMapDropdown(false); map.panTo({ lat: hotel.lat, lng: hotel.lng }); });
       markersRef.current.push(marker);
     });
     map.fitBounds(bounds);
@@ -228,12 +215,12 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
         <p style={s.sidebarTitle}>Hotels</p>
         {hotels.filter(h => h.lat && h.lng).map((hotel, i) => (
           <div key={hotel.placeId || i}
-            style={{ ...s.sidebarItem, background: selectedHotel?.placeId === hotel.placeId ? "#eef2ff" : "#fff", borderColor: selectedHotel?.placeId === hotel.placeId ? "#6366f1" : "#e2e8f0" }}
-            onClick={() => { setSelectedHotel(hotel); setImgErr(false); if (mapInstanceRef.current) { mapInstanceRef.current.panTo({ lat: hotel.lat, lng: hotel.lng }); mapInstanceRef.current.setZoom(15); } }}>
+            style={{ ...s.sidebarItem, background: selectedHotel?.placeId === hotel.placeId ? "#FEF0EC" : "#fff", borderColor: selectedHotel?.placeId === hotel.placeId ? "#E85D3D" : "#DDD5CC" }}
+            onClick={() => { setSelectedHotel(hotel); setImgErr(false); setMapDropdown(false); if (mapInstanceRef.current) { mapInstanceRef.current.panTo({ lat: hotel.lat, lng: hotel.lng }); mapInstanceRef.current.setZoom(15); } }}>
             <div style={s.sidebarNum}>{i + 1}</div>
             <div style={{ flex:1, minWidth:0 }}>
               <p style={s.sidebarName}>{hotel.name}</p>
-              {hotel.rating && <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:2 }}><Stars rating={hotel.rating} /><span style={{ fontSize:10, color:"#94a3b8" }}>{hotel.rating}</span></div>}
+              {hotel.rating && <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:2 }}><Stars rating={hotel.rating} /><span style={{ fontSize:10, color:"#9FB3C8" }}>{hotel.rating}</span></div>}
             </div>
             {hotel.priceLevel && <span style={s.sidebarPrice}>{hotel.priceLevel}</span>}
           </div>
@@ -241,11 +228,11 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
       </div>
       {selectedHotel && (
         <div style={s.mapPopup}>
-          <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>X</button>
+          <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>x</button>
           {selectedHotel.photoUrl && !imgErr && <img src={selectedHotel.photoUrl} alt={selectedHotel.name} style={s.popupImg} onError={() => setImgErr(true)} />}
           <div style={s.popupBody}>
             <h3 style={s.popupName}>{selectedHotel.name}</h3>
-            <p style={s.popupAddr}>📍 {selectedHotel.address}</p>
+            <p style={s.popupAddr}>{selectedHotel.address}</p>
             {selectedHotel.website && <a href={selectedHotel.website} target="_blank" rel="noreferrer" style={s.popupLink}>Visit website</a>}
             <div style={{ position:"relative", marginTop:10 }}>
               <button
@@ -255,13 +242,7 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
                 {mapAddSuccess ? "Added to list!" : "+ Add to List"}
               </button>
               {mapDropdown && (
-                <AddToListDropdown
-                  hotel={selectedHotel}
-                  lists={lists}
-                  onAdd={handleMapAdd}
-                  onCreateAndAdd={handleMapCreateAndAdd}
-                  onClose={() => setMapDropdown(false)}
-                />
+                <AddToListDropdown hotel={selectedHotel} lists={lists} onAdd={handleMapAdd} onCreateAndAdd={handleMapCreate} onClose={() => setMapDropdown(false)} />
               )}
             </div>
           </div>
@@ -283,17 +264,14 @@ export default function Home() {
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore]     = useState(false);
   const [selectedIds, setSelectedIds]     = useState([]);
-  const [contactedIds, setContactedIds]   = useState([]);
   const [gmailToken, setGmailToken]       = useState(null);
   const [gmailEmail, setGmailEmail]       = useState(null);
   const [gmailLoading, setGmailLoading]   = useState(false);
-  const [sentIds, setSentIds]             = useState([]);
   const [lists, setLists]                 = useState([]);
   const [addListDropdown, setAddListDropdown] = useState(null);
   const [addSuccess, setAddSuccess]       = useState(null);
 
   const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
 
   useEffect(() => { fetchLists(); }, []);
@@ -304,19 +282,12 @@ export default function Home() {
   };
 
   const addToList = async (hotel, listId) => {
-    const payload = {
-      list_id: listId,
-      name: hotel.name,
-      address: hotel.address || null,
-      email: hotel.email || null,
-      phone: hotel.phone || null,
-      website: hotel.website || null,
-      photo_url: hotel.photoUrl || null,
-      rating: hotel.rating || null,
-      price_level: hotel.priceLevel || null,
-      place_id: hotel.placeId || null,
-    };
-    await supabase.from("list_hotels").insert(payload);
+    await supabase.from("list_hotels").insert({
+      list_id: listId, name: hotel.name, address: hotel.address || null,
+      email: hotel.email || null, phone: hotel.phone || null, website: hotel.website || null,
+      photo_url: hotel.photoUrl || null, rating: hotel.rating || null,
+      price_level: hotel.priceLevel || null, place_id: hotel.placeId || null,
+    });
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
     setTimeout(() => setAddSuccess(null), 2500);
@@ -324,10 +295,7 @@ export default function Home() {
 
   const createListAndAdd = async (hotel, name) => {
     const { data } = await supabase.from("lists").insert({ name }).select().single();
-    if (data) {
-      setLists(prev => [data, ...prev]);
-      await addToList(hotel, data.id);
-    }
+    if (data) { setLists(prev => [data, ...prev]); await addToList(hotel, data.id); }
   };
 
   useEffect(() => {
@@ -343,9 +311,9 @@ export default function Home() {
 
   const initAutocomplete = useCallback(() => {
     if (!inputRef.current || !window.google) return;
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, { types: ["(cities)"] });
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current.getPlace();
+    const ac = new window.google.maps.places.Autocomplete(inputRef.current, { types: ["(cities)"] });
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
       setLocation(place.formatted_address || place.name || "");
     });
   }, []);
@@ -357,7 +325,8 @@ export default function Home() {
       if (event.origin !== window.location.origin) return;
       if (event.data && event.data.type === "gmail_token" && event.data.token) {
         setGmailToken(event.data.token);
-        fetchGmailProfile(event.data.token);
+        fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${event.data.token}` } })
+          .then(r => r.json()).then(d => { if (d.email) setGmailEmail(d.email); }).catch(() => {});
         setGmailLoading(false);
         window.removeEventListener("message", handleMessage);
       }
@@ -366,33 +335,22 @@ export default function Home() {
     const redirectUri = window.location.origin + "/api/auth/gmail";
     const params = new URLSearchParams({ client_id: GMAIL_CLIENT_ID, redirect_uri: redirectUri, response_type: "token", scope: GMAIL_SCOPES, prompt: "select_account" });
     const popup = window.open("https://accounts.google.com/o/oauth2/v2/auth?" + params.toString(), "gmail-auth", "width=500,height=600,left=200,top=100");
-    const check = setInterval(() => {
-      if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); }
-    }, 1000);
-  };
-
-  const fetchGmailProfile = async (token) => {
-    try {
-      const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      if (data.email) setGmailEmail(data.email);
-    } catch {}
+    const check = setInterval(() => { if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); } }, 1000);
   };
 
   const search = async () => {
     if (!location.trim()) return;
     setLoading(true); setError(""); setHotels([]); setSearched(true); setSelectedIds([]); setNextPageToken(null);
     const priceObj = PRICE_RANGES.find(p => p.value === price);
-    const query = `${priceObj.keyword} in ${location}`;
     setSearchLabel(`${priceObj.label} hotels in ${location}`);
     try {
-      const res = await fetch(`/api/hotels?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/hotels?query=${encodeURIComponent(priceObj.keyword + " in " + location)}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       const hotelList = (data.hotels || []).map(h => ({ ...h, emailStatus: null, email: null }));
       setHotels(hotelList);
       setNextPageToken(data.nextPageToken || null);
-      findContactsForHotels(hotelList);
+      findContacts(hotelList);
     } catch { setError("Could not find hotels. Please try again."); }
     finally { setLoading(false); }
   };
@@ -401,28 +359,23 @@ export default function Home() {
     if (!nextPageToken || loadingMore) return;
     setLoadingMore(true);
     const priceObj = PRICE_RANGES.find(p => p.value === price);
-    const query = `${priceObj.keyword} in ${location}`;
     try {
-      const res = await fetch(`/api/hotels?query=${encodeURIComponent(query)}&pageToken=${encodeURIComponent(nextPageToken)}`);
+      const res = await fetch(`/api/hotels?query=${encodeURIComponent(priceObj.keyword + " in " + location)}&pageToken=${encodeURIComponent(nextPageToken)}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       const newHotels = (data.hotels || []).map(h => ({ ...h, emailStatus: null, email: null }));
       setHotels(prev => [...prev, ...newHotels]);
       setNextPageToken(data.nextPageToken || null);
-      findContactsForHotels(newHotels);
-    } catch { setError("Could not load more hotels."); }
+      findContacts(newHotels);
+    } catch { setError("Could not load more."); }
     finally { setLoadingMore(false); }
   };
 
-  const findContactsForHotels = async (hotelList) => {
-    const withWebsite = hotelList.filter(h => h.website);
-    setHotels(prev => prev.map(h =>
-      withWebsite.find(w => w.placeId === h.placeId) ? { ...h, emailStatus: "finding" }
-      : h.emailStatus ? h : { ...h, emailStatus: "notfound" }
-    ));
-    for (let i = 0; i < withWebsite.length; i += 5) {
-      const batch = withWebsite.slice(i, i + 5);
-      await Promise.all(batch.map(async (hotel) => {
+  const findContacts = async (hotelList) => {
+    const withSite = hotelList.filter(h => h.website);
+    setHotels(prev => prev.map(h => withSite.find(w => w.placeId === h.placeId) ? { ...h, emailStatus: "finding" } : h.emailStatus ? h : { ...h, emailStatus: "notfound" }));
+    for (let i = 0; i < withSite.length; i += 5) {
+      await Promise.all(withSite.slice(i, i + 5).map(async hotel => {
         try {
           const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
@@ -434,18 +387,15 @@ export default function Home() {
     }
   };
 
-  const toggleSelect = (hotel) => {
-    setSelectedIds(prev => prev.includes(hotel.placeId) ? prev.filter(id => id !== hotel.placeId) : [...prev, hotel.placeId]);
-  };
+  const toggleSelect = (hotel) => setSelectedIds(prev => prev.includes(hotel.placeId) ? prev.filter(id => id !== hotel.placeId) : [...prev, hotel.placeId]);
 
   return (
     <main>
-      {/* Header */}
       <div style={s.header}>
         <div style={s.headerInner}>
           <div>
             <h1 style={s.headline}>Find Your Perfect <em style={s.headlineAccent}>Hotel Partner</em></h1>
-            <p style={s.tagline}>Search hotels by location and budget</p>
+            <p style={s.tagline}>Search hotels by location and budget to start your outreach</p>
           </div>
           {!gmailToken ? (
             <button style={s.gmailBtn} onClick={connectGmail} disabled={gmailLoading}>
@@ -455,17 +405,17 @@ export default function Home() {
           ) : (
             <div style={s.gmailConnected}>
               <div style={s.gmailDot} />
-              <span style={s.gmailEmailText}>{gmailEmail}</span>
+              <span style={s.gmailText}>{gmailEmail}</span>
               <button style={s.gmailDisconnect} onClick={() => { setGmailToken(null); setGmailEmail(null); }}>Disconnect</button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Search card */}
       <div style={s.searchCard}>
         <label style={s.fieldLabel}>Location</label>
         <div style={s.inputRow}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input ref={inputRef} style={s.input} placeholder="e.g. Malibu, Miami Beach, Santorini"
             value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
         </div>
@@ -478,13 +428,12 @@ export default function Home() {
             </button>
           ))}
         </div>
-        <button style={{ ...s.searchBtn, opacity: location.trim() && !loading ? 1 : 0.45 }} onClick={search} disabled={!location.trim() || loading}>
+        <button style={{ ...s.searchBtn, opacity: location.trim() && !loading ? 1 : 0.5 }} onClick={search} disabled={!location.trim() || loading}>
           {loading ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Searching...</span> : "Search Hotels"}
         </button>
         {error && <div style={s.errorBox}>{error}</div>}
       </div>
 
-      {/* Results */}
       <div style={s.resultsWrap}>
         {loading && <div style={s.grid}>{[...Array(12)].map((_,i) => <SkeletonCard key={i} />)}</div>}
 
@@ -496,11 +445,11 @@ export default function Home() {
                 <p style={s.resultsSub}>{searchLabel}</p>
               </div>
               <div style={s.viewToggle}>
-                <button style={{ ...s.toggleBtn, ...(view==="list" ? s.toggleBtnActive : {}) }} onClick={() => setView("list")}>
+                <button style={{ ...s.toggleBtn, ...(view==="list" ? s.toggleActive : {}) }} onClick={() => setView("list")}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                   List
                 </button>
-                <button style={{ ...s.toggleBtn, ...(view==="map" ? s.toggleBtnActive : {}) }} onClick={() => setView("map")}>
+                <button style={{ ...s.toggleBtn, ...(view==="map" ? s.toggleActive : {}) }} onClick={() => setView("map")}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                   Map
                 </button>
@@ -510,19 +459,11 @@ export default function Home() {
             {view === "list" && (
               <div style={s.grid}>
                 {hotels.map((hotel, i) => (
-                  <HotelCard
-                    key={hotel.placeId || i}
-                    hotel={hotel}
-                    selected={selectedIds.includes(hotel.placeId)}
-                    contacted={contactedIds.includes(hotel.placeId)}
-                    onToggleSelect={toggleSelect}
-                    lists={lists}
-                    onAddToList={addToList}
-                    onCreateAndAdd={createListAndAdd}
+                  <HotelCard key={hotel.placeId || i} hotel={hotel} selected={selectedIds.includes(hotel.placeId)}
+                    onToggleSelect={toggleSelect} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd}
                     showDropdown={addListDropdown === hotel.placeId}
                     onToggleDropdown={(id) => setAddListDropdown(prev => prev === id ? null : id)}
-                    addSuccess={addSuccess === hotel.placeId}
-                  />
+                    addSuccess={addSuccess === hotel.placeId} />
                 ))}
               </div>
             )}
@@ -532,7 +473,7 @@ export default function Home() {
                 <button style={{ ...s.loadMoreBtn, opacity: loadingMore ? 0.6 : 1 }} onClick={loadMore} disabled={loadingMore}>
                   {loadingMore ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Loading...</span> : "Load More Hotels"}
                 </button>
-                <p style={{ fontSize:12, color:"#94a3b8", marginTop:10 }}>Showing {hotels.length} hotels</p>
+                <p style={{ fontSize:12, color:"#9FB3C8", marginTop:10 }}>Showing {hotels.length} hotels</p>
               </div>
             )}
 
@@ -552,75 +493,68 @@ export default function Home() {
 }
 
 const s = {
-  header: { background:"#0f0e17", padding:"24px 24px 60px" },
-  headerInner: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:12, flexWrap:"wrap" },
-  headline: { fontFamily:"Georgia,serif", fontSize:"clamp(22px,4vw,38px)", color:"#f1f5f9", fontWeight:700, lineHeight:1.2, marginBottom:6 },
-  headlineAccent: { color:"#a78bfa", fontStyle:"italic" },
-  tagline: { color:"#94a3b8", fontSize:14, fontWeight:300 },
-  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"#fff", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"#1e293b", boxShadow:"0 2px 8px rgba(0,0,0,0.15)", flexShrink:0 },
-  gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.15)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:10, padding:"8px 14px" },
-  gmailDot: { width:8, height:8, borderRadius:"50%", background:"#22c55e", flexShrink:0 },
-  gmailEmailText: { fontSize:12, color:"#dcfce7", fontWeight:500 },
-  gmailDisconnect: { fontSize:11, color:"#86efac", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
-  searchCard: { background:"#fff", borderRadius:20, padding:"28px 24px 24px", boxShadow:"0 8px 40px rgba(0,0,0,0.11)", maxWidth:640, width:"calc(100% - 32px)", margin:"-30px auto 0", position:"relative", zIndex:10 },
-  fieldLabel: { display:"block", fontSize:11, fontWeight:600, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 },
-  inputRow: { display:"flex", alignItems:"center", gap:10, border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 16px", marginBottom:4 },
-  input: { flex:1, border:"none", outline:"none", fontSize:15, fontFamily:"system-ui,sans-serif", color:"#1e293b", background:"transparent", width:"100%" },
+  header: { background:"#0F2544", padding:"28px 24px 64px" },
+  headerInner: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:16, flexWrap:"wrap" },
+  headline: { fontSize:"clamp(22px,4vw,36px)", fontWeight:700, color:"#F7F3EF", lineHeight:1.2, marginBottom:6, letterSpacing:"-0.5px" },
+  headlineAccent: { color:"#F5A882", fontStyle:"italic" },
+  tagline: { color:"#4A6A8A", fontSize:14, fontWeight:400 },
+  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"rgba(247,243,239,0.1)", border:"1px solid rgba(247,243,239,0.2)", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:"#F7F3EF", flexShrink:0 },
+  gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"rgba(42,157,143,0.2)", border:"1px solid rgba(42,157,143,0.4)", borderRadius:10, padding:"8px 14px" },
+  gmailDot: { width:8, height:8, borderRadius:"50%", background:"#2A9D8F", flexShrink:0 },
+  gmailText: { fontSize:12, color:"#A8E6E0", fontWeight:500 },
+  gmailDisconnect: { fontSize:11, color:"#A8E6E0", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
+  searchCard: { background:"#fff", borderRadius:20, padding:"28px 24px 24px", boxShadow:"0 8px 40px rgba(15,37,68,0.12)", maxWidth:640, width:"calc(100% - 32px)", margin:"-32px auto 0", position:"relative", zIndex:10, border:"1px solid rgba(15,37,68,0.06)" },
+  fieldLabel: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 },
+  inputRow: { display:"flex", alignItems:"center", gap:10, border:"1.5px solid #DDD5CC", borderRadius:12, padding:"12px 16px", marginBottom:4 },
+  input: { flex:1, border:"none", outline:"none", fontSize:15, color:"#1E3A5F", background:"transparent", width:"100%" },
   priceGrid: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:20 },
-  priceBtn: { display:"flex", flexDirection:"column", alignItems:"center", padding:"10px 4px", border:"1.5px solid #e2e8f0", borderRadius:10, background:"#fff", cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"all 0.15s" },
-  priceBtnActive: { border:"1.5px solid #6366f1", background:"#eef2ff" },
-  priceBtnLabel: { fontSize:12, fontWeight:600, color:"#1e293b", marginBottom:2 },
-  priceBtnSub: { fontSize:10, color:"#94a3b8", textAlign:"center" },
-  searchBtn: { width:"100%", padding:15, background:"#0f0e17", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
-  loadMoreBtn: { padding:"14px 40px", background:"#0f0e17", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif" },
-  spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  errorBox: { marginTop:14, padding:"13px 16px", background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, color:"#dc2626", fontSize:13 },
+  priceBtn: { display:"flex", flexDirection:"column", alignItems:"center", padding:"10px 4px", border:"1.5px solid #DDD5CC", borderRadius:10, background:"#fff", cursor:"pointer", transition:"all 0.15s" },
+  priceBtnActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC" },
+  priceBtnLabel: { fontSize:12, fontWeight:600, color:"#1E3A5F", marginBottom:2 },
+  priceBtnSub: { fontSize:10, color:"#9FB3C8", textAlign:"center" },
+  searchBtn: { width:"100%", padding:14, background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s, background 0.2s" },
+  loadMoreBtn: { padding:"13px 36px", background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer" },
+  spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  errorBox: { marginTop:12, padding:"12px 16px", background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:10, color:"#B83A22", fontSize:13 },
   resultsWrap: { maxWidth:980, margin:"32px auto 80px", padding:"0 16px" },
   resultsBar: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 },
-  resultsTitle: { fontFamily:"Georgia,serif", fontSize:24, fontWeight:700, color:"#0f0e17" },
-  resultsSub: { fontSize:13, color:"#94a3b8", marginTop:3 },
-  viewToggle: { display:"flex", background:"#f1f5f9", borderRadius:10, padding:3, gap:3 },
-  toggleBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 12px", border:"none", borderRadius:8, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"system-ui,sans-serif", color:"#64748b", background:"transparent" },
-  toggleBtnActive: { background:"#fff", color:"#0f0e17", boxShadow:"0 1px 4px rgba(0,0,0,0.1)" },
+  resultsTitle: { fontSize:22, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" },
+  resultsSub: { fontSize:13, color:"#9FB3C8", marginTop:3 },
+  viewToggle: { display:"flex", background:"#EDE8E3", borderRadius:10, padding:3, gap:3 },
+  toggleBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 14px", border:"none", borderRadius:8, fontSize:13, fontWeight:500, cursor:"pointer", color:"#7A9BBF", background:"transparent", transition:"all 0.15s" },
+  toggleActive: { background:"#fff", color:"#0F2544", boxShadow:"0 1px 4px rgba(15,37,68,0.1)" },
   grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:20 },
-  card: { background:"#fff", borderRadius:16, overflow:"visible", boxShadow:"0 2px 14px rgba(0,0,0,0.07)" },
+  card: { background:"#fff", borderRadius:14, overflow:"visible", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
   selectBox: { position:"absolute", top:10, left:10, zIndex:5, width:24, height:24, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"all 0.15s" },
-  contactedBadge: { position:"absolute", top:10, left:42, zIndex:5, background:"#22c55e", color:"#fff", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20 },
-  imgBox: { position:"relative", height:190, background:"#e2e8f0", overflow:"hidden", borderRadius:"16px 16px 0 0" },
+  imgBox: { position:"relative", height:196, background:"#EDE8E3", overflow:"hidden", borderRadius:"14px 14px 0 0" },
   img: { width:"100%", height:"100%", objectFit:"cover", display:"block" },
-  imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#e0e7ff 0%,#f0fdf4 100%)" },
-  imgGradient: { position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent,rgba(0,0,0,0.25))", pointerEvents:"none" },
-  pricePill: { position:"absolute", top:10, right:10, background:"rgba(0,0,0,0.58)", color:"#fff", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20 },
-  cardBody: { padding:"16px 18px 18px" },
-  hotelName: { fontFamily:"Georgia,serif", fontSize:17, fontWeight:700, color:"#0f0e17", marginBottom:5, lineHeight:1.25 },
-  address: { fontSize:12, color:"#94a3b8", marginBottom:6, lineHeight:1.4 },
-  desc: { fontSize:12, color:"#64748b", lineHeight:1.6, marginBottom:8 },
-  emailRow: { marginBottom:8, minHeight:18 },
-  emailFinding: { fontSize:11, color:"#94a3b8", display:"flex", alignItems:"center", gap:6 },
-  dotSpinner: { display:"inline-block", width:8, height:8, borderRadius:"50%", border:"1.5px solid #94a3b8", borderTopColor:"#6366f1", animation:"spin 0.7s linear infinite" },
-  emailFound: { fontSize:11, color:"#6366f1", fontWeight:500, wordBreak:"break-all" },
-  emailNotFound: { fontSize:11, color:"#cbd5e1" },
-  cardFooter: { display:"flex", flexDirection:"column", gap:5, paddingTop:10, borderTop:"1px solid #f1f5f9" },
-  ratingText: { fontSize:11, color:"#94a3b8", marginLeft:2 },
-  phone: { fontSize:12, color:"#6366f1", fontWeight:500, textDecoration:"none" },
-  websiteLink: { display:"inline-block", marginTop:8, fontSize:12, color:"#6366f1", fontWeight:600, textDecoration:"none" },
-  addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #e2e8f0", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"system-ui,sans-serif", transition:"all 0.2s", background:"#f8fafc", color:"#6366f1" },
-  addToListBtnSuccess: { background:"#dcfce7", color:"#166534", borderColor:"#86efac" },
+  imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#EDE8E3 0%,#DDD5CC 100%)" },
+  imgGradient: { position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent,rgba(15,37,68,0.2))", pointerEvents:"none" },
+  pricePill: { position:"absolute", top:10, right:10, background:"rgba(15,37,68,0.7)", color:"#F7F3EF", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, backdropFilter:"blur(4px)" },
+  cardBody: { padding:"14px 16px 16px" },
+  hotelName: { fontSize:16, fontWeight:700, color:"#0F2544", marginBottom:4, lineHeight:1.25, letterSpacing:"-0.2px" },
+  address: { fontSize:12, color:"#9FB3C8", marginBottom:6, lineHeight:1.4 },
+  desc: { fontSize:12, color:"#4A6A8A", lineHeight:1.6, marginBottom:10 },
+  cardFooter: { paddingTop:10, borderTop:"1px solid #F0EBE5", marginBottom:8 },
+  ratingText: { fontSize:11, color:"#9FB3C8", marginLeft:4 },
+  websiteLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none", marginBottom:2 },
+  addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #DDD5CC", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.2s", background:"#FAF7F4", color:"#1E3A5F" },
+  addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0" },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
-  emptyText: { color:"#94a3b8", fontSize:15, maxWidth:300, lineHeight:1.6 },
-  mapWrap: { position:"relative", height:580, borderRadius:16, overflow:"hidden", boxShadow:"0 2px 14px rgba(0,0,0,0.07)" },
+  emptyText: { color:"#9FB3C8", fontSize:15, maxWidth:300, lineHeight:1.6 },
+  mapWrap: { position:"relative", height:580, borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
   mapEl: { width:"100%", height:"100%" },
-  mapSidebar: { position:"absolute", top:12, right:12, width:220, background:"#fff", borderRadius:14, boxShadow:"0 4px 20px rgba(0,0,0,0.12)", padding:"12px 10px", maxHeight:"calc(100% - 24px)", overflowY:"auto", zIndex:10 },
-  sidebarTitle: { fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8, paddingLeft:4 },
-  sidebarItem: { display:"flex", alignItems:"center", gap:8, padding:"9px 8px", borderRadius:10, border:"1.5px solid #e2e8f0", marginBottom:6, cursor:"pointer", transition:"all 0.15s" },
-  sidebarNum: { width:24, height:24, borderRadius:"50%", background:"#6366f1", color:"#fff", fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-  sidebarName: { fontSize:12, fontWeight:600, color:"#1e293b", lineHeight:1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  sidebarPrice: { fontSize:11, color:"#6366f1", fontWeight:700, flexShrink:0 },
-  mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"#fff", borderRadius:16, boxShadow:"0 8px 32px rgba(0,0,0,0.18)", overflow:"hidden", zIndex:20 },
-  popupClose: { position:"absolute", top:8, right:8, background:"rgba(0,0,0,0.45)", border:"none", color:"#fff", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
+  mapSidebar: { position:"absolute", top:12, right:12, width:220, background:"#fff", borderRadius:12, boxShadow:"0 4px 20px rgba(15,37,68,0.12)", padding:"12px 10px", maxHeight:"calc(100% - 24px)", overflowY:"auto", zIndex:10 },
+  sidebarTitle: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8, paddingLeft:4 },
+  sidebarItem: { display:"flex", alignItems:"center", gap:8, padding:"9px 8px", borderRadius:10, border:"1.5px solid #DDD5CC", marginBottom:6, cursor:"pointer", transition:"all 0.15s" },
+  sidebarNum: { width:24, height:24, borderRadius:"50%", background:"#E85D3D", color:"#fff", fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
+  sidebarName: { fontSize:12, fontWeight:600, color:"#0F2544", lineHeight:1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  sidebarPrice: { fontSize:11, color:"#E85D3D", fontWeight:700, flexShrink:0 },
+  mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"#fff", borderRadius:14, boxShadow:"0 8px 32px rgba(15,37,68,0.16)", overflow:"hidden", zIndex:20 },
+  popupClose: { position:"absolute", top:8, right:8, background:"rgba(15,37,68,0.5)", border:"none", color:"#fff", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
   popupImg: { width:"100%", height:130, objectFit:"cover", display:"block" },
   popupBody: { padding:"12px 14px 14px" },
-  popupName: { fontFamily:"Georgia,serif", fontSize:15, fontWeight:700, color:"#0f0e17", marginBottom:4 },
-  popupAddr: { fontSize:11, color:"#94a3b8", lineHeight:1.4 },
-  popupLink: { display:"inline-block", marginTop:8, fontSize:12, color:"#6366f1", fontWeight:600, textDecoration:"none" },
+  popupName: { fontSize:15, fontWeight:700, color:"#0F2544", marginBottom:3, letterSpacing:"-0.2px" },
+  popupAddr: { fontSize:11, color:"#9FB3C8", lineHeight:1.4, marginBottom:6 },
+  popupLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none" },
 };
