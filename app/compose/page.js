@@ -16,6 +16,9 @@ function ComposeInner() {
   const [hotels, setHotels]                 = useState([]);
   const [templates, setTemplates]           = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [portfolios, setPortfolios]             = useState([]);
+  const [attachedPortfolios, setAttachedPortfolios] = useState([]);
+  const [showPortfolioPicker, setShowPortfolioPicker] = useState(false);
   const [subject, setSubject]               = useState("Content Collaboration Opportunity");
   const [body, setBody]                     = useState("");
   const [loading, setLoading]               = useState(false);
@@ -37,6 +40,11 @@ function ComposeInner() {
     const { data } = await supabase.from("lists").select("*").order("created_at", { ascending: false });
     setLists(data || []);
   };
+  const fetchPortfolios = async () => {
+    const { data } = await supabase.from("portfolios").select("*").order("created_at", { ascending: false });
+    setPortfolios(data || []);
+  };
+
   const fetchTemplates = async () => {
     const { data } = await supabase.from("templates").select("*").order("created_at", { ascending: false });
     setTemplates(data || []);
@@ -90,7 +98,15 @@ function ComposeInner() {
         const res = await fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accessToken: gmailToken, to: hotel.email, subject, body: buildBody(hotel), fromName: gmailEmail || "Me" }),
+          body: JSON.stringify({
+              accessToken: gmailToken,
+              to: hotel.email,
+              subject,
+              body: buildBody(hotel) + (attachedPortfolios.length > 0
+                ? "\n\n---\nAttached portfolios:\n" + attachedPortfolios.map(p => `${p.name}: ${p.file_url}`).join("\n")
+                : ""),
+              fromName: gmailEmail || "Me"
+            }),
         });
         const data = await res.json();
         if (data.success) {
@@ -202,6 +218,58 @@ function ComposeInner() {
                 : allSent ? "All Sent!" : `Send to ${unsent} Hotel${unsent !== 1 ? "s" : ""}`}
             </button>
             {!gmailToken && <p style={s.warning}>Connect Gmail above to send</p>}
+
+            {/* Portfolio attachment */}
+            <div style={{ marginTop:16, borderTop:"1px solid #F0EBE5", paddingTop:16 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                <label style={s.label}>Attach Portfolio</label>
+                <button style={sp.attachBtn} onClick={() => setShowPortfolioPicker(v => !v)}>
+                  + Attach
+                </button>
+              </div>
+
+              {attachedPortfolios.length > 0 && (
+                <div style={sp.attachedList}>
+                  {attachedPortfolios.map(p => (
+                    <div key={p.id} style={sp.attachedItem}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      <span style={sp.attachedName}>{p.name}</span>
+                      <button style={sp.removeAttach} onClick={() => setAttachedPortfolios(prev => prev.filter(a => a.id !== p.id))}>x</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showPortfolioPicker && (
+                <div style={sp.picker}>
+                  {portfolios.length === 0 ? (
+                    <p style={sp.pickerEmpty}>No portfolios yet. Upload one in the Portfolio section.</p>
+                  ) : (
+                    portfolios.map(p => {
+                      const attached = attachedPortfolios.some(a => a.id === p.id);
+                      return (
+                        <div key={p.id} style={sp.pickerItem} onClick={() => {
+                          if (attached) setAttachedPortfolios(prev => prev.filter(a => a.id !== p.id));
+                          else setAttachedPortfolios(prev => [...prev, p]);
+                        }}>
+                          <div style={{ ...sp.pickerCheck, background: attached ? "#E85D3D" : "#fff", border: attached ? "none" : "1.5px solid #DDD5CC" }}>
+                            {attached && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>}
+                          </div>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                          <span style={sp.pickerName}>{p.name}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
             {!selectedListId && <p style={s.warning}>Select a list above to get started</p>}
           </div>
         </div>
@@ -355,4 +423,17 @@ const s = {
   resultFail: { background:"#fee2e2", color:"#991b1b", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0 },
   resultName: { color:"#0F2544", fontWeight:500, flex:1 },
   resultError: { fontSize:11, color:"#ef4444" },
+};
+
+const sp = {
+  attachBtn: { fontSize:12, fontWeight:600, color:"#E85D3D", background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:7, padding:"5px 12px", cursor:"pointer", fontFamily:"inherit" },
+  attachedList: { display:"flex", flexDirection:"column", gap:6, marginBottom:8 },
+  attachedItem: { display:"flex", alignItems:"center", gap:7, padding:"7px 10px", background:"#FEF0EC", borderRadius:8, border:"1px solid #F5A882" },
+  attachedName: { flex:1, fontSize:12, color:"#B83A22", fontWeight:500 },
+  removeAttach: { background:"none", border:"none", cursor:"pointer", color:"#F5A882", fontSize:13, fontWeight:700, lineHeight:1 },
+  picker: { background:"#fff", border:"1px solid #DDD5CC", borderRadius:10, overflow:"hidden", marginTop:4 },
+  pickerEmpty: { fontSize:12, color:"#9FB3C8", padding:"14px", textAlign:"center" },
+  pickerItem: { display:"flex", alignItems:"center", gap:10, padding:"11px 14px", cursor:"pointer", borderBottom:"1px solid #F7F3EF", transition:"background 0.1s" },
+  pickerCheck: { width:20, height:20, borderRadius:5, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
+  pickerName: { fontSize:13, color:"#1E3A5F", fontWeight:500 },
 };
