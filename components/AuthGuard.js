@@ -7,31 +7,38 @@ export default function AuthGuard({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [ready, setReady] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+
+  // Safety timeout — if auth takes more than 4 seconds, give up and redirect to login
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) setTimedOut(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading && !timedOut) return;
 
-    // Give a tiny grace period for OAuth session to settle
-    const timer = setTimeout(() => {
-      if (!user && pathname !== "/login" && !pathname.startsWith("/auth")) {
-        router.replace("/login");
-      } else if (user && pathname === "/login") {
-        router.replace("/");
-      }
-      setReady(true);
-    }, 100);
+    if (pathname === "/login" || pathname.startsWith("/auth")) return;
 
-    return () => clearTimeout(timer);
-  }, [user, loading, pathname, router]);
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
 
-  // Always show login page and auth callback without guard
+    if (user && pathname === "/login") {
+      router.replace("/");
+    }
+  }, [user, loading, timedOut, pathname, router]);
+
+  // Always render login and auth pages immediately
   if (pathname === "/login" || pathname.startsWith("/auth")) {
     return children;
   }
 
-  // Show loading spinner while auth resolves
-  if (loading || !ready) {
+  // Still loading within timeout — show spinner
+  if (loading && !timedOut) {
     return (
       <div style={{
         minHeight:"100vh", display:"flex", alignItems:"center",
@@ -51,6 +58,7 @@ export default function AuthGuard({ children }) {
     );
   }
 
+  // Not logged in — return null while redirect fires
   if (!user) return null;
 
   return children;
