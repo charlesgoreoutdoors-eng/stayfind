@@ -349,12 +349,12 @@ export default function Home() {
     const priceObj = PRICE_RANGES.find(p => p.value === price);
     setSearchLabel(`${priceObj.label} hotels in ${location}`);
     try {
-      const res = await fetch(`/api/hotels?query=${encodeURIComponent(priceObj.keyword + " in " + location)}`);
+      const res = await fetch(`/api/hotels?query=${encodeURIComponent(location)}&keyword=${encodeURIComponent(priceObj.keyword)}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       const hotelList = (data.hotels || []).map(h => ({ ...h, emailStatus: null, email: null }));
       setHotels(hotelList);
-      setNextPageToken(data.nextPageToken || null);
+      setNextPageToken(null);
       findContacts(hotelList);
     } catch { setError("Could not find hotels. Please try again."); }
     finally { setLoading(false); }
@@ -440,7 +440,13 @@ export default function Home() {
       </div>
 
       <div style={s.resultsWrap}>
-        {loading && <div style={s.grid}>{[...Array(12)].map((_,i) => <SkeletonCard key={i} />)}</div>}
+        {loading && (
+          <div style={{ textAlign:"center", padding:"60px 24px" }}>
+            <div style={{ width:40, height:40, border:"3px solid #DDD5CC", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 20px" }} />
+            <p style={{ fontSize:15, fontWeight:600, color:"#0F2544", marginBottom:6 }}>Searching across the area...</p>
+            <p style={{ fontSize:13, color:"#9FB3C8" }}>This may take a few seconds — we search multiple zones to find every hotel</p>
+          </div>
+        )}
 
         {!loading && searched && hotels.length > 0 && (
           <>
@@ -473,14 +479,7 @@ export default function Home() {
               </div>
             )}
 
-            {view === "list" && nextPageToken && (
-              <div style={{ textAlign:"center", marginTop:36 }}>
-                <button style={{ ...s.loadMoreBtn, opacity: loadingMore ? 0.6 : 1 }} onClick={loadMore} disabled={loadingMore}>
-                  {loadingMore ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Loading...</span> : "Load More Hotels"}
-                </button>
-                <p style={{ fontSize:12, color:"#9FB3C8", marginTop:10 }}>Showing {hotels.length} hotels</p>
-              </div>
-            )}
+
 
             {view === "map" && <MapView hotels={hotels} apiKey={apiKey} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd} />}
           </>
