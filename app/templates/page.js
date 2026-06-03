@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { useIsMobile } from "../../lib/useIsMobile";
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
@@ -12,6 +13,7 @@ export default function TemplatesPage() {
   const [isNew, setIsNew] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const textareaRef = useRef(null);
 
   useEffect(() => { fetchTemplates(); }, []);
@@ -75,7 +77,7 @@ export default function TemplatesPage() {
         <button style={s.newBtn} onClick={newTemplate}>+ New Template</button>
       </div>
 
-      <div style={s.body}>
+      <div style={{ ...s.body, gridTemplateColumns: isMobile ? "1fr" : "280px 1fr" }}>
         {/* Templates list */}
         <div style={s.listPanel}>
           {loading ? <p style={s.empty}>Loading...</p> :

@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import { useGmail } from "../lib/useGmail";
+import GmailButton from "../components/GmailButton";
 
 const PRICE_RANGES = [
   { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable hotel" },
@@ -265,9 +267,6 @@ export default function Home() {
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore]     = useState(false);
   const [selectedIds, setSelectedIds]     = useState([]);
-  const [gmailToken, setGmailToken]       = useState(null);
-  const [gmailEmail, setGmailEmail]       = useState(null);
-  const [gmailLoading, setGmailLoading]   = useState(false);
   const [lists, setLists]                 = useState([]);
   const [addListDropdown, setAddListDropdown] = useState(null);
   const [addSuccess, setAddSuccess]       = useState(null);
@@ -275,6 +274,7 @@ export default function Home() {
   const inputRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   const { user } = useAuth();
+  const { gmailToken, gmailEmail, gmailLoading, tokenExpired, connectGmail, disconnectGmail } = useGmail();
 
   useEffect(() => { fetchLists(); }, []);
 
@@ -323,25 +323,6 @@ export default function Home() {
     });
   }, []);
 
-  const connectGmail = () => {
-    setGmailLoading(true);
-    if (!GMAIL_CLIENT_ID) { alert("Gmail Client ID not configured."); setGmailLoading(false); return; }
-    const handleMessage = (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data && event.data.type === "gmail_token" && event.data.token) {
-        setGmailToken(event.data.token);
-        fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${event.data.token}` } })
-          .then(r => r.json()).then(d => { if (d.email) setGmailEmail(d.email); }).catch(() => {});
-        setGmailLoading(false);
-        window.removeEventListener("message", handleMessage);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    const redirectUri = window.location.origin + "/api/auth/gmail";
-    const params = new URLSearchParams({ client_id: GMAIL_CLIENT_ID, redirect_uri: redirectUri, response_type: "token", scope: GMAIL_SCOPES, prompt: "select_account" });
-    const popup = window.open("https://accounts.google.com/o/oauth2/v2/auth?" + params.toString(), "gmail-auth", "width=500,height=600,left=200,top=100");
-    const check = setInterval(() => { if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); } }, 1000);
-  };
 
   const search = async () => {
     if (!location.trim()) return;
@@ -402,18 +383,7 @@ export default function Home() {
             <h1 style={s.headline}>Find Your Perfect <em style={s.headlineAccent}>Hotel Partner</em></h1>
             <p style={s.tagline}>Search hotels by location and budget to start your outreach</p>
           </div>
-          {!gmailToken ? (
-            <button style={s.gmailBtn} onClick={connectGmail} disabled={gmailLoading}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-              {gmailLoading ? "Connecting..." : "Connect Gmail"}
-            </button>
-          ) : (
-            <div style={s.gmailConnected}>
-              <div style={s.gmailDot} />
-              <span style={s.gmailText}>{gmailEmail}</span>
-              <button style={s.gmailDisconnect} onClick={() => { setGmailToken(null); setGmailEmail(null); }}>Disconnect</button>
-            </div>
-          )}
+          <GmailButton gmailToken={gmailToken} gmailEmail={gmailEmail} gmailLoading={gmailLoading} tokenExpired={tokenExpired} onConnect={connectGmail} onDisconnect={disconnectGmail} />
         </div>
       </div>
 

@@ -34,8 +34,11 @@ function LoginInner() {
       });
       if (error) setError(error.message);
       else {
-        setSuccess("Account created! Check your email to confirm your account, then sign in.");
+        setSuccess("Account created! We've sent a confirmation email to " + email.trim() + ". Click the link in that email then come back here to sign in.");
         setMode("signin");
+        setEmail("");
+        setPassword("");
+        setName("");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -67,8 +70,14 @@ function LoginInner() {
 
   return (
     <div style={s.root}>
+      <style>{`
+        @media (max-width: 640px) {
+          .login-left { display: none !important; }
+          .login-right { width: 100% !important; padding: 32px 20px !important; }
+        }
+      `}</style>
       {/* Left panel - branding */}
-      <div style={s.left}>
+      <div style={s.left} className="login-left">
         <div style={s.leftInner}>
           <div style={s.logo}>
             <div style={s.logoIcon}>
@@ -103,7 +112,7 @@ function LoginInner() {
       </div>
 
       {/* Right panel - form */}
-      <div style={s.right}>
+      <div style={s.right} className="login-right">
         <div style={s.formWrap}>
           <h2 style={s.formTitle}>
             {mode === "signin" ? "Welcome back" : "Create your account"}
@@ -199,16 +208,21 @@ function LoginInner() {
           </p>
 
           {mode === "signin" && (
-            <p style={s.forgotText}>
-              <button style={s.switchBtn} onClick={async () => {
-                if (!email.trim()) { setError("Enter your email first."); return; }
-                const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+            <div style={s.forgotWrap}>
+              <button style={s.forgotBtn} onClick={async () => {
+                if (!email.trim()) {
+                  setError("Enter your email address above first, then click Forgot password.");
+                  return;
+                }
+                const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                  redirectTo: window.location.origin + "/login",
+                });
                 if (error) setError(error.message);
-                else setSuccess("Password reset email sent!");
+                else setSuccess("Password reset email sent to " + email.trim() + ". Check your inbox!");
               }}>
-                Forgot your password?
+                Forgot password?
               </button>
-            </p>
+            </div>
           )}
         </div>
       </div>
@@ -254,6 +268,7 @@ const s = {
   spinnerDark: { display:"inline-block", width:14, height:14, border:"2px solid rgba(30,58,95,0.2)", borderTopColor:"#1E3A5F", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   spinnerLight: { display:"inline-block", width:14, height:14, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   switchText: { fontSize:13, color:"#9FB3C8", textAlign:"center", marginBottom:8 },
-  forgotText: { fontSize:13, color:"#9FB3C8", textAlign:"center" },
   switchBtn: { background:"none", border:"none", cursor:"pointer", color:"#E85D3D", fontWeight:600, fontSize:13, fontFamily:"inherit" },
+  forgotWrap: { textAlign:"right", marginTop:-8, marginBottom:16 },
+  forgotBtn: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", fontSize:12, fontFamily:"inherit", textDecoration:"underline" },
 };

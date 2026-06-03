@@ -1,5 +1,3 @@
-// This route handles the OAuth redirect from Google
-// It extracts the access token from the URL hash and closes the popup
 export async function GET(request) {
   const html = `
 <!DOCTYPE html>
@@ -7,13 +5,15 @@ export async function GET(request) {
 <head><title>Connecting Gmail...</title></head>
 <body>
 <script>
-  // The token comes back in the URL hash from Google's implicit flow
-  // Pass it back to the opener window and close this popup
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
   const token = params.get('access_token');
+  const expiresIn = parseInt(params.get('expires_in') || '3600');
   if (token && window.opener) {
-    window.opener.postMessage({ type: 'gmail_token', token }, window.location.origin);
+    window.opener.postMessage(
+      { type: 'gmail_token', token, expiresIn },
+      window.location.origin
+    );
   }
   window.close();
 </script>

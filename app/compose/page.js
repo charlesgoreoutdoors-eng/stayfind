@@ -3,6 +3,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { useGmail } from "../../lib/useGmail";
+import GmailButton from "../../components/GmailButton";
 import Link from "next/link";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
@@ -23,15 +25,13 @@ function ComposeInner() {
   const [subject, setSubject]               = useState("Content Collaboration Opportunity");
   const [body, setBody]                     = useState("");
   const [loading, setLoading]               = useState(false);
-  const [gmailToken, setGmailToken]         = useState(null);
-  const [gmailEmail, setGmailEmail]         = useState(null);
-  const [gmailLoading, setGmailLoading]     = useState(false);
   const [sending, setSending]               = useState(false);
   const [sentIds, setSentIds]               = useState([]);
   const [results, setResults]               = useState([]);
   const [previewHotel, setPreviewHotel]     = useState(null);
   const [tab, setTab]                       = useState("compose");
-  const { user } = useAuth(); // "compose" | "hotels" | "preview"
+  const { user } = useAuth();
+  const { gmailToken, gmailEmail, gmailLoading, tokenExpired, connectGmail, disconnectGmail } = useGmail(); // "compose" | "hotels" | "preview"
 
   useEffect(() => { fetchLists(); fetchTemplates(); }, []);
   useEffect(() => { if (selectedListId) fetchHotels(selectedListId); else setHotels([]); }, [selectedListId]);
@@ -62,32 +62,7 @@ function ComposeInner() {
     setLoading(false);
   };
 
-  const connectGmail = () => {
-    setGmailLoading(true);
-    if (!GMAIL_CLIENT_ID) { alert("Gmail Client ID not configured."); setGmailLoading(false); return; }
-    const handleMessage = (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data && event.data.type === "gmail_token" && event.data.token) {
-        setGmailToken(event.data.token);
-        fetchProfile(event.data.token);
-        setGmailLoading(false);
-        window.removeEventListener("message", handleMessage);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    const redirectUri = window.location.origin + "/api/auth/gmail";
-    const params = new URLSearchParams({ client_id: GMAIL_CLIENT_ID, redirect_uri: redirectUri, response_type: "token", scope: GMAIL_SCOPES, prompt: "select_account" });
-    const popup = window.open("https://accounts.google.com/o/oauth2/v2/auth?" + params.toString(), "gmail-auth", "width=500,height=600,left=200,top=100");
-    const check = setInterval(() => { if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); } }, 1000);
-  };
 
-  const fetchProfile = async (token) => {
-    try {
-      const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      if (data.email) setGmailEmail(data.email);
-    } catch {}
-  };
 
   const buildBody = (hotel) => body.replace(/\{hotel_name\}/g, hotel.name);
 
@@ -143,18 +118,7 @@ function ComposeInner() {
           <h1 style={s.title}>Compose Outreach</h1>
           <p style={s.subtitle}>Write one email — send it to your whole list</p>
         </div>
-        {!gmailToken ? (
-          <button style={s.gmailBtn} onClick={connectGmail} disabled={gmailLoading}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-            {gmailLoading ? "Connecting..." : "Connect Gmail"}
-          </button>
-        ) : (
-          <div style={s.gmailConnected}>
-            <div style={s.gmailDot} />
-            <span style={s.gmailText}>{gmailEmail}</span>
-            <button style={s.disconnectBtn} onClick={() => { setGmailToken(null); setGmailEmail(null); }}>Disconnect</button>
-          </div>
-        )}
+        <GmailButton gmailToken={gmailToken} gmailEmail={gmailEmail} gmailLoading={gmailLoading} tokenExpired={tokenExpired} onConnect={connectGmail} onDisconnect={disconnectGmail} />
       </div>
 
       {/* Setup row: list + template selectors */}
@@ -381,8 +345,8 @@ const s = {
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#22c55e" },
   gmailText: { fontSize:13, color:"#166534", fontWeight:500 },
   disconnectBtn: { fontSize:11, color:"#16a34a", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
-  setupRow: { display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"flex-end" },
-  setupField: { display:"flex", flexDirection:"column", gap:6, flex:1, minWidth:200 },
+  setupRow: { display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"flex-end", width:"100%" },
+  setupField: { display:"flex", flexDirection:"column", gap:6, flex:1, minWidth:"min(200px, 100%)" },
   label: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase" },
   select: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none", background:"#fff", cursor:"pointer" },
   hotelCount: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#FEF0EC", borderRadius:10, padding:"10px 18px", border:"1.5px solid #c7d2fe" },

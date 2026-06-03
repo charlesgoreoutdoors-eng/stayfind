@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
+import { useIsMobile } from "../../../lib/useIsMobile";
 
 const DELAY_OPTIONS = [
   { value: 1, label: "1 day later" },
@@ -152,6 +153,7 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
 
 export default function SequenceBuilderPage() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [sequences, setSequences]   = useState([]);
   const [templates, setTemplates]   = useState([]);
   const [lists, setLists]           = useState([]);
@@ -317,7 +319,7 @@ export default function SequenceBuilderPage() {
       {error && <div style={s.errorBox}>{error}</div>}
       {success && <div style={s.successBox}>{success}</div>}
 
-      <div style={s.layout}>
+      <div style={{ ...s.layout, gridTemplateColumns: isMobile ? "1fr" : "260px 1fr" }}>
         {/* Left panel */}
         <div style={s.listPanel}>
           <button style={s.newBtn} onClick={newSequence}>+ New Sequence</button>

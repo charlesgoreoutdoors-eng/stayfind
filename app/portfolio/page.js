@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { useIsMobile } from "../../lib/useIsMobile";
 
 export default function PortfolioPage() {
   const [portfolios, setPortfolios]     = useState([]);
@@ -16,6 +17,7 @@ export default function PortfolioPage() {
   const [dragging, setDragging]         = useState(false);
   const fileInputRef = useRef(null);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => { fetchPortfolios(); }, []);
 
@@ -131,7 +133,7 @@ export default function PortfolioPage() {
       {error && <div style={s.errorBox}>{error}</div>}
       {success && <div style={s.successBox}>{success}</div>}
 
-      <div style={s.layout}>
+      <div style={{ ...s.layout, gridTemplateColumns: isMobile ? "1fr" : "380px 1fr" }}>
         {/* Upload panel */}
         <div style={s.uploadPanel}>
           <h2 style={s.panelTitle}>Upload New Portfolio</h2>

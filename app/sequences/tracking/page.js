@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
+import { useIsMobile } from "../../../lib/useIsMobile";
 
 function timeAgo(ts) {
   if (!ts) return "";
@@ -28,6 +29,7 @@ function nextSend(ts) {
 
 export default function TrackingPage() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [jobs, setJobs]               = useState([]);
   const [sequences, setSequences]     = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -81,7 +83,7 @@ export default function TrackingPage() {
   return (
     <div>
       {/* Stats */}
-      <div style={s.statsRow}>
+      <div style={{ ...s.statsRow, gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)" }}>
         {[
           { label:"Hotels Reached", value: totalHotels, color:"#0F2544" },
           { label:"Replies Received", value: totalReplied, color:"#2A9D8F" },
@@ -200,10 +202,10 @@ const s = {
   filterRow: { display:"flex", gap:6, marginBottom:20, flexWrap:"wrap" },
   filterBtn: { padding:"6px 14px", border:"1px solid #DDD5CC", borderRadius:20, fontSize:12, fontWeight:600, cursor:"pointer", color:"#9FB3C8", background:"#fff", fontFamily:"inherit", transition:"all 0.15s" },
   filterBtnActive: { background:"#0F2544", color:"#F7F3EF", border:"1px solid #0F2544" },
-  tableWrap: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", overflow:"hidden" },
-  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF7F4", borderBottom:"1px solid #F0EBE5" },
+  tableWrap: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", overflow:"auto", WebkitOverflowScrolling:"touch" },
+  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF7F4", borderBottom:"1px solid #F0EBE5", minWidth:700 },
   th: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
-  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #F8F4F0", alignItems:"center" },
+  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #F8F4F0", alignItems:"center", minWidth:700 },
   hotelName: { fontSize:13, fontWeight:600, color:"#0F2544", marginBottom:2 },
   hotelEmail: { fontSize:11, color:"#9FB3C8" },
   seqName: { fontSize:13, color:"#1E3A5F", fontWeight:500 },

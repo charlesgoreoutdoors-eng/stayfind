@@ -36,6 +36,11 @@ const NAV = [
     label: "Portfolio",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
   },
+  {
+    href: "/analytics",
+    label: "Analytics",
+    icon: "M18 20V10M12 20V4M6 20v-6",
+  },
 ];
 
 export default function Sidebar({ children }) {

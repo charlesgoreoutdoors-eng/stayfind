@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import { useAuth } from "../../lib/auth";
+import { useIsMobile } from "../../lib/useIsMobile";
 
 export default function ListsPage() {
   const [lists, setLists]             = useState([]);
@@ -21,6 +22,7 @@ export default function ListsPage() {
   const [igTemplateId, setIgTemplateId] = useState("");
   const [dbError, setDbError]         = useState("");
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
 
@@ -111,6 +113,12 @@ export default function ListsPage() {
     setListHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, contacted: updated, contacted_at: updated ? new Date().toISOString() : null } : h));
   };
 
+  const saveNote = async (hotelId, note) => {
+    await supabase.from("list_hotels").update({ notes: note }).eq("id", hotelId);
+    setListHotels(prev => prev.map(h => h.id === hotelId ? { ...h, notes: note } : h));
+    setEditingNote(null);
+  };
+
   const removeHotel = async (hotelId) => {
     await supabase.from("list_hotels").delete().eq("id", hotelId);
     setListHotels(prev => prev.filter(h => h.id !== hotelId));
@@ -175,7 +183,7 @@ export default function ListsPage() {
         </div>
       )}
 
-      <div style={s.body}>
+      <div style={{ ...s.body, ...(isMobile ? s.bodyMobile : {}) }}>
         {/* Lists panel */}
         <div style={s.listsPanel}>
           {loading ? (
@@ -318,6 +326,37 @@ export default function ListsPage() {
                           <p style={s.contactedDate}>{new Date(hotel.contacted_at).toLocaleDateString()}</p>
                         )}
                       </div>
+                      {/* Notes */}
+                      <div style={{ flex:2, paddingRight:12 }}>
+                        {editingNote === hotel.id ? (
+                          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                            <textarea
+                              style={s.noteInput}
+                              rows={2}
+                              value={noteText}
+                              onChange={e => setNoteText(e.target.value)}
+                              placeholder="Add a note..."
+                              autoFocus
+                              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(hotel.id, noteText); } if (e.key === "Escape") setEditingNote(null); }}
+                            />
+                            <div style={{ display:"flex", gap:6 }}>
+                              <button style={s.noteSaveBtn} onClick={() => saveNote(hotel.id, noteText)}>Save</button>
+                              <button style={s.noteCancelBtn} onClick={() => setEditingNote(null)}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            style={s.noteDisplay}
+                            onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
+                            title="Click to add/edit note"
+                          >
+                            {hotel.notes
+                              ? <p style={s.noteText}>{hotel.notes}</p>
+                              : <p style={s.notePlaceholder}>+ Add note</p>}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Remove */}
                       <div style={{ width:40, display:"flex", alignItems:"center", justifyContent:"center" }}>
                         <button style={s.removeBtn} onClick={() => removeHotel(hotel.id)} title="Remove from list">
@@ -438,7 +477,7 @@ export default function ListsPage() {
 
 const s = {
   root: { padding:"28px 20px 80px", maxWidth:1100, margin:"0 auto" },
-  header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12, flexWrap:"wrap" },
+  header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12, flexWrap:"wrap", padding:"0 0 4px" },
   title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:4 },
   subtitle: { fontSize:14, color:"#9FB3C8" },
   newBtn: { background:"#0F2544", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", flexShrink:0 },
@@ -449,6 +488,7 @@ const s = {
   saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   cancelBtn: { background:"#fff", color:"#4A6A8A", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   body: { display:"grid", gridTemplateColumns:"260px 1fr", gap:16, alignItems:"start" },
+  bodyMobile: { display:"grid", gridTemplateColumns:"1fr", gap:16 },
   listsPanel: { display:"flex", flexDirection:"column", gap:8 },
   listItem: { padding:"14px", borderRadius:12, border:"1.5px solid #e2e8f0", cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:10, background:"#fff" },
   listName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
@@ -460,7 +500,7 @@ const s = {
   detailTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
   detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  tableWrap: { overflowX:"auto" },
+  tableWrap: { overflowX:"auto", WebkitOverflowScrolling:"touch" },
   tableHead: { display:"flex", padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
   tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #f8fafc", alignItems:"center" },
   thumb: { width:44, height:44, borderRadius:8, objectFit:"cover", flexShrink:0 },
@@ -489,5 +529,11 @@ const s = {
   igTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
   igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
   igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  noteInput: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:8, padding:"7px 10px", fontSize:12, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"none", lineHeight:1.5 },
+  noteSaveBtn: { fontSize:11, fontWeight:700, color:"#fff", background:"#0F2544", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontFamily:"inherit" },
+  noteCancelBtn: { fontSize:11, color:"#9FB3C8", background:"none", border:"1px solid #DDD5CC", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontFamily:"inherit" },
+  noteDisplay: { cursor:"pointer", padding:"6px 8px", borderRadius:8, border:"1px dashed #DDD5CC", minHeight:32, transition:"border-color 0.15s" },
+  noteText: { fontSize:12, color:"#1E3A5F", lineHeight:1.5 },
+  notePlaceholder: { fontSize:12, color:"#CBD5E1" },
   deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
 };

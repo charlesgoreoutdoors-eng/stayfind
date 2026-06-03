@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { useGmail } from "../../lib/useGmail";
+import GmailButton from "../../components/GmailButton";
+import { useIsMobile } from "../../lib/useIsMobile";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
 const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email";
@@ -33,9 +36,6 @@ function extractName(str) {
 }
 
 export default function MessagesPage() {
-  const [gmailToken, setGmailToken]       = useState(null);
-  const [gmailEmail, setGmailEmail]       = useState(null);
-  const [gmailLoading, setGmailLoading]   = useState(false);
   const [lists, setLists]                 = useState([]);
   const [allHotels, setAllHotels]         = useState([]);
   const [threads, setThreads]             = useState([]);
@@ -48,6 +48,9 @@ export default function MessagesPage() {
   const [unread, setUnread]               = useState({});
   const messagesEndRef = useRef(null);
   const { user } = useAuth();
+  const { gmailToken, gmailEmail, gmailLoading, tokenExpired, connectGmail, disconnectGmail } = useGmail();
+  const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = useState("list"); // "list" | "conversation"
 
   useEffect(() => { fetchListsAndHotels(); }, []);
   useEffect(() => { if (gmailToken && allHotels.length > 0) fetchThreads(); }, [gmailToken, allHotels]);
@@ -61,32 +64,7 @@ export default function MessagesPage() {
     setAllHotels(hotelsData || []);
   };
 
-  const connectGmail = () => {
-    setGmailLoading(true);
-    if (!GMAIL_CLIENT_ID) { alert("Gmail Client ID not configured."); setGmailLoading(false); return; }
-    const handleMessage = (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data && event.data.type === "gmail_token" && event.data.token) {
-        setGmailToken(event.data.token);
-        fetchProfile(event.data.token);
-        setGmailLoading(false);
-        window.removeEventListener("message", handleMessage);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    const redirectUri = window.location.origin + "/api/auth/gmail";
-    const params = new URLSearchParams({ client_id: GMAIL_CLIENT_ID, redirect_uri: redirectUri, response_type: "token", scope: GMAIL_SCOPES, prompt: "select_account" });
-    const popup = window.open("https://accounts.google.com/o/oauth2/v2/auth?" + params.toString(), "gmail-auth", "width=500,height=600,left=200,top=100");
-    const check = setInterval(() => { if (!popup || popup.closed) { clearInterval(check); window.removeEventListener("message", handleMessage); setGmailLoading(false); } }, 1000);
-  };
 
-  const fetchProfile = async (token) => {
-    try {
-      const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      if (data.email) setGmailEmail(data.email);
-    } catch {}
-  };
 
   const fetchThreads = async () => {
     if (!gmailToken || allHotels.length === 0) return;
@@ -128,6 +106,7 @@ export default function MessagesPage() {
     setActiveThread(thread);
     setReplyText("");
     setUnread(prev => ({ ...prev, [thread.id]: false }));
+    if (isMobile) setMobileView("conversation");
   };
 
   const sendReply = async () => {
@@ -193,24 +172,7 @@ export default function MessagesPage() {
           {unreadCount > 0 && <span style={s.unreadBadge}>{unreadCount} new</span>}
         </div>
         <div style={s.headerRight}>
-          {!gmailToken ? (
-            <button style={s.gmailBtn} onClick={connectGmail} disabled={gmailLoading}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-              {gmailLoading ? "Connecting..." : "Connect Gmail to load messages"}
-            </button>
-          ) : (
-            <div style={s.gmailConnected}>
-              <div style={s.gmailDot} />
-              <span style={s.gmailText}>{gmailEmail}</span>
-              <button style={s.refreshBtn} onClick={fetchThreads} disabled={loading} title="Refresh">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                  style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}>
-                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                </svg>
-              </button>
-              <button style={s.disconnectBtn} onClick={() => { setGmailToken(null); setGmailEmail(null); setThreads([]); }}>Disconnect</button>
-            </div>
-          )}
+          <GmailButton gmailToken={gmailToken} gmailEmail={gmailEmail} gmailLoading={gmailLoading} tokenExpired={tokenExpired} onConnect={connectGmail} onDisconnect={disconnectGmail} />
         </div>
       </div>
 
@@ -228,9 +190,9 @@ export default function MessagesPage() {
           </button>
         </div>
       ) : (
-        <div style={s.layout}>
+        <div style={{ ...s.layout, gridTemplateColumns: isMobile ? "1fr" : "320px 1fr" }}>
           {/* Left: thread list */}
-          <div style={s.threadPanel}>
+          <div style={{ ...s.threadPanel, display: isMobile && mobileView === "conversation" ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
             {/* List filter */}
             <div style={s.filterRow}>
               <button style={{ ...s.filterBtn, ...(selectedList==="all" ? s.filterBtnActive : {}) }} onClick={() => setSelectedList("all")}>
@@ -285,7 +247,7 @@ export default function MessagesPage() {
           </div>
 
           {/* Right: conversation */}
-          <div style={s.conversationPanel}>
+          <div style={{ ...s.conversationPanel, display: isMobile && mobileView === "list" ? "none" : "flex", flexDirection: "column" }}>
             {!activeThread ? (
               <div style={s.noThread}>
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="1.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -296,6 +258,11 @@ export default function MessagesPage() {
                 {/* Thread header */}
                 <div style={s.threadHeader}>
                   <div style={s.threadHeaderLeft}>
+                  {isMobile && (
+                    <button onClick={() => setMobileView("list")} style={{ background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", padding:"0 8px 0 0", display:"flex", alignItems:"center" }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                  )}
                     <div style={s.headerAvatar}>
                       {activeThread.hotel?.photo_url
                         ? <img src={activeThread.hotel.photo_url} alt="" style={s.avatarImg} onError={e => e.target.style.display="none"} />
