@@ -25,7 +25,7 @@ export default function ListsPage() {
   useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
 
   const fetchIgTemplates = async () => {
-    const { data } = await supabase.from("templates").select("*").eq("type", "instagram").order("created_at", { ascending: false });
+    const { data } = await supabase.from("templates").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setIgTemplates(data || []);
   };
 
@@ -362,7 +362,20 @@ export default function ListsPage() {
                   if (t) setIgMessage(t.body.replace(/\{hotel_name\}/g, igModal.name));
                 }}>
                   <option value="">Select a template...</option>
-                  {igTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {igTemplates.filter(t => t.type === "instagram").length > 0 && (
+                    <optgroup label="Instagram Templates">
+                      {igTemplates.filter(t => t.type === "instagram").map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {igTemplates.filter(t => t.type !== "instagram").length > 0 && (
+                    <optgroup label="Email Templates">
+                      {igTemplates.filter(t => t.type !== "instagram").map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
             )}
