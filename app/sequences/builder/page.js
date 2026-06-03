@@ -228,32 +228,43 @@ export default function SequenceBuilderPage() {
     setError("");
     try {
       let seqId;
+
       if (isNew) {
-        const { data, error } = await supabase.from("sequences").insert({ name: form.name.trim(), user_id: user.id }).select().single();
-        if (error) throw error;
-        seqId = data.id;
+        const { data: seqData, error: seqErr } = await supabase
+          .from("sequences")
+          .insert({ name: form.name.trim(), user_id: user.id })
+          .select()
+          .single();
+        if (seqErr) throw new Error("Sequence save failed: " + seqErr.message);
+        seqId = seqData.id;
       } else {
-        await supabase.from("sequences").update({ name: form.name.trim() }).eq("id", activeSeq.id);
-        await supabase.from("sequence_steps").delete().eq("sequence_id", activeSeq.id);
+        const { error: updateErr } = await supabase
+          .from("sequences").update({ name: form.name.trim() }).eq("id", activeSeq.id);
+        if (updateErr) throw new Error("Update failed: " + updateErr.message);
+        const { error: delErr } = await supabase
+          .from("sequence_steps").delete().eq("sequence_id", activeSeq.id);
+        if (delErr) throw new Error("Steps delete failed: " + delErr.message);
         seqId = activeSeq.id;
       }
-      // Insert steps
-      await supabase.from("sequence_steps").insert(
-        form.steps.map(st => ({
+
+      for (const st of form.steps) {
+        const { error: stepErr } = await supabase.from("sequence_steps").insert({
           sequence_id: seqId,
           step_number: st.stepNumber,
           template_id: st.templateId || null,
           delay_days: st.delayDays,
-          subject: st.subject,
+          subject: st.subject || "",
           body: st.body,
-        }))
-      );
+        });
+        if (stepErr) throw new Error("Step " + st.stepNumber + " failed: " + stepErr.message);
+      }
+
       setSuccess(isNew ? "Sequence created!" : "Sequence saved!");
       setTimeout(() => setSuccess(""), 2500);
       await fetchAll();
       setIsNew(false);
     } catch (e) {
-      setError("Could not save: " + e.message);
+      setError(e.message);
     } finally {
       setSaving(false);
     }
