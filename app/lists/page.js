@@ -91,10 +91,7 @@ export default function ListsPage() {
     const handle = hotel.instagram?.replace("@", "");
     if (!handle) { alert("No Instagram handle found for this hotel."); return; }
     // Open Instagram DM compose window with pre-filled text
-    const encoded = encodeURIComponent(message);
-    const igUrl = `https://www.instagram.com/direct/new/?text=${encoded}`;
-    window.open(igUrl, "_blank");
-    // Also copy to clipboard as backup
+    window.open(`https://www.instagram.com/${handle}/`, "_blank");
     navigator.clipboard.writeText(message).catch(() => {});
     // Mark as IG contacted
     setIgContacted(prev => prev.includes(hotel.id) ? prev : [...prev, hotel.id]);
@@ -280,14 +277,6 @@ export default function ListsPage() {
                   <p style={s.detailSub}>{listHotels.length} hotel{listHotels.length !== 1 ? "s" : ""}</p>
                 </div>
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                  <button style={s.igBulkBtn} onClick={startBulkIg}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                      <circle cx="12" cy="12" r="4"/>
-                      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                    </svg>
-                    Bulk IG DM
-                  </button>
                   <Link href={`/compose?list=${activeList.id}`}>
                   <button style={s.composeBtn}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
