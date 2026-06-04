@@ -21,6 +21,12 @@ export default function ListsPage() {
   const [igMessage, setIgMessage] = useState("");
   const [igTemplateId, setIgTemplateId] = useState("");
   const [dbError, setDbError]         = useState("");
+  const [editingNote, setEditingNote] = useState(null);
+  const [noteText, setNoteText]       = useState("");
+  const [igContacted, setIgContacted] = useState([]);
+  const [bulkIgMode, setBulkIgMode]   = useState(false);
+  const [bulkIgSelected, setBulkIgSelected] = useState([]);
+  const [bulkIgIndex, setBulkIgIndex] = useState(0);
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
@@ -84,12 +90,42 @@ export default function ListsPage() {
   const sendIgDm = (hotel, message) => {
     const handle = hotel.instagram?.replace("@", "");
     if (!handle) { alert("No Instagram handle found for this hotel."); return; }
-    // Open Instagram DM - pre-fill with handle
-    const igUrl = `https://www.instagram.com/${handle}/`;
+    // Open Instagram DM compose window with pre-filled text
+    const encoded = encodeURIComponent(message);
+    const igUrl = `https://www.instagram.com/direct/new/?text=${encoded}`;
     window.open(igUrl, "_blank");
-    // Copy message to clipboard so user can paste it
+    // Also copy to clipboard as backup
     navigator.clipboard.writeText(message).catch(() => {});
+    // Mark as IG contacted
+    setIgContacted(prev => prev.includes(hotel.id) ? prev : [...prev, hotel.id]);
+    supabase.from("list_hotels").update({ ig_contacted: true, ig_contacted_at: new Date().toISOString() }).eq("id", hotel.id).then(() => {});
     setIgModal(null);
+  };
+
+  // Bulk IG - send to next hotel in queue
+  const bulkIgNext = (message) => {
+    if (bulkIgIndex >= bulkIgSelected.length) {
+      setBulkIgMode(false);
+      setBulkIgSelected([]);
+      setBulkIgIndex(0);
+      return;
+    }
+    const hotel = bulkIgSelected[bulkIgIndex];
+    sendIgDm(hotel, message);
+    setBulkIgIndex(prev => prev + 1);
+  };
+
+  const startBulkIg = () => {
+    const hotelsWithIg = listHotels.filter(h => h.instagram);
+    if (hotelsWithIg.length === 0) { alert("No hotels in this list have Instagram handles."); return; }
+    setBulkIgSelected(hotelsWithIg);
+    setBulkIgIndex(0);
+    setBulkIgMode(true);
+    // Open modal with first hotel
+    const msg = igTemplates[0]?.body?.replace(/\{hotel_name\}/g, hotelsWithIg[0].name) || "";
+    setIgMessage(msg);
+    setIgTemplateId(igTemplates[0]?.id || "");
+    setIgModal(hotelsWithIg[0]);
   };
 
   const openList = async (list) => {
@@ -243,7 +279,16 @@ export default function ListsPage() {
                   <h2 style={s.detailTitle}>{activeList.name}</h2>
                   <p style={s.detailSub}>{listHotels.length} hotel{listHotels.length !== 1 ? "s" : ""}</p>
                 </div>
-                <Link href={`/compose?list=${activeList.id}`}>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                  <button style={s.igBulkBtn} onClick={startBulkIg}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                      <circle cx="12" cy="12" r="4"/>
+                      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                    </svg>
+                    Bulk IG DM
+                  </button>
+                  <Link href={`/compose?list=${activeList.id}`}>
                   <button style={s.composeBtn}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -251,6 +296,7 @@ export default function ListsPage() {
                     Compose Emails
                   </button>
                 </Link>
+                </div>
               </div>
 
               {hotelsLoading ? (
@@ -297,18 +343,23 @@ export default function ListsPage() {
                       {/* Instagram */}
                       <div style={{ flex:1, paddingRight:12 }}>
                         {hotel.instagram ? (
-                          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
                             <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igHandle}>
                               {hotel.instagram}
                             </a>
-                            <button style={s.igDmBtn} onClick={() => openIgDm(hotel)}>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                                <circle cx="12" cy="12" r="4"/>
-                                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                              </svg>
-                              Send DM
-                            </button>
+                            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                              <button style={s.igDmBtn} onClick={() => openIgDm(hotel)}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                  <circle cx="12" cy="12" r="4"/>
+                                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                                </svg>
+                                DM
+                              </button>
+                              {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
+                                <span style={s.igSentBadge}>Sent</span>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <p style={s.noEmailText}>No handle found</p>
@@ -528,6 +579,8 @@ const s = {
   igSelect: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", cursor:"pointer", marginBottom:0 },
   igTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
   igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
+  igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  igSentBadge: { fontSize:10, fontWeight:700, background:"#FDF0F8", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid #e8b4d8" },
   igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   noteInput: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:8, padding:"7px 10px", fontSize:12, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"none", lineHeight:1.5 },
   noteSaveBtn: { fontSize:11, fontWeight:700, color:"#fff", background:"#0F2544", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontFamily:"inherit" },

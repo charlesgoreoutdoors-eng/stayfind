@@ -91,21 +91,41 @@ const dd = {
   createBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:7, padding:"7px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
 };
 
-function HotelCard({ hotel, selected, onToggleSelect, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
+function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
+  const photos = (hotel.photoUrls && hotel.photoUrls.length > 0) ? hotel.photoUrls : (hotel.photoUrl ? [hotel.photoUrl] : []);
+  const [photoIdx, setPhotoIdx] = useState(0);
   const [imgErr, setImgErr] = useState(false);
-  return (
-    <div className="hotel-card fade-up" style={{ ...s.card, outline: selected ? "2.5px solid #E85D3D" : "none", position:"relative" }}>
-      <div style={{ ...s.selectBox, background: selected ? "#E85D3D" : "rgba(255,255,255,0.92)", border: selected ? "none" : "2px solid #DDD5CC" }}
-        onClick={e => { e.stopPropagation(); onToggleSelect(hotel); }}>
-        {selected && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>}
-      </div>
 
+  const prev = (e) => { e.stopPropagation(); setPhotoIdx(i => (i - 1 + photos.length) % photos.length); setImgErr(false); };
+  const next = (e) => { e.stopPropagation(); setPhotoIdx(i => (i + 1) % photos.length); setImgErr(false); };
+
+  return (
+    <div className="hotel-card fade-up" style={{ ...s.card, position:"relative" }}>
       <div style={s.imgBox}>
-        {hotel.photoUrl && !imgErr
-          ? <img src={hotel.photoUrl} alt={hotel.name} style={s.img} onError={() => setImgErr(true)} />
+        {photos.length > 0 && !imgErr
+          ? <img src={photos[photoIdx]} alt={hotel.name} style={s.img} onError={() => setImgErr(true)} />
           : <div style={s.imgFallback}><span style={{ fontSize:44 }}>🏨</span></div>}
         <div style={s.imgGradient} />
         {hotel.priceLevel && <span style={s.pricePill}>{hotel.priceLevel}</span>}
+
+        {photos.length > 1 && (
+          <>
+            <button style={{ ...s.carouselBtn, left:8 }} onClick={prev}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button style={{ ...s.carouselBtn, right:8 }} onClick={next}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <div style={s.carouselDots}>
+              {photos.map((_, i) => (
+                <div key={i}
+                  style={{ ...s.carouselDot, background: i === photoIdx ? "#fff" : "rgba(255,255,255,0.45)" }}
+                  onClick={e => { e.stopPropagation(); setPhotoIdx(i); setImgErr(false); }} />
+              ))}
+            </div>
+            <div style={s.photoCount}>{photoIdx + 1}/{photos.length}</div>
+          </>
+        )}
       </div>
 
       <div style={s.cardBody}>
@@ -440,8 +460,8 @@ export default function Home() {
             {view === "list" && (
               <div style={s.grid}>
                 {hotels.map((hotel, i) => (
-                  <HotelCard key={hotel.placeId || i} hotel={hotel} selected={selectedIds.includes(hotel.placeId)}
-                    onToggleSelect={toggleSelect} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd}
+                  <HotelCard key={hotel.placeId || i} hotel={hotel}
+                    lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd}
                     showDropdown={addListDropdown === hotel.placeId}
                     onToggleDropdown={(id) => setAddListDropdown(prev => prev === id ? null : id)}
                     addSuccess={addSuccess === hotel.placeId} />
@@ -499,7 +519,10 @@ const s = {
   toggleActive: { background:"#fff", color:"#0F2544", boxShadow:"0 1px 4px rgba(15,37,68,0.1)" },
   grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:20 },
   card: { background:"#fff", borderRadius:14, overflow:"visible", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
-  selectBox: { position:"absolute", top:10, left:10, zIndex:5, width:24, height:24, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"all 0.15s" },
+  carouselBtn: { position:"absolute", top:"50%", transform:"translateY(-50%)", zIndex:5, width:28, height:28, borderRadius:"50%", background:"rgba(0,0,0,0.45)", border:"none", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", backdropFilter:"blur(4px)", transition:"background 0.15s" },
+  carouselDots: { position:"absolute", bottom:28, left:0, right:0, display:"flex", justifyContent:"center", gap:4, zIndex:5 },
+  carouselDot: { width:6, height:6, borderRadius:"50%", cursor:"pointer", transition:"background 0.15s" },
+  photoCount: { position:"absolute", top:10, right:10, background:"rgba(0,0,0,0.5)", color:"#fff", fontSize:10, fontWeight:600, padding:"3px 8px", borderRadius:20, zIndex:5 },
   imgBox: { position:"relative", height:196, background:"#EDE8E3", overflow:"hidden", borderRadius:"14px 14px 0 0" },
   img: { width:"100%", height:"100%", objectFit:"cover", display:"block" },
   imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#EDE8E3 0%,#DDD5CC 100%)" },
