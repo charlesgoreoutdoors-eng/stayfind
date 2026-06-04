@@ -31,22 +31,37 @@ export default function TemplatesPage() {
 
   const newTemplate = () => {
     setActive(null);
-    setForm({ name:"", subject:"Content Collaboration Opportunity", body:"", type:"email" });
+    setForm({ name:"", subject:"", body:"", type:"email" });
     setIsNew(true);
   };
 
   const save = async () => {
-    if (!form.name.trim() || !form.body.trim()) return;
+    if (!form.name.trim()) { alert("Give your template a name."); return; }
+    if (!form.body.trim()) { alert("Add a message body."); return; }
+    if (!user) { alert("Not logged in."); return; }
     setSaving(true);
-    if (isNew) {
-      const { data } = await supabase.from("templates").insert({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), type:form.type, user_id: user.id }).select().single();
-      if (data) { setTemplates(prev => [data, ...prev]); setActive(data); setIsNew(false); }
-    } else if (active) {
-      await supabase.from("templates").update({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), type:form.type }).eq("id", active.id);
-      setTemplates(prev => prev.map(t => t.id === active.id ? { ...t, ...form } : t));
-      setActive(prev => ({ ...prev, ...form }));
+    try {
+      if (isNew) {
+        const { data, error } = await supabase.from("templates")
+          .insert({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), type:form.type, user_id: user.id })
+          .select().single();
+        if (error) throw new Error(error.message);
+        setTemplates(prev => [data, ...prev]);
+        setActive(data);
+        setIsNew(false);
+      } else if (active) {
+        const { error } = await supabase.from("templates")
+          .update({ name:form.name.trim(), subject:form.subject.trim(), body:form.body.trim(), type:form.type })
+          .eq("id", active.id);
+        if (error) throw new Error(error.message);
+        setTemplates(prev => prev.map(t => t.id === active.id ? { ...t, ...form } : t));
+        setActive(prev => ({ ...prev, ...form }));
+      }
+    } catch(e) {
+      alert("Could not save template: " + e.message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const deleteTemplate = async (id) => {
@@ -133,7 +148,7 @@ export default function TemplatesPage() {
 
               <div style={s.field}>
                 <label style={s.label}>Email Subject</label>
-                <input style={s.input} placeholder="Content Collaboration Opportunity"
+                <input style={s.input} placeholder="e.g. Collaboration Opportunity"
                   value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} />
               </div>
 

@@ -224,8 +224,9 @@ export default function SequenceBuilderPage() {
   };
 
   const save = async () => {
+    if (!user) { setError("Not logged in. Please refresh and try again."); return; }
     if (!form.name.trim()) { setError("Give your sequence a name."); return; }
-    if (form.steps.some(st => !st.body.trim())) { setError("All steps need a message."); return; }
+    if (form.steps.some(st => !st.body.trim())) { setError("All steps need a message — check each email has content."); return; }
     setSaving(true);
     setError("");
     try {

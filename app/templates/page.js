@@ -31,7 +31,7 @@ export default function TemplatesPage() {
 
   const newTemplate = () => {
     setActive(null);
-    setForm({ name:"", subject:"Content Collaboration Opportunity", body:"", type:"email" });
+    setForm({ name:"", subject:"", body:"", type:"email" });
     setIsNew(true);
   };
 
@@ -133,7 +133,7 @@ export default function TemplatesPage() {
 
               <div style={s.field}>
                 <label style={s.label}>Email Subject</label>
-                <input style={s.input} placeholder="Content Collaboration Opportunity"
+                <input style={s.input} placeholder="e.g. Collaboration Opportunity"
                   value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} />
               </div>
 
