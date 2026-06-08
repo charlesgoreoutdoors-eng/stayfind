@@ -163,32 +163,28 @@ export default function TemplatesPage() {
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
+                          {form.type === "email" && (
               <div style={s.field}>
                 <label style={s.label}>Email Subject</label>
                 <input style={s.input} placeholder="e.g. Collaboration Opportunity"
                   value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} />
               </div>
+            )}
 
               <div style={s.field}>
                 <label style={s.label}>Message</label>
-                <p style={s.hint}>
-                  Use <code style={s.code}>{"{hotel_name}"}</code> to auto-fill each hotel's name when sending
-                </p>
                 <div style={s.toolbar}>
                   <button style={s.toolBtn} onClick={() => insertFormat("**", "**")}><strong>B</strong></button>
                   <button style={s.toolBtn} onClick={() => insertFormat("\n- ")}>List</button>
                   <button style={s.toolBtn} onClick={() => insertFormat("\n\n")}>Para</button>
-                  <button style={s.toolBtn} onClick={() => setForm(f => ({ ...f, body: f.body + "{hotel_name}" }))}>
-                    + Hotel Name
-                  </button>
-                </div>
+                                  </div>
                 <textarea
                   ref={textareaRef}
                   style={s.textarea}
                   rows={14}
                   value={form.body}
                   onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
-                  placeholder={"Write your outreach message here...\n\nExample:\nHi {hotel_name} team,\n\nMy name is [Your Name] and I'm a content creator specialising in travel and lifestyle...\n\nI'd love to discuss a potential collaboration.\n\nWarm regards,\n[Your Name]"}
+                  placeholder={"Write your message here...ng in travel and lifestyle...\n\nI'd love to discuss a potential collaboration.\n\nWarm regards,\n[Your Name]"}
                 />
                 <p style={s.charCount}>
                   {form.body.length} characters
