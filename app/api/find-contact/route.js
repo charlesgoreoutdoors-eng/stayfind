@@ -100,13 +100,13 @@ const fetchRendered = async (url) => {
   if (!BROWSERLESS_KEY) return null;
   try {
     const res = await fetch(
-      `https://chrome.browserless.io/content?token=${BROWSERLESS_KEY}`,
+      `https://production-sfo.browserless.io/content?token=${BROWSERLESS_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url,
-          waitFor: 2000, // wait 2s for JS to render
+          waitForTimeout: 2000, // wait 2s for JS to render
           gotoOptions: { waitUntil: "networkidle2", timeout: 15000 },
         }),
         signal: AbortSignal.timeout(20000),

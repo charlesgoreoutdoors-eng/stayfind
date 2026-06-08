@@ -4,13 +4,13 @@ export async function GET(request) {
 
   try {
     const res = await fetch(
-      `https://chrome.browserless.io/content?token=${key}`,
+      `https://production-sfo.browserless.io/content?token=${key}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: "https://www.malibubeachinn.com",
-          waitFor: 2000,
+          waitForTimeout: 2000,
         }),
         signal: AbortSignal.timeout(20000),
       }
