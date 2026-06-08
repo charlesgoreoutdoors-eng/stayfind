@@ -1,7 +1,10 @@
 {
   "functions": {
     "app/api/find-contact/route.js": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "app/api/hotels/route.js": {
+      "maxDuration": 60
     }
   }
 }

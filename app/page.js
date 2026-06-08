@@ -394,31 +394,34 @@ export default function Home() {
 
   const findContacts = async (hotelList) => {
     const withSite = hotelList.filter(h => h.website);
-    // Mark all as finding in one update
+    if (!withSite.length) return;
+
+    // Mark all as finding
     setHotels(prev => prev.map(h =>
       withSite.find(w => w.placeId === h.placeId)
         ? { ...h, emailStatus: "finding" }
         : h.emailStatus ? h : { ...h, emailStatus: "notfound" }
     ));
 
-    // Fetch all contacts, then update hotels in ONE batch at the end
-    const results = {};
-    for (let i = 0; i < withSite.length; i += 5) {
-      await Promise.all(withSite.slice(i, i + 5).map(async hotel => {
+    // Process in batches of 3 — update after each batch so results show quickly
+    for (let i = 0; i < withSite.length; i += 3) {
+      const batch = withSite.slice(i, i + 3);
+      const batchResults = await Promise.all(batch.map(async hotel => {
         try {
           const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
-          results[hotel.placeId] = { email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : data.instagram ? "found" : "notfound" };
+          return { placeId: hotel.placeId, email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : data.instagram ? "found" : "notfound" };
         } catch {
-          results[hotel.placeId] = { emailStatus: "notfound" };
+          return { placeId: hotel.placeId, emailStatus: "notfound" };
         }
       }));
-    }
 
-    // Single state update with all results — no jitter
-    setHotels(prev => prev.map(h =>
-      results[h.placeId] ? { ...h, ...results[h.placeId] } : h
-    ));
+      // Update state after each batch so users see results coming in
+      setHotels(prev => prev.map(h => {
+        const found = batchResults.find(r => r.placeId === h.placeId);
+        return found ? { ...h, ...found } : h;
+      }));
+    }
   };
 
   const toggleSelect = (hotel) => setSelectedIds(prev => prev.includes(hotel.placeId) ? prev.filter(id => id !== hotel.placeId) : [...prev, hotel.placeId]);
