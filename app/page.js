@@ -118,19 +118,20 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
           )}
         </div>
         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
-        {/* Instagram status */}
-        {hotel.emailStatus && (
-          hotel.instagram
-            ? <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <circle cx="12" cy="12" r="4"/>
-                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                </svg>
-                {hotel.instagram}
-              </a>
-            : <p style={s.igNotFound}>No Instagram handle found</p>
-        )}
+        {/* Instagram status - show once scrape is done */}
+        {hotel.instagram
+          ? <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+              </svg>
+              {hotel.instagram}
+            </a>
+          : hotel.emailStatus
+            ? <p style={s.igNotFound}>No Instagram handle found</p>
+            : null
+        }
 
         <div style={{ position:"relative", marginTop:10 }}>
           <button
@@ -407,7 +408,7 @@ export default function Home() {
         try {
           const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
-          results[hotel.placeId] = { email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : "notfound" };
+          results[hotel.placeId] = { email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : data.instagram ? "found" : "notfound" };
         } catch {
           results[hotel.placeId] = { emailStatus: "notfound" };
         }
