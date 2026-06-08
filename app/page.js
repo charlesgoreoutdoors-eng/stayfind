@@ -118,15 +118,18 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
           )}
         </div>
         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
-        {hotel.instagram && (
-          <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <circle cx="12" cy="12" r="4"/>
-              <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-            </svg>
-            {hotel.instagram}
-          </a>
+        {/* Instagram status */}
+        {hotel.emailStatus && (
+          hotel.instagram
+            ? <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                </svg>
+                {hotel.instagram}
+              </a>
+            : <p style={s.igNotFound}>No Instagram handle found</p>
         )}
 
         <div style={{ position:"relative", marginTop:10 }}>
@@ -556,6 +559,7 @@ const s = {
   ratingText: { fontSize:11, color:"#9FB3C8", marginLeft:4 },
   websiteLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none", marginBottom:2 },
   igLink: { display:"inline-flex", alignItems:"center", gap:5, marginTop:4, fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
+  igNotFound: { fontSize:11, color:"#CBD5E1", marginTop:4 },
   addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #DDD5CC", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.2s", background:"#FAF7F4", color:"#1E3A5F" },
   addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0" },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
