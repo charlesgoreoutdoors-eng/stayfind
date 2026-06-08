@@ -1,12 +1,27 @@
 const BROWSERLESS_KEY = process.env.BROWSERLESS_API_KEY;
 
 const igBlacklist = [
+  // Instagram system pages
   "p", "explore", "reel", "reels", "tv", "stories", "share", "sharer",
   "accounts", "legal", "about", "help", "press", "api", "blog",
   "jobs", "privacy", "terms", "developers", "directory", "lite",
-  "web", "login", "signup", "static", "cdn", "graphql", "",
+  "login", "signup", "graphql", "",
+  // Common false positives from CSS/JS
   "null", "undefined", "true", "false", "home", "index",
+  "web", "static", "cdn", "fonts", "font", "media", "assets",
+  "images", "img", "css", "js", "scripts", "style", "styles",
+  "icons", "icon", "logo", "logos", "uploads", "files", "docs",
+  "wix", "squarespace", "wordpress", "shopify", "weebly",
+  "support", "contact", "admin", "user", "users", "profile",
+  "search", "tag", "tags", "category", "categories", "page",
+  "post", "posts", "news", "blog", "feed", "rss", "sitemap",
+  "embed", "widget", "plugin", "theme", "themes", "template",
+  // Social platforms (not hotel handles)
   "instagram", "facebook", "twitter", "tiktok", "youtube",
+  "linkedin", "pinterest", "snapchat", "whatsapp", "telegram",
+  // Common website junk
+  "data", "json", "xml", "html", "amp", "www", "http", "https",
+  "com", "org", "net", "io", "co", "uk", "au",
 ];
 
 const emailBlacklist = [

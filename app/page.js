@@ -129,7 +129,7 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
               {hotel.instagram}
             </a>
           : hotel.emailStatus
-            ? <p style={s.igNotFound}>No Instagram handle found</p>
+            ? <p style={s.igNotFound}>Finding Instagram handle...</p>
             : null
         }
 
