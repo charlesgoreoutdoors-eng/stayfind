@@ -345,9 +345,24 @@ export default function ListsPage() {
                                 </svg>
                                 DM
                               </button>
-                              {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
-                                <span style={s.igSentBadge}>Sent</span>
-                              )}
+                              <button
+                                title={igContacted.includes(hotel.id) || hotel.ig_contacted ? "Mark as not sent" : "Mark DM as sent"}
+                                style={{ ...s.igCheckbox, ...(igContacted.includes(hotel.id) || hotel.ig_contacted ? s.igCheckboxChecked : {}) }}
+                                onClick={() => {
+                                  const alreadySent = igContacted.includes(hotel.id) || hotel.ig_contacted;
+                                  if (alreadySent) {
+                                    setIgContacted(prev => prev.filter(id => id !== hotel.id));
+                                    supabase.from("list_hotels").update({ ig_contacted: false, ig_contacted_at: null }).eq("id", hotel.id);
+                                  } else {
+                                    setIgContacted(prev => [...prev, hotel.id]);
+                                    supabase.from("list_hotels").update({ ig_contacted: true, ig_contacted_at: new Date().toISOString() }).eq("id", hotel.id);
+                                  }
+                                }}
+                              >
+                                {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                )}
+                              </button>
                             </div>
                           </div>
                         ) : (
@@ -570,6 +585,8 @@ const s = {
   igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
   igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   igSentBadge: { fontSize:10, fontWeight:700, background:"#FDF0F8", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid #e8b4d8" },
+  igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid #e8b4d8", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
+  igCheckboxChecked: { background:"#C13584", border:"1.5px solid #C13584" },
   igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   noteInput: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:8, padding:"7px 10px", fontSize:12, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"none", lineHeight:1.5 },
   noteSaveBtn: { fontSize:11, fontWeight:700, color:"#fff", background:"#0F2544", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontFamily:"inherit" },
