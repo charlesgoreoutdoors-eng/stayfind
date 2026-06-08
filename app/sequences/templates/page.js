@@ -12,6 +12,8 @@ export default function TemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showTypePicker, setShowTypePicker] = useState(false);
+  const [typeFilter, setTypeFilter] = useState("all"); // "all" | "email" | "instagram"
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const textareaRef = useRef(null);
@@ -30,8 +32,13 @@ export default function TemplatesPage() {
   const selectTemplate = (t) => { setActive(t); setForm({ name:t.name, subject:t.subject, body:t.body, type:t.type||"email" }); setIsNew(false); };
 
   const newTemplate = () => {
+    setShowTypePicker(true);
+  };
+
+  const startNewTemplate = (type) => {
+    setShowTypePicker(false);
     setActive(null);
-    setForm({ name:"", subject:"", body:"", type:"email" });
+    setForm({ name:"", subject:"", body:"", type });
     setIsNew(true);
   };
 
@@ -93,6 +100,16 @@ export default function TemplatesPage() {
       </div>
 
       <div style={{ ...s.body, gridTemplateColumns: isMobile ? "1fr" : "280px 1fr" }}>
+        {/* Type filter tabs */}
+        <div style={{ display:"flex", gap:4, marginBottom:12 }}>
+          {["all","email","instagram"].map(t => (
+            <button key={t} style={{ ...s.filterTab, ...(typeFilter===t ? s.filterTabActive : {}) }}
+              onClick={() => setTypeFilter(t)}>
+              {t === "all" ? "All" : t === "email" ? "📧 Email" : "📸 Instagram"}
+            </button>
+          ))}
+        </div>
+
         {/* Templates list */}
         <div style={s.listPanel}>
           {loading ? <p style={s.empty}>Loading...</p> :
@@ -102,7 +119,7 @@ export default function TemplatesPage() {
               <p>No templates yet. Create one to get started.</p>
             </div>
           ) : (
-            templates.map(t => (
+            templates.filter(t => typeFilter === "all" || t.type === typeFilter).map(t => (
               <div key={t.id}
                 style={{ ...s.templateItem, ...(active?.id === t.id && !isNew ? s.templateItemActive : {}) }}
                 onClick={() => selectTemplate(t)}
@@ -195,6 +212,39 @@ export default function TemplatesPage() {
         </div>
       </div>
 
+      {/* Type picker modal */}
+      {showTypePicker && (
+        <div style={s.overlay}>
+          <div style={s.modal}>
+            <h3 style={{ fontSize:18, fontWeight:700, color:"#0F2544", marginBottom:6 }}>What type of template?</h3>
+            <p style={{ fontSize:13, color:"#9FB3C8", marginBottom:24 }}>Choose the type before writing your message</p>
+            <div style={{ display:"flex", gap:12, flexDirection:"column" }}>
+              <button style={s.typePickerBtn} onClick={() => startNewTemplate("email")}>
+                <div style={s.typePickerIcon}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9"/></svg>
+                </div>
+                <div style={{ flex:1, textAlign:"left" }}>
+                  <p style={{ fontWeight:700, color:"#0F2544", fontSize:15, marginBottom:2 }}>Email Template</p>
+                  <p style={{ fontSize:12, color:"#9FB3C8" }}>Has subject line — used for email outreach</p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button style={s.typePickerBtn} onClick={() => startNewTemplate("instagram")}>
+                <div style={{ ...s.typePickerIcon, background:"#FDF0F8" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C13584" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#C13584"/></svg>
+                </div>
+                <div style={{ flex:1, textAlign:"left" }}>
+                  <p style={{ fontWeight:700, color:"#0F2544", fontSize:15, marginBottom:2 }}>Instagram DM Template</p>
+                  <p style={{ fontSize:12, color:"#9FB3C8" }}>No subject — used for Instagram direct messages</p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <button style={{ ...s.cancelBtn, marginTop:16, width:"100%" }} onClick={() => setShowTypePicker(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       {deleteConfirm && (
         <div style={s.overlay}>
           <div style={s.confirmModal}>
@@ -239,6 +289,10 @@ const s = {
   charCount: { fontSize:11, color:"#cbd5e1", marginTop:4, textAlign:"right" },
   saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:10, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", transition:"opacity 0.2s" },
   emptyState: { display:"flex", flexDirection:"column", alignItems:"center", gap:10, padding:"48px 24px", color:"#9FB3C8", fontSize:14, textAlign:"center" },
+  filterTab: { padding:"5px 12px", border:"1px solid #DDD5CC", borderRadius:20, fontSize:12, fontWeight:500, cursor:"pointer", color:"#9FB3C8", background:"#fff", fontFamily:"inherit", transition:"all 0.15s" },
+  filterTabActive: { background:"#0F2544", color:"#F7F3EF", border:"1px solid #0F2544" },
+  typePickerBtn: { display:"flex", alignItems:"center", gap:14, padding:"16px", border:"1.5px solid #DDD5CC", borderRadius:12, background:"#fff", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s", width:"100%" },
+  typePickerIcon: { width:48, height:48, borderRadius:12, background:"#FEF0EC", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
   typeRow: { display:"flex", gap:8, marginBottom:20 },
   typeBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 16px", border:"1.5px solid #DDD5CC", borderRadius:10, background:"#fff", cursor:"pointer", fontSize:13, fontWeight:500, color:"#4A6A8A", fontFamily:"inherit", transition:"all 0.15s" },
   typeBtnActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC", color:"#E85D3D" },

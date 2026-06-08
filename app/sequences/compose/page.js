@@ -134,7 +134,7 @@ function ComposeInner() {
           <label style={s.label}>Template (optional)</label>
           <select style={s.select} value={selectedTemplateId} onChange={e => setSelectedTemplateId(e.target.value)}>
             <option value="">Write from scratch...</option>
-            {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {templates.filter(t => !t.type || t.type === "email").map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </div>
         {selectedListId && (

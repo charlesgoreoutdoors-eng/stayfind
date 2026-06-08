@@ -139,6 +139,7 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+  const hotelsRef = useRef(hotels);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [imgErr, setImgErr] = useState(false);
   const [mapDropdown, setMapDropdown] = useState(false);
@@ -157,9 +158,36 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
     setTimeout(() => setMapAddSuccess(false), 2500);
   };
 
+  // Keep hotels ref up to date without triggering map reinit
+  useEffect(() => { hotelsRef.current = hotels; }, [hotels]);
+
+  const updateMarkers = useCallback((map, hotelList) => {
+    // Clear old markers
+    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current = [];
+    const validHotels = hotelList.filter(h => h.lat && h.lng);
+    if (!validHotels.length) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    validHotels.forEach((hotel, i) => {
+      bounds.extend({ lat: hotel.lat, lng: hotel.lng });
+      const marker = new window.google.maps.Marker({
+        position: { lat: hotel.lat, lng: hotel.lng }, map,
+        label: { text: String(i + 1), color: "#fff", fontSize: "12px", fontWeight: "700" },
+        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 18, fillColor: "#E85D3D", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2.5 },
+      });
+      marker.addListener("click", () => {
+        setSelectedHotel(hotel); setImgErr(false); setMapDropdown(false);
+        map.panTo({ lat: hotel.lat, lng: hotel.lng });
+      });
+      markersRef.current.push(marker);
+    });
+    map.fitBounds(bounds);
+  }, []);
+
+  // Init map ONCE only
   const initMap = useCallback(() => {
-    if (!mapRef.current || !window.google || !hotels.length) return;
-    const validHotels = hotels.filter(h => h.lat && h.lng);
+    if (!mapRef.current || !window.google || mapInstanceRef.current) return;
+    const validHotels = hotelsRef.current.filter(h => h.lat && h.lng);
     if (!validHotels.length) return;
     const map = new window.google.maps.Map(mapRef.current, {
       center: { lat: validHotels[0].lat, lng: validHotels[0].lng },
@@ -172,40 +200,36 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
         { featureType:"poi", elementType:"labels", stylers:[{ visibility:"off" }] },
         { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#D4E8D4" }] },
       ],
-      mapTypeControl:false, streetViewControl:false, zoomControl:true, scrollwheel:true, gestureHandling:'greedy',
+      mapTypeControl:false, streetViewControl:false, zoomControl:true,
+      scrollwheel:true, gestureHandling:"greedy",
     });
     mapInstanceRef.current = map;
-    markersRef.current.forEach(m => m.setMap(null));
-    markersRef.current = [];
-    const bounds = new window.google.maps.LatLngBounds();
-    validHotels.forEach((hotel, i) => {
-      bounds.extend({ lat: hotel.lat, lng: hotel.lng });
-      const marker = new window.google.maps.Marker({
-        position: { lat: hotel.lat, lng: hotel.lng }, map,
-        label: { text: String(i + 1), color: "#fff", fontSize: "12px", fontWeight: "700" },
-        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 18, fillColor: "#E85D3D", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2.5 },
-      });
-      marker.addListener("click", () => { setSelectedHotel(hotel); setImgErr(false); setMapDropdown(false); map.panTo({ lat: hotel.lat, lng: hotel.lng }); });
-      markersRef.current.push(marker);
-    });
-    map.fitBounds(bounds);
-  }, [hotels]);
+    updateMarkers(map, hotelsRef.current);
+  }, [updateMarkers]);
 
+  // Update markers when hotels change WITHOUT recreating the map
   useEffect(() => {
-    if (window.google) { initMap(); }
-    else {
-      const scriptId = "google-maps-script";
-      const existing = document.getElementById(scriptId);
-      if (existing) existing.addEventListener("load", initMap);
-      else {
-        const script = document.createElement("script");
-        script.id = scriptId;
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-        script.async = true; script.onload = initMap;
-        document.head.appendChild(script);
-      }
+    if (mapInstanceRef.current) {
+      updateMarkers(mapInstanceRef.current, hotels);
     }
-  }, [initMap, apiKey]);
+  }, [hotels, updateMarkers]);
+
+  // Load Google Maps script once
+  useEffect(() => {
+    if (window.google) { initMap(); return; }
+    const scriptId = "google-maps-script";
+    const existing = document.getElementById(scriptId);
+    if (existing) {
+      existing.addEventListener("load", initMap);
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.onload = initMap;
+    document.head.appendChild(script);
+  }, []); // empty deps - only runs once
 
   return (
     <div style={s.mapWrap}>
