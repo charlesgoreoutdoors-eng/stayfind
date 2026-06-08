@@ -80,7 +80,8 @@ async function searchAtPoint(lat, lng, radius, keyword, key) {
 
 async function getPlaceDetails(placeId, key) {
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,rating,user_ratings_total,price_level,website,formatted_phone_number,photos,editorial_summary,geometry&key=${key}`;
+    // Include url field which sometimes contains social links
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,rating,user_ratings_total,price_level,website,formatted_phone_number,photos,editorial_summary,geometry,url&key=${key}`;
     const res = await fetch(url);
     const data = await res.json();
     return data.result || null;
