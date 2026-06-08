@@ -94,12 +94,8 @@ function buildHotel(place, details, apiKey) {
   const geo = d.geometry?.location || place.geometry?.location;
   const photos = d.photos || place.photos;
   let photoUrl = null;
-  let photoUrls = [];
   if (photos && photos.length > 0) {
-    photoUrls = photos.slice(0, 5).map(p =>
-      `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photo_reference}&key=${apiKey}`
-    );
-    photoUrl = photoUrls[0];
+    photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photos[0].photo_reference}&key=${apiKey}`;
   }
   return {
     name: d.name || place.name,
@@ -114,7 +110,6 @@ function buildHotel(place, details, apiKey) {
     placeId: place.place_id,
     lat: geo?.lat || null,
     lng: geo?.lng || null,
-    photoUrls,
   };
 }
 

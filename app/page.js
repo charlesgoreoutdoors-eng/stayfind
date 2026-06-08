@@ -92,40 +92,16 @@ const dd = {
 };
 
 function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
-  const photos = (hotel.photoUrls && hotel.photoUrls.length > 0) ? hotel.photoUrls : (hotel.photoUrl ? [hotel.photoUrl] : []);
-  const [photoIdx, setPhotoIdx] = useState(0);
   const [imgErr, setImgErr] = useState(false);
-
-  const prev = (e) => { e.stopPropagation(); setPhotoIdx(i => (i - 1 + photos.length) % photos.length); setImgErr(false); };
-  const next = (e) => { e.stopPropagation(); setPhotoIdx(i => (i + 1) % photos.length); setImgErr(false); };
 
   return (
     <div className="hotel-card fade-up" style={{ ...s.card, position:"relative" }}>
       <div style={s.imgBox}>
-        {photos.length > 0 && !imgErr
-          ? <img src={photos[photoIdx]} alt={hotel.name} style={s.img} onError={() => setImgErr(true)} />
+        {hotel.photoUrl && !imgErr
+          ? <img src={hotel.photoUrl} alt={hotel.name} style={s.img} onError={() => setImgErr(true)} />
           : <div style={s.imgFallback}><span style={{ fontSize:44 }}>🏨</span></div>}
         <div style={s.imgGradient} />
         {hotel.priceLevel && <span style={s.pricePill}>{hotel.priceLevel}</span>}
-
-        {photos.length > 1 && (
-          <>
-            <button style={{ ...s.carouselBtn, left:8 }} onClick={prev}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <button style={{ ...s.carouselBtn, right:8 }} onClick={next}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-            <div style={s.carouselDots}>
-              {photos.map((_, i) => (
-                <div key={i}
-                  style={{ ...s.carouselDot, background: i === photoIdx ? "#fff" : "rgba(255,255,255,0.45)" }}
-                  onClick={e => { e.stopPropagation(); setPhotoIdx(i); setImgErr(false); }} />
-              ))}
-            </div>
-            <div style={s.photoCount}>{photoIdx + 1}/{photos.length}</div>
-          </>
-        )}
       </div>
 
       <div style={s.cardBody}>
@@ -196,7 +172,7 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
         { featureType:"poi", elementType:"labels", stylers:[{ visibility:"off" }] },
         { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#D4E8D4" }] },
       ],
-      mapTypeControl:false, streetViewControl:false,
+      mapTypeControl:false, streetViewControl:false, zoomControl:true, scrollwheel:true, gestureHandling:'greedy',
     });
     mapInstanceRef.current = map;
     markersRef.current.forEach(m => m.setMap(null));
@@ -234,21 +210,6 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
   return (
     <div style={s.mapWrap}>
       <div ref={mapRef} style={s.mapEl} />
-      <div style={s.mapSidebar}>
-        <p style={s.sidebarTitle}>Hotels</p>
-        {hotels.filter(h => h.lat && h.lng).map((hotel, i) => (
-          <div key={hotel.placeId || i}
-            style={{ ...s.sidebarItem, background: selectedHotel?.placeId === hotel.placeId ? "#FEF0EC" : "#fff", borderColor: selectedHotel?.placeId === hotel.placeId ? "#E85D3D" : "#DDD5CC" }}
-            onClick={() => { setSelectedHotel(hotel); setImgErr(false); setMapDropdown(false); if (mapInstanceRef.current) { mapInstanceRef.current.panTo({ lat: hotel.lat, lng: hotel.lng }); mapInstanceRef.current.setZoom(15); } }}>
-            <div style={s.sidebarNum}>{i + 1}</div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <p style={s.sidebarName}>{hotel.name}</p>
-              {hotel.rating && <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:2 }}><Stars rating={hotel.rating} /><span style={{ fontSize:10, color:"#9FB3C8" }}>{hotel.rating}</span></div>}
-            </div>
-            {hotel.priceLevel && <span style={s.sidebarPrice}>{hotel.priceLevel}</span>}
-          </div>
-        ))}
-      </div>
       {selectedHotel && (
         <div style={s.mapPopup}>
           <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>x</button>
@@ -519,10 +480,6 @@ const s = {
   toggleActive: { background:"#fff", color:"#0F2544", boxShadow:"0 1px 4px rgba(15,37,68,0.1)" },
   grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:20 },
   card: { background:"#fff", borderRadius:14, overflow:"visible", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
-  carouselBtn: { position:"absolute", top:"50%", transform:"translateY(-50%)", zIndex:5, width:28, height:28, borderRadius:"50%", background:"rgba(0,0,0,0.45)", border:"none", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", backdropFilter:"blur(4px)", transition:"background 0.15s" },
-  carouselDots: { position:"absolute", bottom:28, left:0, right:0, display:"flex", justifyContent:"center", gap:4, zIndex:5 },
-  carouselDot: { width:6, height:6, borderRadius:"50%", cursor:"pointer", transition:"background 0.15s" },
-  photoCount: { position:"absolute", top:10, right:10, background:"rgba(0,0,0,0.5)", color:"#fff", fontSize:10, fontWeight:600, padding:"3px 8px", borderRadius:20, zIndex:5 },
   imgBox: { position:"relative", height:196, background:"#EDE8E3", overflow:"hidden", borderRadius:"14px 14px 0 0" },
   img: { width:"100%", height:"100%", objectFit:"cover", display:"block" },
   imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#EDE8E3 0%,#DDD5CC 100%)" },
@@ -541,12 +498,6 @@ const s = {
   emptyText: { color:"#9FB3C8", fontSize:15, maxWidth:300, lineHeight:1.6 },
   mapWrap: { position:"relative", height:580, borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
   mapEl: { width:"100%", height:"100%" },
-  mapSidebar: { position:"absolute", top:12, right:12, width:220, background:"#fff", borderRadius:12, boxShadow:"0 4px 20px rgba(15,37,68,0.12)", padding:"12px 10px", maxHeight:"calc(100% - 24px)", overflowY:"auto", zIndex:10 },
-  sidebarTitle: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8, paddingLeft:4 },
-  sidebarItem: { display:"flex", alignItems:"center", gap:8, padding:"9px 8px", borderRadius:10, border:"1.5px solid #DDD5CC", marginBottom:6, cursor:"pointer", transition:"all 0.15s" },
-  sidebarNum: { width:24, height:24, borderRadius:"50%", background:"#E85D3D", color:"#fff", fontSize:11, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-  sidebarName: { fontSize:12, fontWeight:600, color:"#0F2544", lineHeight:1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  sidebarPrice: { fontSize:11, color:"#E85D3D", fontWeight:700, flexShrink:0 },
   mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"#fff", borderRadius:14, boxShadow:"0 8px 32px rgba(15,37,68,0.16)", overflow:"hidden", zIndex:20 },
   popupClose: { position:"absolute", top:8, right:8, background:"rgba(15,37,68,0.5)", border:"none", color:"#fff", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
   popupImg: { width:"100%", height:130, objectFit:"cover", display:"block" },
