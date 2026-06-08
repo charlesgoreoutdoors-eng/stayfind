@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { useGmail } from "../lib/useGmail";
@@ -118,6 +118,16 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
           )}
         </div>
         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
+        {hotel.instagram && (
+          <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+            </svg>
+            {hotel.instagram}
+          </a>
+        )}
 
         <div style={{ position:"relative", marginTop:10 }}>
           <button
@@ -135,7 +145,7 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
   );
 }
 
-function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
+const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -161,7 +171,9 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
   // Keep hotels ref up to date without triggering map reinit
   useEffect(() => { hotelsRef.current = hotels; }, [hotels]);
 
-  const updateMarkers = useCallback((map, hotelList) => {
+  const boundsSetRef = useRef(false);
+
+  const updateMarkers = useCallback((map, hotelList, fitBounds = false) => {
     // Clear old markers
     markersRef.current.forEach(m => m.setMap(null));
     markersRef.current = [];
@@ -181,7 +193,11 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
       });
       markersRef.current.push(marker);
     });
-    map.fitBounds(bounds);
+    // Only fitBounds on initial load, never after
+    if (fitBounds && !boundsSetRef.current) {
+      map.fitBounds(bounds);
+      boundsSetRef.current = true;
+    }
   }, []);
 
   // Init map ONCE only
@@ -204,13 +220,18 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
       scrollwheel:true, gestureHandling:"greedy",
     });
     mapInstanceRef.current = map;
-    updateMarkers(map, hotelsRef.current);
+    updateMarkers(map, hotelsRef.current, true);
   }, [updateMarkers]);
 
-  // Update markers when hotels change WITHOUT recreating the map
+  // Update markers when hotels change WITHOUT recreating the map or resetting zoom
+  // Track previous hotel count to detect a fresh search vs incremental updates
+  const prevHotelCountRef = useRef(0);
   useEffect(() => {
     if (mapInstanceRef.current) {
-      updateMarkers(mapInstanceRef.current, hotels);
+      const isFirstLoad = prevHotelCountRef.current === 0 && hotels.length > 0;
+      if (isFirstLoad) boundsSetRef.current = false; // allow fitBounds for fresh results
+      updateMarkers(mapInstanceRef.current, hotels, isFirstLoad);
+      prevHotelCountRef.current = hotels.length;
     }
   }, [hotels, updateMarkers]);
 
@@ -258,7 +279,12 @@ function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if hotel placeIds change (new search) not when emails load
+  const prevIds = prevProps.hotels.map(h => h.placeId).join(",");
+  const nextIds = nextProps.hotels.map(h => h.placeId).join(",");
+  return prevIds === nextIds && prevProps.apiKey === nextProps.apiKey;
+});
 
 export default function Home() {
   const [location, setLocation]           = useState("");
@@ -289,7 +315,7 @@ export default function Home() {
     setLists(data || []);
   };
 
-  const addToList = async (hotel, listId) => {
+  const addToList = useCallback(async (hotel, listId) => {
     await supabase.from("list_hotels").insert({
       user_id: user?.id,
       list_id: listId, name: hotel.name, address: hotel.address || null,
@@ -301,12 +327,12 @@ export default function Home() {
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
     setTimeout(() => setAddSuccess(null), 2500);
-  };
+  }, [user]);
 
-  const createListAndAdd = async (hotel, name) => {
+  const createListAndAdd = useCallback(async (hotel, name) => {
     const { data } = await supabase.from("lists").insert({ name, user_id: user?.id }).select().single();
     if (data) { setLists(prev => [data, ...prev]); await addToList(hotel, data.id); }
-  };
+  }, [user, addToList]);
 
   useEffect(() => {
     if (!apiKey) return;
@@ -364,18 +390,31 @@ export default function Home() {
 
   const findContacts = async (hotelList) => {
     const withSite = hotelList.filter(h => h.website);
-    setHotels(prev => prev.map(h => withSite.find(w => w.placeId === h.placeId) ? { ...h, emailStatus: "finding" } : h.emailStatus ? h : { ...h, emailStatus: "notfound" }));
+    // Mark all as finding in one update
+    setHotels(prev => prev.map(h =>
+      withSite.find(w => w.placeId === h.placeId)
+        ? { ...h, emailStatus: "finding" }
+        : h.emailStatus ? h : { ...h, emailStatus: "notfound" }
+    ));
+
+    // Fetch all contacts, then update hotels in ONE batch at the end
+    const results = {};
     for (let i = 0; i < withSite.length; i += 5) {
       await Promise.all(withSite.slice(i, i + 5).map(async hotel => {
         try {
           const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
-          setHotels(prev => prev.map(h => h.placeId === hotel.placeId ? { ...h, email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : "notfound" } : h));
+          results[hotel.placeId] = { email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : "notfound" };
         } catch {
-          setHotels(prev => prev.map(h => h.placeId === hotel.placeId ? { ...h, emailStatus: "notfound" } : h));
+          results[hotel.placeId] = { emailStatus: "notfound" };
         }
       }));
     }
+
+    // Single state update with all results — no jitter
+    setHotels(prev => prev.map(h =>
+      results[h.placeId] ? { ...h, ...results[h.placeId] } : h
+    ));
   };
 
   const toggleSelect = (hotel) => setSelectedIds(prev => prev.includes(hotel.placeId) ? prev.filter(id => id !== hotel.placeId) : [...prev, hotel.placeId]);
@@ -516,6 +555,7 @@ const s = {
   cardFooter: { paddingTop:10, borderTop:"1px solid #F0EBE5", marginBottom:8 },
   ratingText: { fontSize:11, color:"#9FB3C8", marginLeft:4 },
   websiteLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none", marginBottom:2 },
+  igLink: { display:"inline-flex", alignItems:"center", gap:5, marginTop:4, fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
   addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #DDD5CC", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.2s", background:"#FAF7F4", color:"#1E3A5F" },
   addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0" },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
