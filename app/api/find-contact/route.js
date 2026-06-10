@@ -22,6 +22,13 @@ const igBlacklist = [
   // Common website junk
   "data", "json", "xml", "html", "amp", "www", "http", "https",
   "com", "org", "net", "io", "co", "uk", "au",
+  // CSS/JS @ rules and selectors that get picked up
+  "keyframes", "media", "font", "fontface", "import", "charset",
+  "supports", "namespace", "viewport", "layer", "container",
+  "id", "bg", "section", "header", "footer", "main", "nav",
+  "div", "span", "body", "head", "html", "img", "src", "href",
+  "class", "type", "name", "value", "text", "link", "button",
+  "input", "form", "label", "title", "meta", "script", "style",
 ];
 
 const emailBlacklist = [

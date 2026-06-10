@@ -16,7 +16,7 @@ export default function ListsPage() {
   const [listHotels, setListHotels]   = useState([]);
   const [hotelsLoading, setHotelsLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [igModal, setIgModal] = useState(null); // { hotel, message }
+  const [igModal, setIgModal] = useState(null);
   const [igTemplates, setIgTemplates] = useState([]);
   const [igMessage, setIgMessage] = useState("");
   const [igTemplateId, setIgTemplateId] = useState("");
@@ -24,13 +24,26 @@ export default function ListsPage() {
   const [editingNote, setEditingNote] = useState(null);
   const [noteText, setNoteText]       = useState("");
   const [igContacted, setIgContacted] = useState([]);
+  const [igReplied, setIgReplied]     = useState([]);
   const [bulkIgMode, setBulkIgMode]   = useState(false);
   const [bulkIgSelected, setBulkIgSelected] = useState([]);
   const [bulkIgIndex, setBulkIgIndex] = useState(0);
+  const [igScraping, setIgScraping]   = useState(false);
+  const [igScrapeProgress, setIgScrapeProgress] = useState({ done: 0, total: 0, found: 0 });
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
   useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
+
+  // Restore active list from localStorage after lists load
+  useEffect(() => {
+    if (lists.length === 0) return;
+    const savedId = localStorage.getItem("activeListId");
+    if (savedId && !activeList) {
+      const found = lists.find(l => l.id === savedId);
+      if (found) openList(found);
+    }
+  }, [lists]);
 
   const fetchIgTemplates = async () => {
     const { data } = await supabase.from("templates").select("*").eq("user_id", user.id).eq("type", "instagram").order("created_at", { ascending: false });
@@ -76,7 +89,7 @@ export default function ListsPage() {
   const deleteList = async (id) => {
     await supabase.from("lists").delete().eq("id", id);
     setLists(prev => prev.filter(l => l.id !== id));
-    if (activeList?.id === id) { setActiveList(null); setListHotels([]); }
+    if (activeList?.id === id) { setActiveList(null); setListHotels([]); localStorage.removeItem("activeListId"); }
     setDeleteConfirm(null);
   };
 
@@ -90,16 +103,13 @@ export default function ListsPage() {
   const sendIgDm = (hotel, message) => {
     const handle = hotel.instagram?.replace("@", "");
     if (!handle) { alert("No Instagram handle found for this hotel."); return; }
-    // Open Instagram DM compose window with pre-filled text
     window.open(`https://www.instagram.com/${handle}/`, "_blank");
     navigator.clipboard.writeText(message).catch(() => {});
-    // Mark as IG contacted
     setIgContacted(prev => prev.includes(hotel.id) ? prev : [...prev, hotel.id]);
     supabase.from("list_hotels").update({ ig_contacted: true, ig_contacted_at: new Date().toISOString() }).eq("id", hotel.id).then(() => {});
     setIgModal(null);
   };
 
-  // Bulk IG - send to next hotel in queue
   const bulkIgNext = (message) => {
     if (bulkIgIndex >= bulkIgSelected.length) {
       setBulkIgMode(false);
@@ -118,15 +128,52 @@ export default function ListsPage() {
     setBulkIgSelected(hotelsWithIg);
     setBulkIgIndex(0);
     setBulkIgMode(true);
-    // Open modal with first hotel
     const msg = igTemplates[0]?.body?.replace(/\{hotel_name\}/g, hotelsWithIg[0].name) || "";
     setIgMessage(msg);
     setIgTemplateId(igTemplates[0]?.id || "");
     setIgModal(hotelsWithIg[0]);
   };
 
+  const findIgHandles = async () => {
+    const hotelsToScrape = listHotels.filter(h => h.website && !h.instagram);
+    if (hotelsToScrape.length === 0) {
+      alert("All hotels in this list already have Instagram handles, or none have websites to scrape.");
+      return;
+    }
+    setIgScraping(true);
+    setIgScrapeProgress({ done: 0, total: hotelsToScrape.length, found: 0 });
+
+    let found = 0;
+    for (let i = 0; i < hotelsToScrape.length; i += 3) {
+      const batch = hotelsToScrape.slice(i, i + 3);
+      const results = await Promise.all(batch.map(async hotel => {
+        try {
+          const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
+          const data = await res.json();
+          return { id: hotel.id, instagram: data.instagram || null };
+        } catch {
+          return { id: hotel.id, instagram: null };
+        }
+      }));
+
+      for (const result of results) {
+        if (result.instagram) {
+          found++;
+          await supabase.from("list_hotels").update({ instagram: result.instagram }).eq("id", result.id);
+          setListHotels(prev => prev.map(h => h.id === result.id ? { ...h, instagram: result.instagram } : h));
+        }
+      }
+      setIgScrapeProgress({ done: Math.min(i + 3, hotelsToScrape.length), total: hotelsToScrape.length, found });
+    }
+
+    setIgScraping(false);
+    setIgScrapeProgress({ done: 0, total: 0, found: 0 });
+    alert(`Done! Found ${found} Instagram handle${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
+  };
+
   const openList = async (list) => {
     setActiveList(list);
+    localStorage.setItem("activeListId", list.id);
     setHotelsLoading(true);
     const { data } = await supabase
       .from("list_hotels")
@@ -152,12 +199,26 @@ export default function ListsPage() {
     setEditingNote(null);
   };
 
+  const isFollowUpNeeded = (hotel) => {
+    const replied = igReplied.includes(hotel.id) || hotel.ig_replied;
+    if (replied) return false;
+    const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;
+    if (!contacted || !hotel.ig_contacted_at) return false;
+    const daysSince = (Date.now() - new Date(hotel.ig_contacted_at).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSince > 3;
+  };
+
+  const markIgReplied = async (hotel, replied) => {
+    setIgReplied(prev => replied ? [...prev, hotel.id] : prev.filter(id => id !== hotel.id));
+    await supabase.from("list_hotels").update({ ig_replied: replied }).eq("id", hotel.id);
+    setListHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, ig_replied: replied } : h));
+  };
+
   const removeHotel = async (hotelId) => {
     await supabase.from("list_hotels").delete().eq("id", hotelId);
     setListHotels(prev => prev.filter(h => h.id !== hotelId));
   };
 
-  // Count hotels per list
   const [hotelCounts, setHotelCounts] = useState({});
   useEffect(() => {
     if (lists.length === 0) return;
@@ -276,15 +337,30 @@ export default function ListsPage() {
                   <h2 style={s.detailTitle}>{activeList.name}</h2>
                   <p style={s.detailSub}>{listHotels.length} hotel{listHotels.length !== 1 ? "s" : ""}</p>
                 </div>
-                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+                  {igScraping ? (
+                    <div style={s.igScrapeProgress}>
+                      <div style={s.igScrapeSpinner} />
+                      <span>{igScrapeProgress.done}/{igScrapeProgress.total} scraped — {igScrapeProgress.found} found</span>
+                    </div>
+                  ) : (
+                    <button style={s.igScrapeBtn} onClick={findIgHandles} title="Find Instagram handles for hotels missing them">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                      </svg>
+                      Find IG Handles
+                    </button>
+                  )}
                   <Link href={`/compose?list=${activeList.id}`}>
-                  <button style={s.composeBtn}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                    Compose Emails
-                  </button>
-                </Link>
+                    <button style={s.composeBtn}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                      </svg>
+                      Compose Emails
+                    </button>
+                  </Link>
                 </div>
               </div>
 
@@ -299,7 +375,6 @@ export default function ListsPage() {
                 </div>
               ) : (
                 <div style={s.tableWrap}>
-                  {/* Table header */}
                   <div style={s.tableHead}>
                     <div style={{ flex:3, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Hotel</div>
                     <div style={{ flex:2, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Contact</div>
@@ -336,7 +411,13 @@ export default function ListsPage() {
                             <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igHandle}>
                               {hotel.instagram}
                             </a>
-                            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                            {isFollowUpNeeded(hotel) && (
+                              <div style={s.followUpBadge} title="No reply after 3+ days">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                Follow up
+                              </div>
+                            )}
+                            <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
                               <button style={s.igDmBtn} onClick={() => openIgDm(hotel)}>
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -363,6 +444,15 @@ export default function ListsPage() {
                                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 )}
                               </button>
+                              {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
+                                <button
+                                  title={igReplied.includes(hotel.id) || hotel.ig_replied ? "Mark as not replied" : "Mark as replied"}
+                                  style={{ ...s.igReplyBtn, ...(igReplied.includes(hotel.id) || hotel.ig_replied ? s.igReplyBtnActive : {}) }}
+                                  onClick={() => markIgReplied(hotel, !(igReplied.includes(hotel.id) || hotel.ig_replied))}
+                                >
+                                  {igReplied.includes(hotel.id) || hotel.ig_replied ? "✓ Replied" : "Replied?"}
+                                </button>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -440,13 +530,11 @@ export default function ListsPage() {
               to {igModal.instagram} — {igModal.name}
             </p>
 
-            {/* Warning */}
             <div style={s.igWarning}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               <span>Use sparingly — Instagram may restrict accounts that send too many DMs. We recommend max 20-30 per day.</span>
             </div>
 
-            {/* Template picker */}
             {igTemplates.length > 0 && (
               <div style={{ marginBottom:14 }}>
                 <label style={s.igLabel}>Load Template</label>
@@ -456,11 +544,7 @@ export default function ListsPage() {
                   if (t) setIgMessage(t.body.replace(/\{hotel_name\}/g, igModal.name));
                 }}>
                   <option value="">Select a template...</option>
-                  {igTemplates.length === 0 ? (
-                    <option disabled value="">No Instagram templates yet — create one in Sequences</option>
-                  ) : (
-                    igTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)
-                  )}
+                  {igTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
             )}
@@ -542,7 +626,7 @@ const s = {
   listMeta: { fontSize:11, color:"#F5A882", fontWeight:500 },
   iconBtn: { width:30, height:30, borderRadius:7, border:"1.5px solid #e2e8f0", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
   detailPanel: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", overflow:"hidden", minHeight:300 },
-  detailHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid #f1f5f9" },
+  detailHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid #f1f5f9", gap:12, flexWrap:"wrap" },
   detailTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
   detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
@@ -567,6 +651,7 @@ const s = {
   loadingSpinner: { width:24, height:24, border:"2.5px solid #e2e8f0", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
   overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
   modal: { background:"#fff", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
+  modalActions: { display:"flex", gap:10, justifyContent:"flex-end" },
   igHandle: { fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
   igDmBtn: { display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#C13584", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
   igWarning: { display:"flex", alignItems:"flex-start", gap:8, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:10, padding:"10px 12px", marginBottom:16, fontSize:12, color:"#92400e", lineHeight:1.5 },
@@ -574,6 +659,9 @@ const s = {
   igSelect: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", cursor:"pointer", marginBottom:0 },
   igTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
   igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
+  igScrapeBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#C13584", fontFamily:"inherit" },
+  igScrapeProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, color:"#C13584", fontWeight:500 },
+  igScrapeSpinner: { width:12, height:12, border:"2px solid #e8b4d8", borderTopColor:"#C13584", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
   igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   igSentBadge: { fontSize:10, fontWeight:700, background:"#FDF0F8", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid #e8b4d8" },
   igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid #e8b4d8", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
@@ -586,4 +674,7 @@ const s = {
   noteText: { fontSize:12, color:"#1E3A5F", lineHeight:1.5 },
   notePlaceholder: { fontSize:12, color:"#CBD5E1" },
   deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
+  followUpBadge: { display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, color:"#92400e", background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:20, padding:"2px 8px" },
+  igReplyBtn: { fontSize:10, fontWeight:700, color:"#4A6A8A", background:"#f1f5f9", border:"1px solid #e2e8f0", borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
+  igReplyBtnActive: { color:"#166534", background:"#dcfce7", border:"1px solid #86efac" },
 };

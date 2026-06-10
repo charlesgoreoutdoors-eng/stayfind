@@ -186,7 +186,7 @@ export default function SequenceBuilderPage() {
     // Fetch steps for each sequence
     const seqs = seqRes.data || [];
     const withSteps = await Promise.all(seqs.map(async seq => {
-      const { data: steps } = await supabase.from("sequence_steps").select("*").eq("sequence_id", seq.id).order("step_number");
+      const { data: steps } = await supabase.from("sequence_steps").select("*").eq("sequence_id", seq.id).eq("user_id", user.id).order("step_number");
       return { ...seq, steps: steps || [] };
     }));
     setSequences(withSteps);
@@ -230,37 +230,24 @@ export default function SequenceBuilderPage() {
     setSaving(true);
     setError("");
     try {
-      let seqId;
-
-      if (isNew) {
-        const { data: seqData, error: seqErr } = await supabase
-          .from("sequences")
-          .insert({ name: form.name.trim(), user_id: user.id })
-          .select()
-          .single();
-        if (seqErr) throw new Error("Sequence save failed: " + seqErr.message);
-        seqId = seqData.id;
-      } else {
-        const { error: updateErr } = await supabase
-          .from("sequences").update({ name: form.name.trim() }).eq("id", activeSeq.id);
-        if (updateErr) throw new Error("Update failed: " + updateErr.message);
-        const { error: delErr } = await supabase
-          .from("sequence_steps").delete().eq("sequence_id", activeSeq.id);
-        if (delErr) throw new Error("Steps delete failed: " + delErr.message);
-        seqId = activeSeq.id;
-      }
-
-      for (const st of form.steps) {
-        const { error: stepErr } = await supabase.from("sequence_steps").insert({
-          sequence_id: seqId,
-          step_number: st.stepNumber,
-          template_id: st.templateId || null,
-          delay_days: st.delayDays,
-          subject: st.subject || "",
-          body: st.body,
-        });
-        if (stepErr) throw new Error("Step " + st.stepNumber + " failed: " + stepErr.message);
-      }
+      const res = await fetch("/api/save-sequence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          userId: user.id,
+          sequenceId: isNew ? null : activeSeq.id,
+          steps: form.steps.map(st => ({
+            stepNumber: st.stepNumber,
+            templateId: st.templateId || null,
+            delayDays: st.delayDays || 0,
+            subject: st.subject || "",
+            body: st.body,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Save failed");
 
       setSuccess(isNew ? "Sequence created!" : "Sequence saved!");
       setTimeout(() => setSuccess(""), 2500);
