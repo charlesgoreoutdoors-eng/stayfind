@@ -1,4 +1,10 @@
+import { createClient } from "@supabase/supabase-js";
+
 const BROWSERLESS_KEY = process.env.BROWSERLESS_API_KEY;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 const igBlacklist = [
   // Instagram system pages
@@ -139,10 +145,30 @@ const fetchRendered = async (url) => {
   } catch { return null; }
 };
 
+const getDomain = (website) => {
+  try { return new URL(website).hostname.replace(/^www\./, ""); }
+  catch { return null; }
+};
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const website = searchParams.get("website");
+  const placeId = searchParams.get("place_id");
   if (!website) return Response.json({ email: null, instagram: null });
+
+  const domain = getDomain(website);
+
+  // Check Instagram cache before scraping
+  if (domain) {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: cached } = await supabase
+      .from("instagram_cache")
+      .select("instagram")
+      .eq("domain", domain)
+      .gte("scraped_at", cutoff)
+      .maybeSingle();
+    if (cached) return Response.json({ email: null, instagram: cached.instagram });
+  }
 
   try {
     const base = website.replace(/\/$/, "").replace(/^http:/, "https:");
@@ -188,6 +214,15 @@ export async function GET(request) {
     }
 
     email = cleanEmails(allEmails)[0] || null;
+
+    // Save Instagram result to cache (even if null, to avoid re-scraping dead sites)
+    if (domain) {
+      await supabase.from("instagram_cache").upsert(
+        { place_id: placeId ?? null, domain, instagram: instagram ?? null, scraped_at: new Date().toISOString() },
+        { onConflict: "domain" }
+      );
+    }
+
     return Response.json({ email, instagram });
   } catch {
     return Response.json({ email: null, instagram: null });

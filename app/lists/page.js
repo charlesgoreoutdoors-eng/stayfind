@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import { useAuth } from "../../lib/auth";
@@ -28,8 +28,15 @@ export default function ListsPage() {
   const [bulkIgMode, setBulkIgMode]   = useState(false);
   const [bulkIgSelected, setBulkIgSelected] = useState([]);
   const [bulkIgIndex, setBulkIgIndex] = useState(0);
+  const [showMap, setShowMap]         = useState(false);
+  const mapRef                        = useRef(null);
+  const editingIgRef                  = useRef(null);
+  const [editingIg, setEditingIg]     = useState(null);
+  const [igInputText, setIgInputText] = useState("");
   const [igScraping, setIgScraping]   = useState(false);
   const [igScrapeProgress, setIgScrapeProgress] = useState({ done: 0, total: 0, found: 0 });
+  const [emailScraping, setEmailScraping] = useState(false);
+  const [emailScrapeProgress, setEmailScrapeProgress] = useState({ done: 0, total: 0, found: 0 });
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
@@ -105,8 +112,10 @@ export default function ListsPage() {
     if (!handle) { alert("No Instagram handle found for this hotel."); return; }
     window.open(`https://www.instagram.com/${handle}/`, "_blank");
     navigator.clipboard.writeText(message).catch(() => {});
+    const now = new Date().toISOString();
     setIgContacted(prev => prev.includes(hotel.id) ? prev : [...prev, hotel.id]);
-    supabase.from("list_hotels").update({ ig_contacted: true, ig_contacted_at: new Date().toISOString() }).eq("id", hotel.id).then(() => {});
+    setListHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, ig_contacted: true, ig_contacted_at: now, contacted: true, contacted_at: now } : h));
+    supabase.from("list_hotels").update({ ig_contacted: true, ig_contacted_at: now, contacted: true, contacted_at: now }).eq("id", hotel.id).then(() => {});
     setIgModal(null);
   };
 
@@ -171,6 +180,53 @@ export default function ListsPage() {
     alert(`Done! Found ${found} Instagram handle${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
   };
 
+  const saveIgManual = async (hotelId, raw) => {
+    const handle = raw.trim().replace(/^@/, "");
+    if (!handle) return;
+    const formatted = "@" + handle;
+    await supabase.from("list_hotels").update({ instagram: formatted }).eq("id", hotelId);
+    setListHotels(prev => prev.map(h => h.id === hotelId ? { ...h, instagram: formatted } : h));
+    setEditingIg(null);
+    setIgInputText("");
+  };
+
+  const findEmails = async () => {
+    const hotelsToScrape = listHotels.filter(h => h.website && !h.email);
+    if (hotelsToScrape.length === 0) {
+      alert("All hotels in this list already have emails, or none have websites to scrape.");
+      return;
+    }
+    setEmailScraping(true);
+    setEmailScrapeProgress({ done: 0, total: hotelsToScrape.length, found: 0 });
+
+    let found = 0;
+    for (let i = 0; i < hotelsToScrape.length; i += 3) {
+      const batch = hotelsToScrape.slice(i, i + 3);
+      const results = await Promise.all(batch.map(async hotel => {
+        try {
+          const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&place_id=${encodeURIComponent(hotel.place_id || "")}&name=${encodeURIComponent(hotel.name)}`);
+          const data = await res.json();
+          return { id: hotel.id, email: data.email || null };
+        } catch {
+          return { id: hotel.id, email: null };
+        }
+      }));
+
+      for (const result of results) {
+        if (result.email) {
+          found++;
+          await supabase.from("list_hotels").update({ email: result.email }).eq("id", result.id);
+          setListHotels(prev => prev.map(h => h.id === result.id ? { ...h, email: result.email } : h));
+        }
+      }
+      setEmailScrapeProgress({ done: Math.min(i + 3, hotelsToScrape.length), total: hotelsToScrape.length, found });
+    }
+
+    setEmailScraping(false);
+    setEmailScrapeProgress({ done: 0, total: 0, found: 0 });
+    alert(`Found ${found} email${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
+  };
+
   const openList = async (list) => {
     setActiveList(list);
     localStorage.setItem("activeListId", list.id);
@@ -218,6 +274,51 @@ export default function ListsPage() {
     await supabase.from("list_hotels").delete().eq("id", hotelId);
     setListHotels(prev => prev.filter(h => h.id !== hotelId));
   };
+
+  // Load Google Maps and render pins whenever the map modal opens
+  useEffect(() => {
+    if (!showMap) return;
+    const hotels = listHotels.filter(h => h.lat && h.lng);
+    if (hotels.length === 0) return;
+
+    const init = () => {
+      if (!mapRef.current) return;
+      const bounds = new window.google.maps.LatLngBounds();
+      hotels.forEach(h => bounds.extend({ lat: h.lat, lng: h.lng }));
+      const map = new window.google.maps.Map(mapRef.current, {
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+      });
+      map.fitBounds(bounds);
+      const infoWindow = new window.google.maps.InfoWindow();
+      hotels.forEach(h => {
+        const marker = new window.google.maps.Marker({
+          position: { lat: h.lat, lng: h.lng },
+          map,
+          title: h.name,
+          icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#E85D3D", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+        });
+        marker.addListener("click", () => {
+          infoWindow.setContent(`<div style="font-family:sans-serif;font-size:13px;font-weight:600;color:#0F2544;max-width:180px">${h.name}${h.address ? `<div style="font-weight:400;color:#9FB3C8;font-size:11px;margin-top:3px">${h.address}</div>` : ""}</div>`);
+          infoWindow.open(map, marker);
+        });
+      });
+    };
+
+    if (window.google?.maps) { init(); return; }
+    if (document.getElementById("gmap-script")) {
+      // script already loading — wait for it
+      window.__gmapCallback = init;
+      return;
+    }
+    window.__gmapCallback = init;
+    const script = document.createElement("script");
+    script.id = "gmap-script";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&callback=__gmapCallback`;
+    script.async = true;
+    document.head.appendChild(script);
+  }, [showMap, listHotels]);
 
   const [hotelCounts, setHotelCounts] = useState({});
   useEffect(() => {
@@ -344,7 +445,7 @@ export default function ListsPage() {
                       <span>{igScrapeProgress.done}/{igScrapeProgress.total} scraped — {igScrapeProgress.found} found</span>
                     </div>
                   ) : (
-                    <button style={s.igScrapeBtn} onClick={findIgHandles} title="Find Instagram handles for hotels missing them">
+                    <button style={{ ...s.igScrapeBtn, ...(emailScraping ? s.igScrapeBtnDisabled : {}) }} onClick={findIgHandles} disabled={emailScraping} title="Find Instagram handles for hotels missing them">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                         <circle cx="12" cy="12" r="4"/>
@@ -353,6 +454,28 @@ export default function ListsPage() {
                       Find IG Handles
                     </button>
                   )}
+                  {emailScraping ? (
+                    <div style={s.igScrapeProgress}>
+                      <div style={s.igScrapeSpinner} />
+                      <span>{emailScrapeProgress.done}/{emailScrapeProgress.total} scraped — {emailScrapeProgress.found} found</span>
+                    </div>
+                  ) : (
+                    <button style={{ ...s.igScrapeBtn, ...s.emailScrapeBtn, ...(igScraping ? s.igScrapeBtnDisabled : {}) }} onClick={findEmails} disabled={igScraping} title="Find emails for hotels missing them">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                      </svg>
+                      Find Emails
+                    </button>
+                  )}
+                  <button style={s.mapBtn} onClick={() => setShowMap(true)} title="View hotels on a map">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                      <line x1="8" y1="2" x2="8" y2="18"/>
+                      <line x1="16" y1="6" x2="16" y2="22"/>
+                    </svg>
+                    View Map
+                  </button>
                   <Link href={`/compose?list=${activeList.id}`}>
                     <button style={s.composeBtn}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -424,25 +547,7 @@ export default function ListsPage() {
                                   <circle cx="12" cy="12" r="4"/>
                                   <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
                                 </svg>
-                                DM
-                              </button>
-                              <button
-                                title={igContacted.includes(hotel.id) || hotel.ig_contacted ? "Mark as not sent" : "Mark DM as sent"}
-                                style={{ ...s.igCheckbox, ...(igContacted.includes(hotel.id) || hotel.ig_contacted ? s.igCheckboxChecked : {}) }}
-                                onClick={() => {
-                                  const alreadySent = igContacted.includes(hotel.id) || hotel.ig_contacted;
-                                  if (alreadySent) {
-                                    setIgContacted(prev => prev.filter(id => id !== hotel.id));
-                                    supabase.from("list_hotels").update({ ig_contacted: false, ig_contacted_at: null }).eq("id", hotel.id);
-                                  } else {
-                                    setIgContacted(prev => [...prev, hotel.id]);
-                                    supabase.from("list_hotels").update({ ig_contacted: true, ig_contacted_at: new Date().toISOString() }).eq("id", hotel.id);
-                                  }
-                                }}
-                              >
-                                {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
-                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                )}
+                                Send DM
                               </button>
                               {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
                                 <button
@@ -455,8 +560,31 @@ export default function ListsPage() {
                               )}
                             </div>
                           </div>
+                        ) : editingIg === hotel.id ? (
+                          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+                            <input
+                              style={s.igManualInput}
+                              value={igInputText}
+                              onChange={e => setIgInputText(e.target.value)}
+                              placeholder="@handle"
+                              autoFocus
+                              onKeyDown={e => {
+                                if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
+                                if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
+                              }}
+                            />
+                            <div style={{ display:"flex", gap:5 }}>
+                              <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
+                              <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
+                            </div>
+                          </div>
                         ) : (
-                          <p style={s.noEmailText}>No handle found</p>
+                          <button
+                            style={s.igAddBtn}
+                            onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}
+                          >
+                            + Add handle
+                          </button>
                         )}
                       </div>
                       {/* Status */}
@@ -465,7 +593,7 @@ export default function ListsPage() {
                           style={{ ...s.statusBtn, ...(hotel.contacted ? s.contacted : s.pending) }}
                           onClick={() => toggleContacted(hotel)}
                         >
-                          {hotel.contacted ? "Contacted" : "Pending"}
+                          {hotel.contacted ? "Contacted" : "Not contacted yet"}
                         </button>
                         {hotel.contacted_at && (
                           <p style={s.contactedDate}>{new Date(hotel.contacted_at).toLocaleDateString()}</p>
@@ -518,6 +646,31 @@ export default function ListsPage() {
           )}
         </div>
       </div>
+
+      {/* Map Modal */}
+      {showMap && (
+        <div style={s.overlay} onClick={() => setShowMap(false)}>
+          <div style={s.mapModal} onClick={e => e.stopPropagation()}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+              <div>
+                <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", margin:0 }}>{activeList?.name}</h3>
+                <p style={{ fontSize:12, color:"#9FB3C8", marginTop:3 }}>
+                  {listHotels.filter(h => h.lat && h.lng).length} of {listHotels.length} hotels mapped
+                </p>
+              </div>
+              <button style={s.mapCloseBtn} onClick={() => setShowMap(false)}>✕</button>
+            </div>
+            {listHotels.filter(h => h.lat && h.lng).length === 0 ? (
+              <div style={{ ...s.empty, padding:"40px 0" }}>
+                <span style={{ fontSize:32 }}>📍</span>
+                <p>No location data for hotels in this list.</p>
+              </div>
+            ) : (
+              <div ref={mapRef} style={s.mapContainer} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Instagram DM Modal */}
       {igModal && (
@@ -660,6 +813,8 @@ const s = {
   igTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
   igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
   igScrapeBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#C13584", fontFamily:"inherit" },
+  emailScrapeBtn: { background:"#FEF0EC", border:"1px solid #f5c4b4", color:"#E85D3D" },
+  igScrapeBtnDisabled: { opacity:0.45, cursor:"not-allowed" },
   igScrapeProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, color:"#C13584", fontWeight:500 },
   igScrapeSpinner: { width:12, height:12, border:"2px solid #e8b4d8", borderTopColor:"#C13584", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
   igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
@@ -673,8 +828,14 @@ const s = {
   noteDisplay: { cursor:"pointer", padding:"6px 8px", borderRadius:8, border:"1px dashed #DDD5CC", minHeight:32, transition:"border-color 0.15s" },
   noteText: { fontSize:12, color:"#1E3A5F", lineHeight:1.5 },
   notePlaceholder: { fontSize:12, color:"#CBD5E1" },
+  mapBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#EEF4FF", border:"1px solid #c3d4f5", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#3B6FD4", fontFamily:"inherit" },
+  mapModal: { background:"#fff", borderRadius:16, padding:"24px", width:"90vw", maxWidth:780, maxHeight:"90vh", display:"flex", flexDirection:"column" },
+  mapContainer: { width:"100%", height:480, borderRadius:12, overflow:"hidden", border:"1.5px solid #e2e8f0" },
+  mapCloseBtn: { background:"none", border:"none", fontSize:16, color:"#9FB3C8", cursor:"pointer", padding:4, lineHeight:1 },
   deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   followUpBadge: { display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, color:"#92400e", background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:20, padding:"2px 8px" },
   igReplyBtn: { fontSize:10, fontWeight:700, color:"#4A6A8A", background:"#f1f5f9", border:"1px solid #e2e8f0", borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
   igReplyBtnActive: { color:"#166534", background:"#dcfce7", border:"1px solid #86efac" },
+  igAddBtn: { fontSize:12, color:"#C13584", background:"none", border:"1px dashed #e8b4d8", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
+  igManualInput: { width:"100%", border:"1.5px solid #e8b4d8", borderRadius:7, padding:"5px 8px", fontSize:12, fontFamily:"inherit", color:"#1E3A5F", outline:"none" },
 };
