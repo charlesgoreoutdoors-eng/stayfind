@@ -58,7 +58,8 @@ export async function POST(request) {
 
         // 3. Send the email
         const body = (step.body || "").replace(/\{hotel_name\}/g, job.hotel_name);
-        await sendEmail(job.gmail_token, job.hotel_email, step.subject || "Collaboration Opportunity", body);
+        const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
+        await sendEmail(job.gmail_token, job.hotel_email, subject, body);
 
         // 4. Check if there's a next step
         const { data: nextStep } = await supabase
