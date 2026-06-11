@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useGmail } from "../../lib/useGmail";
-import GmailButton from "../../components/GmailButton";
 import Link from "next/link";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
@@ -31,7 +30,7 @@ function ComposeInner() {
   const [previewHotel, setPreviewHotel]     = useState(null);
   const [tab, setTab]                       = useState("compose");
   const { user } = useAuth();
-  const { gmailToken, gmailEmail, gmailLoading, tokenExpired, connectGmail, disconnectGmail } = useGmail(); // "compose" | "hotels" | "preview"
+  const { gmailToken, gmailEmail } = useGmail();
 
   useEffect(() => { fetchLists(); fetchTemplates(); }, []);
   useEffect(() => { if (selectedListId) fetchHotels(selectedListId); else setHotels([]); }, [selectedListId]);
@@ -118,7 +117,6 @@ function ComposeInner() {
           <h1 style={s.title}>Compose Outreach</h1>
           <p style={s.subtitle}>Write one email — send it to your whole list</p>
         </div>
-        <GmailButton gmailToken={gmailToken} gmailEmail={gmailEmail} gmailLoading={gmailLoading} tokenExpired={tokenExpired} onConnect={connectGmail} onDisconnect={disconnectGmail} />
       </div>
 
       {/* Setup row: list + template selectors */}

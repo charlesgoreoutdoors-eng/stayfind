@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
-import { useGmail } from "../lib/useGmail";
-import GmailButton from "../components/GmailButton";
 
 const PRICE_RANGES = [
   { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable hotel" },
@@ -309,7 +307,6 @@ export default function Home() {
   const inputRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   const { user } = useAuth();
-  const { gmailToken, gmailEmail, gmailLoading, tokenExpired, connectGmail, disconnectGmail } = useGmail();
 
   useEffect(() => { fetchLists(); }, []);
 
@@ -435,7 +432,6 @@ export default function Home() {
             <h1 style={s.headline}>Find Your Perfect <em style={s.headlineAccent}>Hotel Partner</em></h1>
             <p style={s.tagline}>Search hotels by location and budget to start your outreach</p>
           </div>
-          <GmailButton gmailToken={gmailToken} gmailEmail={gmailEmail} gmailLoading={gmailLoading} tokenExpired={tokenExpired} onConnect={connectGmail} onDisconnect={disconnectGmail} />
         </div>
       </div>
 
