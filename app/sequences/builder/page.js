@@ -225,7 +225,7 @@ export default function SequenceBuilderPage() {
 
   const save = async () => {
     if (!user) { setError("Not logged in. Please refresh and try again."); return; }
-    if (!form.name.trim()) { setError("Give your sequence a name."); return; }
+    if (!form.name.trim()) { setError("Please enter a sequence name before saving."); return; }
     if (form.steps.some(st => !st.body.trim())) { setError("All steps need a message — check each email has content."); return; }
     setSaving(true);
     setError("");
@@ -373,8 +373,8 @@ export default function SequenceBuilderPage() {
               )}
 
               <div style={s.saveRow}>
-                <button style={{ ...s.saveBtn, opacity: !form.name.trim() || saving ? 0.45 : 1 }}
-                  onClick={save} disabled={!form.name.trim() || saving}>
+                <button style={{ ...s.saveBtn, opacity: saving ? 0.45 : 1 }}
+                  onClick={save} disabled={saving}>
                   {saving ? "Saving..." : isNew ? "Create Sequence" : "Save Changes"}
                 </button>
                 {activeSeq && (

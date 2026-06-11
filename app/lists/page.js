@@ -498,16 +498,18 @@ export default function ListsPage() {
                 </div>
               ) : (
                 <div style={s.tableWrap}>
-                  <div style={s.tableHead}>
-                    <div style={{ flex:3, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Hotel</div>
-                    <div style={{ flex:2, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Contact</div>
-                    <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" }}>Status</div>
-                    <div style={{ width:40 }}></div>
+                  <div style={{ ...s.tableHead, ...s.tableGrid }}>
+                    <div style={s.colHd}>Hotel</div>
+                    <div style={s.colHd}>Email</div>
+                    <div style={s.colHd}>Instagram</div>
+                    <div style={s.colHd}>Contacted</div>
+                    <div style={s.colHd}>Notes</div>
+                    <div style={{ width:40 }} />
                   </div>
                   {listHotels.map(hotel => (
-                    <div key={hotel.id} style={s.tableRow}>
+                    <div key={hotel.id} style={{ ...s.tableRow, ...s.tableGrid }}>
                       {/* Hotel info */}
-                      <div style={{ flex:3, display:"flex", alignItems:"center", gap:10, paddingRight:12 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
                         {hotel.photo_url ? (
                           <img src={hotel.photo_url} alt={hotel.name} style={s.thumb} onError={e => { e.target.style.display="none"; }} />
                         ) : (
@@ -519,16 +521,16 @@ export default function ListsPage() {
                           {hotel.rating && <p style={s.hotelRating}>{"★".repeat(Math.round(hotel.rating))} {hotel.rating}</p>}
                         </div>
                       </div>
-                      {/* Contact */}
-                      <div style={{ flex:2, paddingRight:12 }}>
+                      {/* Email */}
+                      <div style={{ minWidth:0 }}>
                         {hotel.email
-                          ? <p style={s.emailText}>✉ {hotel.email}</p>
-                          : <p style={s.noEmailText}>No email found</p>}
+                          ? <p style={{ ...s.emailText, wordBreak:"break-all" }}>✉ {hotel.email}</p>
+                          : <p style={s.noEmailText}>No email</p>}
                         {hotel.phone && <p style={s.phoneText}>{hotel.phone}</p>}
                         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
                       </div>
                       {/* Instagram */}
-                      <div style={{ flex:1, paddingRight:12 }}>
+                      <div style={{ minWidth:0 }}>
                         {hotel.instagram ? (
                           <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
                             <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igHandle}>
@@ -588,7 +590,7 @@ export default function ListsPage() {
                         )}
                       </div>
                       {/* Status */}
-                      <div style={{ flex:1 }}>
+                      <div style={{ minWidth:0 }}>
                         <div style={{ display:"flex", alignItems:"center", gap:7 }}>
                           <span style={{ fontSize:12, fontWeight:500, color: hotel.contacted ? "#166534" : "#9FB3C8" }}>Contacted</span>
                           <button
@@ -606,7 +608,7 @@ export default function ListsPage() {
                         )}
                       </div>
                       {/* Notes */}
-                      <div style={{ flex:2, paddingRight:12 }}>
+                      <div style={{ minWidth:0 }}>
                         {editingNote === hotel.id ? (
                           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                             <textarea
@@ -790,8 +792,10 @@ const s = {
   detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   tableWrap: { overflowX:"auto", WebkitOverflowScrolling:"touch" },
-  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
-  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #f8fafc", alignItems:"center" },
+  tableGrid: { display:"grid", gridTemplateColumns:"220px 180px 160px 110px 1fr 40px", alignItems:"center", gap:"0 12px" },
+  tableHead: { padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
+  tableRow: { padding:"14px 20px", borderBottom:"1px solid #f8fafc" },
+  colHd: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
   thumb: { width:44, height:44, borderRadius:8, objectFit:"cover", flexShrink:0 },
   thumbFallback: { width:44, height:44, borderRadius:8, background:"#F0EBE5", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 },
   hotelName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
