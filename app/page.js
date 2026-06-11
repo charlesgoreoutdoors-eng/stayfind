@@ -317,7 +317,7 @@ export default function Home() {
     } catch {}
   }, [location, price, hotels, searched, searchLabel, view, nextPageToken]);
 
-  useEffect(() => { fetchLists(); }, []);
+  useEffect(() => { if (user) fetchLists(); }, [user]);
 
   const fetchLists = async () => {
     if (!user) return;
