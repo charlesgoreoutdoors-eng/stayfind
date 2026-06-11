@@ -289,15 +289,17 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
 });
 
 export default function Home() {
-  const [location, setLocation]           = useState("");
-  const [price, setPrice]                 = useState("midrange");
-  const [hotels, setHotels]               = useState([]);
+  const _ss = (() => { try { const r = sessionStorage.getItem("sf_search"); return r ? JSON.parse(r) : {}; } catch { return {}; } })();
+
+  const [location, setLocation]           = useState(_ss.location || "");
+  const [price, setPrice]                 = useState(_ss.price || "midrange");
+  const [hotels, setHotels]               = useState(_ss.hotels || []);
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState("");
-  const [searched, setSearched]           = useState(false);
-  const [searchLabel, setSearchLabel]     = useState("");
-  const [view, setView]                   = useState("list");
-  const [nextPageToken, setNextPageToken] = useState(null);
+  const [searched, setSearched]           = useState(_ss.searched || false);
+  const [searchLabel, setSearchLabel]     = useState(_ss.searchLabel || "");
+  const [view, setView]                   = useState(_ss.view || "list");
+  const [nextPageToken, setNextPageToken] = useState(_ss.nextPageToken || null);
   const [loadingMore, setLoadingMore]     = useState(false);
   const [selectedIds, setSelectedIds]     = useState([]);
   const [lists, setLists]                 = useState([]);
@@ -307,6 +309,13 @@ export default function Home() {
   const inputRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   const { user } = useAuth();
+
+  // Persist search state to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("sf_search", JSON.stringify({ location, price, hotels, searched, searchLabel, view, nextPageToken }));
+    } catch {}
+  }, [location, price, hotels, searched, searchLabel, view, nextPageToken]);
 
   useEffect(() => { fetchLists(); }, []);
 
