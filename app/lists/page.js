@@ -589,12 +589,18 @@ export default function ListsPage() {
                       </div>
                       {/* Status */}
                       <div style={{ flex:1 }}>
-                        <button
-                          style={{ ...s.statusBtn, ...(hotel.contacted ? s.contacted : s.pending) }}
-                          onClick={() => toggleContacted(hotel)}
-                        >
-                          {hotel.contacted ? "Contacted" : "Not contacted yet"}
-                        </button>
+                        <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                          <span style={{ fontSize:12, fontWeight:500, color: hotel.contacted ? "#166534" : "#9FB3C8" }}>Contacted</span>
+                          <button
+                            style={{ ...s.igCheckbox, ...(hotel.contacted ? s.igCheckboxChecked : {}) }}
+                            onClick={() => toggleContacted(hotel)}
+                            title={hotel.contacted ? "Mark as not contacted" : "Mark as contacted"}
+                          >
+                            {hotel.contacted && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            )}
+                          </button>
+                        </div>
                         {hotel.contacted_at && (
                           <p style={s.contactedDate}>{new Date(hotel.contacted_at).toLocaleDateString()}</p>
                         )}
