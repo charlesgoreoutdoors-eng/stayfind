@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { useIsMobile } from "../../../lib/useIsMobile";
+import { useGmail } from "../../../lib/useGmail";
 
 const DELAY_OPTIONS = [
   { value: 1, label: "1 day later" },
@@ -68,7 +69,7 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
   const [mode, setMode] = useState("list"); // "list" | "hotel"
   const [selectedListId, setSelectedListId] = useState("");
   const [selectedHotelId, setSelectedHotelId] = useState("");
-  const [gmailToken, setGmailToken] = useState("");
+  const { gmailToken } = useGmail();
 
   const listHotels = allHotels.filter(h => h.list_id === selectedListId && h.email);
   const hotelsWithEmail = allHotels.filter(h => h.email);
@@ -82,12 +83,15 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
         </div>
 
         <div style={s.modalBody}>
-          <div style={s.field}>
-            <label style={s.label}>Gmail Access Token</label>
-            <p style={s.hint}>Paste your Gmail access token so the sequence can send emails automatically. Get this by connecting Gmail on the Search page.</p>
-            <input style={s.input} type="password" placeholder="Paste Gmail access token..."
-              value={gmailToken} onChange={e => setGmailToken(e.target.value)} />
-          </div>
+          {gmailToken
+            ? <div style={{ display:"flex", alignItems:"center", gap:8, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#166534", fontWeight:500 }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e" }} />
+                Gmail connected — ready to send
+              </div>
+            : <div style={{ background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#92400e" }}>
+                Gmail not connected. Go to the Messages page to connect first.
+              </div>
+          }
 
           <div style={s.modeRow}>
             <button style={{ ...s.modeBtn, ...(mode === "list" ? s.modeBtnActive : {}) }} onClick={() => setMode("list")}>
