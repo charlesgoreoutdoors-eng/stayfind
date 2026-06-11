@@ -278,11 +278,33 @@ export default function ListsPage() {
   // Load Google Maps and render pins whenever the map modal opens
   useEffect(() => {
     if (!showMap) return;
-    const hotels = listHotels.filter(h => h.lat && h.lng);
-    if (hotels.length === 0) return;
 
-    const init = () => {
+    const init = async () => {
       if (!mapRef.current) return;
+
+      // Backfill lat/lng for hotels missing coords using Geocoder
+      const coordMap = {};
+      listHotels.forEach(h => { if (h.lat && h.lng) coordMap[h.id] = { lat: h.lat, lng: h.lng }; });
+      const missing = listHotels.filter(h => !h.lat && (h.place_id || h.address));
+      if (missing.length > 0) {
+        const geocoder = new window.google.maps.Geocoder();
+        await Promise.all(missing.map(h => new Promise(resolve => {
+          const query = h.place_id ? { placeId: h.place_id } : { address: h.address };
+          geocoder.geocode(query, (results, status) => {
+            if (status === "OK" && results[0]) {
+              const loc = results[0].geometry.location;
+              const lat = loc.lat(), lng = loc.lng();
+              coordMap[h.id] = { lat, lng };
+              supabase.from("list_hotels").update({ lat, lng }).eq("id", h.id).then(() => {});
+              setListHotels(prev => prev.map(p => p.id === h.id ? { ...p, lat, lng } : p));
+            }
+            resolve();
+          });
+        })));
+      }
+
+      const hotels = listHotels.map(h => ({ ...h, ...(coordMap[h.id] || {}) })).filter(h => h.lat && h.lng);
+      if (hotels.length === 0) return;
       const bounds = new window.google.maps.LatLngBounds();
       hotels.forEach(h => bounds.extend({ lat: h.lat, lng: h.lng }));
       const map = new window.google.maps.Map(mapRef.current, {
@@ -608,34 +630,20 @@ export default function ListsPage() {
                         )}
                       </div>
                       {/* Notes */}
-                      <div style={{ minWidth:0 }}>
-                        {editingNote === hotel.id ? (
-                          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                            <textarea
-                              style={s.noteInput}
-                              rows={2}
-                              value={noteText}
-                              onChange={e => setNoteText(e.target.value)}
-                              placeholder="Add a note..."
-                              autoFocus
-                              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(hotel.id, noteText); } if (e.key === "Escape") setEditingNote(null); }}
-                            />
-                            <div style={{ display:"flex", gap:6 }}>
-                              <button style={s.noteSaveBtn} onClick={() => saveNote(hotel.id, noteText)}>Save</button>
-                              <button style={s.noteCancelBtn} onClick={() => setEditingNote(null)}>Cancel</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            style={s.noteDisplay}
-                            onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
-                            title="Click to add/edit note"
-                          >
-                            {hotel.notes
-                              ? <p style={s.noteText}>{hotel.notes}</p>
-                              : <p style={s.notePlaceholder}>+ Add note</p>}
-                          </div>
-                        )}
+                      <div style={{ minWidth:0, display:"flex", alignItems:"center" }}>
+                        <button
+                          style={{ ...s.noteBtn, ...(hotel.notes ? s.noteBtnFilled : {}) }}
+                          onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
+                          title={hotel.notes || "Add a note"}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                          </svg>
+                          {hotel.notes ? "Edit note" : "Add note"}
+                        </button>
                       </div>
 
                       {/* Remove */}
@@ -654,6 +662,36 @@ export default function ListsPage() {
           )}
         </div>
       </div>
+
+      {/* Notes Modal */}
+      {editingNote && (() => {
+        const hotel = listHotels.find(h => h.id === editingNote);
+        return (
+          <div style={s.overlay} onClick={() => setEditingNote(null)}>
+            <div style={s.notesModal} onClick={e => e.stopPropagation()}>
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:16 }}>
+                <div>
+                  <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", margin:0 }}>Notes</h3>
+                  {hotel && <p style={{ fontSize:12, color:"#9FB3C8", marginTop:4 }}>{hotel.name}</p>}
+                </div>
+                <button style={s.mapCloseBtn} onClick={() => setEditingNote(null)}>✕</button>
+              </div>
+              <textarea
+                style={s.notesModalTextarea}
+                rows={8}
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Write a note about this hotel..."
+                autoFocus
+              />
+              <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:14 }}>
+                <button style={s.cancelBtn} onClick={() => setEditingNote(null)}>Cancel</button>
+                <button style={s.saveBtn} onClick={() => saveNote(editingNote, noteText)}>Save Note</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Map Modal */}
       {showMap && (
@@ -832,12 +870,10 @@ const s = {
   igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid #e8b4d8", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
   igCheckboxChecked: { background:"#C13584", border:"1.5px solid #C13584" },
   igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
-  noteInput: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:8, padding:"7px 10px", fontSize:12, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"none", lineHeight:1.5 },
-  noteSaveBtn: { fontSize:11, fontWeight:700, color:"#fff", background:"#0F2544", border:"none", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontFamily:"inherit" },
-  noteCancelBtn: { fontSize:11, color:"#9FB3C8", background:"none", border:"1px solid #DDD5CC", borderRadius:6, padding:"4px 10px", cursor:"pointer", fontFamily:"inherit" },
-  noteDisplay: { cursor:"pointer", padding:"6px 8px", borderRadius:8, border:"1px dashed #DDD5CC", minHeight:32, transition:"border-color 0.15s" },
-  noteText: { fontSize:12, color:"#1E3A5F", lineHeight:1.5 },
-  notePlaceholder: { fontSize:12, color:"#CBD5E1" },
+  noteBtn: { display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:600, color:"#9FB3C8", background:"#F8FAFC", border:"1px dashed #DDD5CC", borderRadius:7, padding:"5px 10px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
+  noteBtnFilled: { color:"#0F2544", background:"#F0EBE5", border:"1px solid #DDD5CC" },
+  notesModal: { background:"#fff", borderRadius:16, padding:"24px", width:"90vw", maxWidth:480 },
+  notesModalTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"12px 14px", fontSize:14, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7, boxSizing:"border-box" },
   mapBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#EEF4FF", border:"1px solid #c3d4f5", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#3B6FD4", fontFamily:"inherit" },
   mapModal: { background:"#fff", borderRadius:16, padding:"24px", width:"90vw", maxWidth:780, maxHeight:"90vh", display:"flex", flexDirection:"column" },
   mapContainer: { width:"100%", height:480, borderRadius:12, overflow:"hidden", border:"1.5px solid #e2e8f0" },
