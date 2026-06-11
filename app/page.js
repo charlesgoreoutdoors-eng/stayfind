@@ -326,7 +326,7 @@ export default function Home() {
   };
 
   const addToList = useCallback(async (hotel, listId) => {
-    await supabase.from("list_hotels").insert({
+    const { error } = await supabase.from("list_hotels").insert({
       user_id: user?.id,
       list_id: listId, name: hotel.name, address: hotel.address || null,
       email: hotel.email || null, phone: hotel.phone || null, website: hotel.website || null,
@@ -335,6 +335,7 @@ export default function Home() {
       instagram: hotel.instagram || null,
       lat: hotel.lat || null, lng: hotel.lng || null,
     });
+    if (error) { alert("Could not add hotel: " + error.message); return; }
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
     setTimeout(() => setAddSuccess(null), 2500);
