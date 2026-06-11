@@ -830,7 +830,7 @@ const s = {
   detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   tableWrap: { overflowX:"auto", WebkitOverflowScrolling:"touch" },
-  tableGrid: { display:"grid", gridTemplateColumns:"220px 180px 160px 110px 1fr 40px", alignItems:"center", gap:"0 12px" },
+  tableGrid: { display:"grid", gridTemplateColumns:"220px 180px 160px 110px 180px 40px", alignItems:"center", gap:"0 12px", minWidth:940 },
   tableHead: { padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
   tableRow: { padding:"14px 20px", borderBottom:"1px solid #f8fafc" },
   colHd: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
