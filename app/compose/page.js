@@ -18,6 +18,11 @@ function ComposeInner() {
   const [hotels, setHotels]                 = useState([]);
   const [templates, setTemplates]           = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [sendMode, setSendMode]             = useState("email"); // "email" | "sequence"
+  const [sequences, setSequences]           = useState([]);
+  const [selectedSequenceId, setSelectedSequenceId] = useState("");
+  const [launching, setLaunching]           = useState(false);
+  const [launched, setLaunched]             = useState(false);
   const [portfolios, setPortfolios]             = useState([]);
   const [attachedPortfolios, setAttachedPortfolios] = useState([]);
   const [showPortfolioPicker, setShowPortfolioPicker] = useState(false);
@@ -32,7 +37,7 @@ function ComposeInner() {
   const { user } = useAuth();
   const { gmailToken, gmailEmail } = useGmail();
 
-  useEffect(() => { fetchLists(); fetchTemplates(); }, []);
+  useEffect(() => { fetchLists(); fetchTemplates(); fetchSequences(); }, []);
   useEffect(() => { if (selectedListId) fetchHotels(selectedListId); else setHotels([]); }, [selectedListId]);
   useEffect(() => { if (selectedTemplateId) { const t = templates.find(t => t.id === selectedTemplateId); if (t) { setSubject(t.subject); setBody(t.body); } } }, [selectedTemplateId, templates]);
   useEffect(() => { if (hotels.length > 0 && !previewHotel) setPreviewHotel(hotels[0]); }, [hotels]);
@@ -52,6 +57,41 @@ function ComposeInner() {
     if (!user) return;
     const { data } = await supabase.from("templates").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setTemplates(data || []);
+  };
+
+  const fetchSequences = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("sequences").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+    setSequences(data || []);
+  };
+
+  const launchSequence = async () => {
+    if (!gmailToken) { alert("Connect your Gmail account on the Messages page first."); return; }
+    if (!selectedSequenceId) { alert("Select a sequence first."); return; }
+    const toSend = hotels.filter(h => h.email);
+    if (toSend.length === 0) { alert("No hotels with email addresses in this list."); return; }
+    setLaunching(true);
+    try {
+      const now = new Date().toISOString();
+      const jobs = toSend.map(hotel => ({
+        user_id: user.id,
+        sequence_id: selectedSequenceId,
+        hotel_id: hotel.id,
+        hotel_email: hotel.email,
+        hotel_name: hotel.name,
+        current_step: 1,
+        status: "active",
+        gmail_token: gmailToken,
+        next_send_at: now,
+      }));
+      const { error } = await supabase.from("sequence_jobs").insert(jobs);
+      if (error) throw error;
+      setLaunched(true);
+      setTimeout(() => setLaunched(false), 4000);
+    } catch (e) {
+      alert("Could not launch sequence: " + e.message);
+    }
+    setLaunching(false);
   };
   const fetchHotels = async (id) => {
     setLoading(true);
@@ -115,7 +155,17 @@ function ComposeInner() {
       <div style={s.pageHeader}>
         <div>
           <h1 style={s.title}>Compose Outreach</h1>
-          <p style={s.subtitle}>Write one email — send it to your whole list</p>
+          <p style={s.subtitle}>{sendMode === "email" ? "Write one email — send it to your whole list" : "Send an automated sequence to your whole list"}</p>
+        </div>
+        <div style={s.modeToggle}>
+          <button style={{ ...s.modeBtn, ...(sendMode === "email" ? s.modeBtnActive : {}) }} onClick={() => setSendMode("email")}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            One Email
+          </button>
+          <button style={{ ...s.modeBtn, ...(sendMode === "sequence" ? s.modeBtnActive : {}) }} onClick={() => setSendMode("sequence")}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Sequence
+          </button>
         </div>
       </div>
 
@@ -128,13 +178,24 @@ function ComposeInner() {
             {lists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </div>
-        <div style={s.setupField}>
-          <label style={s.label}>Template (optional)</label>
-          <select style={s.select} value={selectedTemplateId} onChange={e => setSelectedTemplateId(e.target.value)}>
-            <option value="">Write from scratch...</option>
-            {templates.filter(t => !t.type || t.type === "email").map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        </div>
+        {sendMode === "email" && (
+          <div style={s.setupField}>
+            <label style={s.label}>Template (optional)</label>
+            <select style={s.select} value={selectedTemplateId} onChange={e => setSelectedTemplateId(e.target.value)}>
+              <option value="">Write from scratch...</option>
+              {templates.filter(t => !t.type || t.type === "email").map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+        )}
+        {sendMode === "sequence" && (
+          <div style={s.setupField}>
+            <label style={s.label}>Sequence</label>
+            <select style={s.select} value={selectedSequenceId} onChange={e => setSelectedSequenceId(e.target.value)}>
+              <option value="">Choose a sequence...</option>
+              {sequences.map(seq => <option key={seq.id} value={seq.id}>{seq.name}</option>)}
+            </select>
+          </div>
+        )}
         {selectedListId && (
           <div style={s.hotelCount}>
             <span style={s.hotelCountNum}>{hotels.length}</span>
@@ -156,9 +217,49 @@ function ComposeInner() {
 
       {/* Main layout */}
       <div style={s.layout}>
-        {/* Left: compose */}
+        {/* Left: compose / sequence launch */}
         <div style={{ ...s.composeCol, display: tab === "compose" || typeof window !== "undefined" && window.innerWidth >= 900 ? "flex" : "none" }} className="compose-col">
           <div style={s.card}>
+          {sendMode === "sequence" ? (
+            <div>
+              <p style={s.panelLabel}>Launch Sequence</p>
+              {sequences.length === 0 ? (
+                <div style={s.emptyPanel}>
+                  <span style={{ fontSize:28 }}>📋</span>
+                  <p>No sequences yet.</p>
+                  <a href="/sequences/builder" style={s.emptyLink}>Build a sequence</a>
+                </div>
+              ) : !selectedSequenceId ? (
+                <p style={{ fontSize:13, color:"#9FB3C8", marginTop:8 }}>Select a sequence and list above to get started.</p>
+              ) : !selectedListId ? (
+                <p style={{ fontSize:13, color:"#9FB3C8", marginTop:8 }}>Select a list above to send this sequence to.</p>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:12, marginTop:8 }}>
+                  <div style={s.seqSummary}>
+                    <p style={s.seqSummaryTitle}>{sequences.find(s => s.id === selectedSequenceId)?.name}</p>
+                    <p style={s.seqSummaryMeta}>Will be sent to <strong>{hotels.filter(h => h.email).length}</strong> hotels with email addresses in this list.</p>
+                    {hotels.filter(h => !h.email).length > 0 && (
+                      <p style={{ fontSize:12, color:"#f59e0b", marginTop:4 }}>{hotels.filter(h => !h.email).length} hotels without email will be skipped.</p>
+                    )}
+                  </div>
+                  {launched && (
+                    <div style={s.launchSuccess}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Sequence launched! Emails will send automatically.
+                    </div>
+                  )}
+                  <button
+                    style={{ ...s.sendBtn, opacity: launching || !gmailToken || !selectedSequenceId || hotels.filter(h => h.email).length === 0 ? 0.45 : 1 }}
+                    onClick={launchSequence}
+                    disabled={launching || !gmailToken || !selectedSequenceId || hotels.filter(h => h.email).length === 0}
+                  >
+                    {launching ? "Launching..." : `Launch Sequence for ${hotels.filter(h => h.email).length} Hotels`}
+                  </button>
+                  {!gmailToken && <p style={s.warning}>Connect Gmail on the Messages page first</p>}
+                </div>
+              )}
+            </div>
+          ) : (
             <div style={s.field}>
               <label style={s.label}>Subject Line</label>
               <input style={s.input} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Content Collaboration Opportunity" />
@@ -238,6 +339,7 @@ function ComposeInner() {
               )}
             </div>
             {!selectedListId && <p style={s.warning}>Select a list above to get started</p>}
+          )}
           </div>
         </div>
 
@@ -343,6 +445,13 @@ const s = {
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#22c55e" },
   gmailText: { fontSize:13, color:"#166534", fontWeight:500 },
   disconnectBtn: { fontSize:11, color:"#16a34a", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
+  modeToggle: { display:"flex", gap:4, background:"#F0EBE5", borderRadius:10, padding:4 },
+  modeBtn: { display:"flex", alignItems:"center", gap:6, padding:"8px 14px", border:"none", borderRadius:8, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"inherit", color:"#4A6A8A", background:"transparent" },
+  modeBtnActive: { background:"#fff", color:"#0F2544", fontWeight:600, boxShadow:"0 1px 4px rgba(0,0,0,0.1)" },
+  seqSummary: { background:"#F8FAFC", borderRadius:10, padding:"14px 16px", border:"1px solid #e2e8f0" },
+  seqSummaryTitle: { fontSize:15, fontWeight:700, color:"#0F2544", marginBottom:6 },
+  seqSummaryMeta: { fontSize:13, color:"#4A6A8A", lineHeight:1.5 },
+  launchSuccess: { display:"flex", alignItems:"center", gap:8, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"12px 16px", fontSize:13, fontWeight:500, color:"#166534" },
   setupRow: { display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"flex-end", width:"100%" },
   setupField: { display:"flex", flexDirection:"column", gap:6, flex:1, minWidth:"min(200px, 100%)" },
   label: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase" },
