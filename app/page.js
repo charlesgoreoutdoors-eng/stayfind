@@ -153,15 +153,25 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
   );
 }
 
-const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd }) {
+const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCreateAndAdd, onSearchArea, activeTabKeywords }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const hotelsRef = useRef(hotels);
+  const onSearchAreaRef = useRef(onSearchArea);
+  const activeTabKeywordsRef = useRef(activeTabKeywords);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [imgErr, setImgErr] = useState(false);
   const [mapDropdown, setMapDropdown] = useState(false);
   const [mapAddSuccess, setMapAddSuccess] = useState(false);
+  const [showSearchArea, setShowSearchArea] = useState(false);
+  const [searchingArea, setSearchingArea] = useState(false);
+  const baseZoomRef = useRef(null);
+  const baseCenterRef = useRef(null);
+  const idleListenerRef = useRef(null);
+
+  useEffect(() => { onSearchAreaRef.current = onSearchArea; }, [onSearchArea]);
+  useEffect(() => { activeTabKeywordsRef.current = activeTabKeywords; }, [activeTabKeywords]);
 
   const handleMapAdd = async (hotel, listId) => {
     await onAddToList(hotel, listId);
@@ -229,6 +239,23 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
     });
     mapInstanceRef.current = map;
     updateMarkers(map, hotelsRef.current, true);
+
+    // Track pan/zoom to show "Search this area"
+    idleListenerRef.current = map.addListener("idle", () => {
+      const zoom = map.getZoom();
+      const center = map.getCenter();
+      if (baseZoomRef.current === null) {
+        baseZoomRef.current = zoom;
+        baseCenterRef.current = center;
+        return;
+      }
+      const zoomDelta = Math.abs(zoom - baseZoomRef.current);
+      const latDelta = Math.abs(center.lat() - baseCenterRef.current.lat());
+      const lngDelta = Math.abs(center.lng() - baseCenterRef.current.lng());
+      const hasMoved = latDelta > 0.005 || lngDelta > 0.005;
+      const hasZoomed = zoomDelta > 1;
+      if (hasMoved || hasZoomed) setShowSearchArea(true);
+    });
   }, [updateMarkers]);
 
   // Update markers when hotels change WITHOUT recreating the map or resetting zoom
@@ -260,9 +287,35 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
     document.head.appendChild(script);
   }, []); // empty deps - only runs once
 
+  const handleSearchArea = async () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    setSearchingArea(true);
+    setShowSearchArea(false);
+    const bounds = map.getBounds();
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+    // Reset base position so button doesn't immediately reappear
+    baseZoomRef.current = map.getZoom();
+    baseCenterRef.current = map.getCenter();
+    await onSearchAreaRef.current({
+      lat_ne: ne.lat(), lng_ne: ne.lng(),
+      lat_sw: sw.lat(), lng_sw: sw.lng(),
+      keywords: activeTabKeywordsRef.current,
+    });
+    setSearchingArea(false);
+  };
+
   return (
     <div style={s.mapWrap}>
       <div ref={mapRef} style={s.mapEl} />
+      {(showSearchArea || searchingArea) && (
+        <button style={s.searchAreaBtn} onClick={handleSearchArea} disabled={searchingArea}>
+          {searchingArea
+            ? <><span style={s.searchAreaSpinner} /> Searching...</>
+            : "Search this area"}
+        </button>
+      )}
       {selectedHotel && (
         <div style={s.mapPopup}>
           <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>x</button>
@@ -288,10 +341,9 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Only re-render if hotel placeIds change (new search) not when emails load
   const prevIds = prevProps.hotels.map(h => h.placeId).join(",");
   const nextIds = nextProps.hotels.map(h => h.placeId).join(",");
-  return prevIds === nextIds && prevProps.apiKey === nextProps.apiKey;
+  return prevIds === nextIds && prevProps.apiKey === nextProps.apiKey && prevProps.activeTabKeywords === nextProps.activeTabKeywords;
 });
 
 const EMPTY_TAB_STATE = { hotels: [], loading: false, searched: false };
@@ -443,6 +495,37 @@ export default function Home() {
 
   const search = () => searchTab(activeTab);
 
+  const handleSearchArea = useCallback(async ({ lat_ne, lng_ne, lat_sw, lng_sw, keywords }) => {
+    const priceObj = PRICE_RANGES.find(p => p.value === price);
+    const pricePrefix = priceObj.keyword ? priceObj.keyword + " " : "";
+    const kws = (keywords || ["hotel"]).map(k => pricePrefix + k);
+    setError("");
+    setTab(activeTab, { loading: true, searched: true });
+    try {
+      const allResults = await Promise.all(kws.map(async kw => {
+        const params = new URLSearchParams({ lat_ne, lng_ne, lat_sw, lng_sw, keyword: kw });
+        const res = await fetch(`/api/hotels?${params}`);
+        const data = await res.json();
+        return data.hotels || [];
+      }));
+      const seen = new Set();
+      const seenNames = new Set();
+      const hotelList = allResults.flat()
+        .filter(h => {
+          if (seen.has(h.placeId)) return false;
+          const n = (h.name || "").toLowerCase().trim();
+          if (seenNames.has(n)) return false;
+          seen.add(h.placeId); seenNames.add(n); return true;
+        })
+        .map(h => ({ ...h, emailStatus: null, email: null }));
+      setTab(activeTab, { hotels: hotelList, loading: false, searched: true });
+      findContacts(activeTab, hotelList);
+    } catch {
+      setError("Could not search this area. Please try again.");
+      setTab(activeTab, { loading: false });
+    }
+  }, [activeTab, price]);
+
   // When switching tabs, auto-fetch if location set but tab not yet searched
   const handleTabSwitch = (tabId) => {
     setActiveTab(tabId);
@@ -587,7 +670,7 @@ export default function Home() {
               </div>
             )}
 
-            {view === "map" && <MapView key={activeTab} hotels={activeHotels} apiKey={apiKey} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd} />}
+            {view === "map" && <MapView key={activeTab} hotels={activeHotels} apiKey={apiKey} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd} onSearchArea={handleSearchArea} activeTabKeywords={PROPERTY_TABS.find(t => t.id === activeTab)?.keywords} />}
           </>
         )}
 
@@ -660,6 +743,8 @@ const s = {
   addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0" },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
   emptyText: { color:"#9FB3C8", fontSize:15, maxWidth:300, lineHeight:1.6 },
+  searchAreaBtn: { position:"absolute", top:12, left:"50%", transform:"translateX(-50%)", zIndex:10, display:"flex", alignItems:"center", gap:7, padding:"9px 20px", background:"#0F2544", color:"#fff", border:"none", borderRadius:24, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", boxShadow:"0 2px 12px rgba(15,37,68,0.25)", whiteSpace:"nowrap" },
+  searchAreaSpinner: { display:"inline-block", width:12, height:12, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   mapWrap: { position:"relative", height:580, borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
   mapEl: { width:"100%", height:"100%" },
   mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"#fff", borderRadius:14, boxShadow:"0 8px 32px rgba(15,37,68,0.16)", overflow:"hidden", zIndex:20 },

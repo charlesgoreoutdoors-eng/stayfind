@@ -129,11 +129,53 @@ export async function GET(request) {
   const query   = searchParams.get("query");
   const keyword = searchParams.get("keyword") || "hotel";
   const key     = process.env.GOOGLE_PLACES_API_KEY;
+  const lat_ne  = searchParams.get("lat_ne");
+  const lng_ne  = searchParams.get("lng_ne");
+  const lat_sw  = searchParams.get("lat_sw");
+  const lng_sw  = searchParams.get("lng_sw");
+  const isBoundsSearch = lat_ne && lng_ne && lat_sw && lng_sw;
 
-  if (!query) return Response.json({ error: "Missing query" }, { status: 400 });
-  if (!key)   return Response.json({ error: "API key not configured" }, { status: 500 });
+  if (!query && !isBoundsSearch) return Response.json({ error: "Missing query" }, { status: 400 });
+  if (!key) return Response.json({ error: "API key not configured" }, { status: 500 });
 
-  // Check search cache
+  // Bounds-based search — skip cache and geocoding, go straight to grid
+  if (isBoundsSearch) {
+    try {
+      const viewport = {
+        northeast: { lat: parseFloat(lat_ne), lng: parseFloat(lng_ne) },
+        southwest: { lat: parseFloat(lat_sw), lng: parseFloat(lng_sw) },
+      };
+      const latDiff = Math.abs(viewport.northeast.lat - viewport.southwest.lat);
+      const lngDiff = Math.abs(viewport.northeast.lng - viewport.southwest.lng);
+      const radius = Math.min(Math.max(latDiff * 111000 / 2, lngDiff * 111000 / 2), 25000);
+      const gridRadius = Math.min(radius / 2.5, 5000);
+      const points = generateGridPoints(viewport, gridRadius);
+
+      const seen = new Set();
+      const allPlaces = [];
+      for (let i = 0; i < points.length; i += 4) {
+        const batch = points.slice(i, i + 4);
+        const results = await Promise.all(batch.map(p => searchAtPoint(p.lat, p.lng, gridRadius, keyword, key)));
+        for (const places of results) {
+          for (const place of places) {
+            if (!seen.has(place.place_id)) { seen.add(place.place_id); allPlaces.push(place); }
+          }
+        }
+      }
+      const hotels = [];
+      for (let i = 0; i < allPlaces.length; i += 10) {
+        const batch = allPlaces.slice(i, i + 10);
+        const details = await Promise.all(batch.map(p => getPlaceDetails(p.place_id, key)));
+        for (let j = 0; j < batch.length; j++) hotels.push(buildHotel(batch[j], details[j], key));
+      }
+      hotels.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return Response.json({ hotels, total: hotels.length });
+    } catch (err) {
+      return Response.json({ error: "Bounds search failed: " + err.message }, { status: 500 });
+    }
+  }
+
+  // Check search cache (city searches only)
   const cacheKey = makeCacheKey(query, keyword);
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data: cached } = await supabase
