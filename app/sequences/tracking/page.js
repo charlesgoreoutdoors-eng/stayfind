@@ -82,6 +82,7 @@ export default function TrackingPage() {
 
   return (
     <div>
+      <h2 style={{ fontSize:20, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px", marginBottom:20 }}>Email Tracking</h2>
       {/* Stats */}
       <div style={{ ...s.statsRow, gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)" }}>
         {[

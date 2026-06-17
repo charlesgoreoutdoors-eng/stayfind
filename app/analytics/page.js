@@ -42,7 +42,9 @@ export default function AnalyticsPage() {
     totalLists: 0,
     totalHotels: 0,
     hotelsWithEmail: 0,
+    hotelsWithIg: 0,
     hotelsContacted: 0,
+    hotelsIgContacted: 0,
     hotelsReplied: 0,
     totalTemplates: 0,
     totalSequences: 0,
@@ -79,7 +81,9 @@ export default function AnalyticsPage() {
       const listList = lists || [];
 
       const hotelsWithEmail = hotelList.filter(h => h.email).length;
+      const hotelsWithIg = hotelList.filter(h => h.instagram).length;
       const hotelsContacted = hotelList.filter(h => h.contacted).length;
+      const hotelsIgContacted = hotelList.filter(h => h.ig_contacted).length;
       const hotelsReplied = jobList.filter(j => j.replied_at).length;
       const activeJobs = jobList.filter(j => j.status === "active").length;
       const completedJobs = jobList.filter(j => j.status === "completed").length;
@@ -92,6 +96,8 @@ export default function AnalyticsPage() {
           total: listHotels.length,
           withEmail: listHotels.filter(h => h.email).length,
           contacted: listHotels.filter(h => h.contacted).length,
+          igDms: listHotels.filter(h => h.ig_contacted).length,
+          emailsSent: listHotels.filter(h => h.contacted).length,
           created: list.created_at,
         };
       }).sort((a, b) => b.total - a.total);
@@ -122,7 +128,9 @@ export default function AnalyticsPage() {
         totalLists: listList.length,
         totalHotels: hotelList.length,
         hotelsWithEmail,
+        hotelsWithIg,
         hotelsContacted,
+        hotelsIgContacted,
         hotelsReplied,
         totalTemplates: (templates || []).length,
         totalSequences: (sequences || []).length,
@@ -175,9 +183,11 @@ export default function AnalyticsPage() {
           icon="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
         <StatCard label="Emails Found" value={`${stats.emailFoundRate}%`} sub={`${stats.hotelsWithEmail} hotels`} color="#2A9D8F"
           icon="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9" />
-        <StatCard label="Contacted" value={stats.hotelsContacted} sub={`${stats.contactRate}% contact rate`} color="#E85D3D"
+        <StatCard label="Contacted via Email" value={stats.hotelsContacted} sub={`${stats.contactRate}% of emails found`} color="#E85D3D"
           icon="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-        <StatCard label="Replies Received" value={stats.hotelsReplied} sub={`${stats.replyRate}% reply rate`} color="#C13584"
+        <StatCard label="Contacted via Instagram" value={stats.hotelsIgContacted} sub={`of ${stats.hotelsWithIg} with IG handle`} color="#C13584"
+          icon="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z" />
+        <StatCard label="Replies Received" value={stats.hotelsReplied} sub={`${stats.replyRate}% reply rate`} color="#1E3A5F"
           icon="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </div>
 
@@ -222,21 +232,21 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div style={{ marginTop:16 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 48px 64px 72px", gap:"0 8px", padding:"0 0 6px", borderBottom:"1px solid #F0EBE5", marginBottom:4 }}>
+                <span style={s.breakdownHd}>List</span>
+                <span style={{ ...s.breakdownHd, textAlign:"center" }}>Hotels</span>
+                <span style={{ ...s.breakdownHd, textAlign:"center", color:"#C13584" }}>IG DMs</span>
+                <span style={{ ...s.breakdownHd, textAlign:"center", color:"#E85D3D" }}>Emails Sent</span>
+              </div>
               {stats.listBreakdown.map((list, i) => (
-                <div key={i} style={s.listRow}>
-                  <div style={{ flex:1, minWidth:0 }}>
+                <div key={i} style={{ ...s.listRow, display:"grid", gridTemplateColumns:"1fr 48px 64px 72px", gap:"0 8px" }}>
+                  <div style={{ minWidth:0 }}>
                     <p style={s.listName}>{list.name}</p>
-                    <div style={s.listMini}>
-                      <span style={s.miniStat}>{list.total} hotels</span>
-                      <span style={s.miniDot}>-</span>
-                      <span style={s.miniStat}>{list.withEmail} with email</span>
-                      <span style={s.miniDot}>-</span>
-                      <span style={{ ...s.miniStat, color:"#E85D3D" }}>{list.contacted} contacted</span>
-                    </div>
+                    <p style={{ fontSize:11, color:"#9FB3C8", marginTop:1 }}>{list.withEmail} with email</p>
                   </div>
-                  <div style={s.listPct}>
-                    {list.total > 0 ? Math.round((list.contacted / list.total) * 100) : 0}%
-                  </div>
+                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"#0F2544", alignSelf:"center" }}>{list.total}</div>
+                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"#C13584", alignSelf:"center" }}>{list.igDms}</div>
+                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"#E85D3D", alignSelf:"center" }}>{list.emailsSent}</div>
                 </div>
               ))}
             </div>
@@ -247,12 +257,33 @@ export default function AnalyticsPage() {
       {/* Funnel */}
       <div style={s.card}>
         <h2 style={s.cardTitle}>Outreach Funnel</h2>
-        <p style={s.cardSub}>How hotels move through your pipeline</p>
-        <div style={{ marginTop:20 }}>
-          <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="#0F2544" />
-          <SimpleBar label="Email Found" value={stats.hotelsWithEmail} max={stats.totalHotels} color="#2A9D8F" />
-          <SimpleBar label="Contacted" value={stats.hotelsContacted} max={stats.totalHotels} color="#E85D3D" />
-          <SimpleBar label="Replied" value={stats.hotelsReplied} max={stats.totalHotels} color="#C13584" />
+        <p style={s.cardSub}>How hotels move through each channel</p>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:28, marginTop:24 }}>
+          {/* Email track */}
+          <div>
+            <div style={s.funnelTrackHead}>
+              <div style={{ ...s.funnelTrackDot, background:"#E85D3D" }} />
+              <span style={s.funnelTrackLabel}>Email Outreach</span>
+            </div>
+            <div style={{ marginTop:14 }}>
+              <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="#0F2544" />
+              <SimpleBar label="Email Found" value={stats.hotelsWithEmail} max={stats.totalHotels} color="#2A9D8F" />
+              <SimpleBar label="Email Sent" value={stats.hotelsContacted} max={stats.totalHotels} color="#E85D3D" />
+              <SimpleBar label="Replied" value={stats.hotelsReplied} max={stats.totalHotels} color="#1E3A5F" />
+            </div>
+          </div>
+          {/* Instagram track */}
+          <div>
+            <div style={s.funnelTrackHead}>
+              <div style={{ ...s.funnelTrackDot, background:"#C13584" }} />
+              <span style={s.funnelTrackLabel}>Instagram Outreach</span>
+            </div>
+            <div style={{ marginTop:14 }}>
+              <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="#0F2544" />
+              <SimpleBar label="IG Handle Found" value={stats.hotelsWithIg} max={stats.totalHotels} color="#4A6A8A" />
+              <SimpleBar label="DM Sent" value={stats.hotelsIgContacted} max={stats.totalHotels} color="#C13584" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -297,4 +328,8 @@ const s = {
   barTrack: { flex:1, height:10, background:"#F0EBE5", borderRadius:6, overflow:"hidden" },
   barFill: { height:"100%", borderRadius:6, transition:"width 0.5s ease" },
   barValue: { fontSize:13, fontWeight:600, color:"#0F2544", minWidth:32, textAlign:"right" },
+  breakdownHd: { fontSize:10, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.06em", textTransform:"uppercase" },
+  funnelTrackHead: { display:"flex", alignItems:"center", gap:8, paddingBottom:10, borderBottom:"1px solid #F0EBE5" },
+  funnelTrackDot: { width:8, height:8, borderRadius:"50%", flexShrink:0 },
+  funnelTrackLabel: { fontSize:13, fontWeight:700, color:"#1E3A5F" },
 };

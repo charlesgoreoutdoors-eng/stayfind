@@ -524,7 +524,7 @@ export default function ListsPage() {
                     <div style={s.colHd}>Hotel</div>
                     <div style={s.colHd}>Email</div>
                     <div style={s.colHd}>Instagram</div>
-                    <div style={s.colHd}>Contacted</div>
+                    <div style={s.colHd}>Instagram Contacted</div>
                     <div style={s.colHd}>Notes</div>
                     <div style={{ width:40 }} />
                   </div>
@@ -611,22 +611,24 @@ export default function ListsPage() {
                           </button>
                         )}
                       </div>
-                      {/* Status */}
+                      {/* Instagram Contacted */}
                       <div style={{ minWidth:0 }}>
                         <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-                          <span style={{ fontSize:12, fontWeight:500, color: hotel.contacted ? "#166534" : "#9FB3C8" }}>Contacted</span>
+                          <span style={{ fontSize:12, fontWeight:500, color: hotel.ig_contacted ? "#C13584" : "#9FB3C8" }}>
+                            {hotel.ig_contacted ? "DM Sent" : "Not Sent"}
+                          </span>
                           <button
-                            style={{ ...s.igCheckbox, ...(hotel.contacted ? s.igCheckboxChecked : {}) }}
+                            style={{ ...s.igCheckbox, ...(hotel.ig_contacted ? s.igCheckboxChecked : {}) }}
                             onClick={() => toggleContacted(hotel)}
-                            title={hotel.contacted ? "Mark as not contacted" : "Mark as contacted"}
+                            title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}
                           >
-                            {hotel.contacted && (
+                            {hotel.ig_contacted && (
                               <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
                             )}
                           </button>
                         </div>
-                        {hotel.contacted_at && (
-                          <p style={s.contactedDate}>{new Date(hotel.contacted_at).toLocaleDateString()}</p>
+                        {hotel.ig_contacted_at && (
+                          <p style={s.contactedDate}>{new Date(hotel.ig_contacted_at).toLocaleDateString()}</p>
                         )}
                       </div>
                       {/* Notes */}

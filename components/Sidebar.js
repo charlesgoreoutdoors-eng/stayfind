@@ -61,12 +61,11 @@ export default function Sidebar({ children }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #F7F3EF; font-family: "Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #1E3A5F; }
+        body { background: #F7F3EF; font-family: var(--font-sans, "Manrope", system-ui, sans-serif); -webkit-font-smoothing: antialiased; color: #1E3A5F; }
         ::placeholder { color: #9FB3C8; }
         a { text-decoration: none; color: inherit; }
-        input, select, textarea, button { font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+        input, select, textarea, button { font-family: inherit; }
 
         .sf-layout { display: flex; min-height: 100vh; }
 
@@ -90,7 +89,7 @@ export default function Sidebar({ children }) {
           padding: 0 16px; gap: 14px; z-index: 200;
         }
         .sf-main { flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; }
-        .sf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 149; }
+        .sf-overlay { position: fixed; inset: 0; background: rgba(15,37,68,0.55); z-index: 149; }
 
         .sf-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
         .sf-nav-item:hover { background: rgba(255,255,255,0.07); }
@@ -114,7 +113,10 @@ export default function Sidebar({ children }) {
         .hotel-card { transition: transform 0.2s, box-shadow 0.2s; }
         .hotel-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,37,68,0.13) !important; }
 
-        .pac-container { font-family: "Plus Jakarta Sans",system-ui,sans-serif; border-radius:12px; border:1px solid #DDD5CC; box-shadow:0 8px 24px rgba(15,37,68,0.1); margin-top:4px; z-index:9999 !important; }
+        /* Focus ring override for dark sidebar */
+        .sf-sidebar :focus-visible { outline-color: #F5A882; }
+
+        .pac-container { font-family: var(--font-sans, "Manrope", system-ui, sans-serif); border-radius:12px; border:1px solid #DDD5CC; box-shadow:0 8px 24px rgba(15,37,68,0.1); margin-top:4px; z-index:9999 !important; }
         .pac-item { padding:10px 14px; font-size:14px; cursor:pointer; color:#1E3A5F; }
         .pac-item:hover { background:#F7F3EF; }
       `}</style>

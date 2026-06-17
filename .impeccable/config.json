@@ -1,0 +1,196 @@
+{
+  "detector": {
+    "ignoreRules": [
+      "layout-transition"
+    ],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "rgba(42,157,143,0.2)",
+        "reason": "Gmail connected state — teal brand color",
+        "createdAt": "2026-06-17T08:47:07.032Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(42,157,143,0.4)",
+        "reason": "Gmail connected state — teal brand color",
+        "createdAt": "2026-06-17T08:47:17.112Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#2a9d8f",
+        "reason": "Gmail connected state — teal brand color",
+        "createdAt": "2026-06-17T08:47:17.148Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#a8e6e0",
+        "reason": "Gmail connected + success state colors",
+        "createdAt": "2026-06-17T08:47:17.183Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c13584",
+        "reason": "Instagram link — official brand color",
+        "createdAt": "2026-06-17T08:47:17.217Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e8f8f5",
+        "reason": "Add-to-list success state background",
+        "createdAt": "2026-06-17T08:47:17.252Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#1a6b5a",
+        "reason": "Add-to-list success state text",
+        "createdAt": "2026-06-17T08:47:17.286Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "4px",
+        "reason": "Focus ring border-radius — functional a11y value, intentionally slightly tighter than xs:5px to hug focused element shapes",
+        "createdAt": "2026-06-17T09:06:59.037Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#2d5a8a",
+        "reason": "Deep Harbour medium — documented in DESIGN.md Section 5 as inactive nav dot color. Intentional extended palette value.",
+        "createdAt": "2026-06-17T09:07:28.727Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ef4444",
+        "reason": "Destructive action red — delete buttons, cancel confirmations. Semantic danger color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.358Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#dc2626",
+        "reason": "Error state red — database error box text. Semantic danger color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.398Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fca5a5",
+        "reason": "Error box border — light red. Semantic danger color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.435Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fee2e2",
+        "reason": "Error box background — very light red. Semantic danger color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.474Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#166534",
+        "reason": "Success text green — contacted/replied states. Semantic success color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.521Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#dcfce7",
+        "reason": "Success background green — replied state chip. Semantic success color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.558Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#86efac",
+        "reason": "Success border green — replied state chip. Semantic success color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.597Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#64748b",
+        "reason": "Slate-500 neutral — cancelled/inactive sequence status. Semantic neutral, intentional.",
+        "createdAt": "2026-06-17T09:50:45.631Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#4338ca",
+        "reason": "Indigo — completed sequence status badge. Semantic status color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.666Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#94a3b8",
+        "reason": "Slate-400 — cancel button icon stroke. Muted icon color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.701Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#cbd5e1",
+        "reason": "Slate-300 — chart date labels and remove button icon. Muted decorative color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.737Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f59e0b",
+        "reason": "Amber — hotel star rating display. Star rating semantic color, intentional.",
+        "createdAt": "2026-06-17T09:50:45.772Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fffbeb",
+        "reason": "Amber-50 — follow-up warning badge background. Warning state background, intentional.",
+        "createdAt": "2026-06-17T09:50:45.806Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fcd34d",
+        "reason": "Amber-300 — follow-up warning badge border. Warning state border, intentional.",
+        "createdAt": "2026-06-17T09:50:45.881Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#92400e",
+        "reason": "Amber-800 — follow-up warning text and IG warning text. Warning state text, intentional.",
+        "createdAt": "2026-06-17T09:50:45.920Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f1f5f9",
+        "reason": "Slate-100 — inactive status badge background. Muted neutral bg, intentional.",
+        "createdAt": "2026-06-17T09:50:45.957Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e2e8f0",
+        "reason": "Slate-200 — borders and inputs in lists page. Pre-migration neutral, intentional.",
+        "createdAt": "2026-06-17T09:50:45.993Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3b6fd4",
+        "reason": "Blue — map view button. Geographic/map UI semantic color, intentional.",
+        "createdAt": "2026-06-17T09:50:46.029Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#eef4ff",
+        "reason": "Blue-50 — map view button background. Geographic/map UI semantic color, intentional.",
+        "createdAt": "2026-06-17T09:50:46.064Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c3d4f5",
+        "reason": "Blue-200 — map view button border. Geographic/map UI semantic color, intentional.",
+        "createdAt": "2026-06-17T09:50:46.098Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "plus jakarta sans",
+        "reason": "Pre-Manrope font in lists/page.js — migration not yet applied to this file. Tracked for cleanup.",
+        "createdAt": "2026-06-17T09:50:46.135Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "3px",
+        "reason": "Chart bar top radius — 3px is intentionally smaller than xs:5px so bars don't look like pills at low heights.",
+        "createdAt": "2026-06-17T09:51:00.237Z"
+      }
+    ]
+  }
+}

@@ -48,6 +48,7 @@ function SkeletonCard() {
 function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
   const [newListName, setNewListName] = useState("");
   const [showNew, setShowNew] = useState(false);
+  const [error, setError] = useState(null);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -56,16 +57,33 @@ function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
+  const handleAdd = async (listId) => {
+    setError(null);
+    const err = await onAdd(hotel, listId);
+    if (err) { setError(err); setTimeout(() => setError(null), 4000); }
+  };
+
+  const handleCreate = async (name) => {
+    setError(null);
+    const err = await onCreateAndAdd(hotel, name);
+    if (err) { setError(err); setTimeout(() => setError(null), 4000); }
+  };
+
   return (
     <div ref={ref} style={dd.wrap}>
       <div style={dd.header}>
-        <span style={dd.title}>Add to List</span>
-        <button style={dd.close} onClick={onClose}>x</button>
+        <span style={dd.title}>Your Lists</span>
+        <button style={dd.close} onClick={onClose} aria-label="Close">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
+      {error && <p style={dd.error}>{error}</p>}
       {lists.length === 0 && !showNew && <p style={dd.empty}>No lists yet</p>}
       <div style={{ maxHeight:130, overflowY:"auto" }}>
         {lists.map(l => (
-          <button key={l.id} style={dd.item} onClick={() => onAdd(hotel, l.id)}>{l.name}</button>
+          <button key={l.id} style={dd.item} onClick={() => handleAdd(l.id)}>{l.name}</button>
         ))}
       </div>
       {!showNew
@@ -74,8 +92,8 @@ function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
           <div style={dd.newForm}>
             <input style={dd.newInput} placeholder="List name" autoFocus value={newListName}
               onChange={e => setNewListName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && newListName.trim() && onCreateAndAdd(hotel, newListName.trim())} />
-            <button style={dd.createBtn} onClick={() => newListName.trim() && onCreateAndAdd(hotel, newListName.trim())}>Create</button>
+              onKeyDown={e => e.key === "Enter" && newListName.trim() && handleCreate(newListName.trim())} />
+            <button style={dd.createBtn} onClick={() => newListName.trim() && handleCreate(newListName.trim())}>Create</button>
           </div>
         )}
     </div>
@@ -85,8 +103,9 @@ function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
 const dd = {
   wrap: { position:"absolute", bottom:"calc(100% + 6px)", left:0, right:0, background:"#fff", borderRadius:12, border:"1px solid #DDD5CC", boxShadow:"0 8px 28px rgba(15,37,68,0.14)", padding:"12px", zIndex:200 },
   header: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 },
-  title: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
-  close: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", fontSize:14, fontWeight:700 },
+  title: { fontSize:12, fontWeight:600, color:"#1E3A5F" },
+  close: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", display:"flex", alignItems:"center", padding:2 },
+  error: { fontSize:12, color:"#B83A22", background:"#FEF0EC", borderRadius:6, padding:"6px 8px", marginBottom:8 },
   empty: { fontSize:12, color:"#9FB3C8", padding:"4px 0 8px" },
   item: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"none", background:"none", cursor:"pointer", fontSize:13, color:"#1E3A5F", fontFamily:"inherit", marginBottom:2 },
   newBtn: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"1.5px dashed #F5A882", background:"none", cursor:"pointer", fontSize:12, color:"#E85D3D", fontFamily:"inherit", marginTop:6, fontWeight:600 },
@@ -121,10 +140,10 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
             </div>
           )}
         </div>
-        {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
-        {/* Instagram status - show once scrape is done */}
-        {hotel.instagram
-          ? <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 12px", marginBottom:2 }}>
+          {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
+          {hotel.instagram && (
+            <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                 <circle cx="12" cy="12" r="4"/>
@@ -132,8 +151,15 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
               </svg>
               {hotel.instagram}
             </a>
-          : hotel.emailStatus
-            ? <p style={s.igNotFound}>Finding Instagram handle...</p>
+          )}
+        </div>
+        {hotel.email
+          ? <a href={`mailto:${hotel.email}`} style={s.emailLink}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              {hotel.email}
+            </a>
+          : hotel.emailStatus === "finding"
+            ? <p style={s.igNotFound}>Scanning for contact info...</p>
             : null
         }
 
@@ -318,7 +344,9 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
       )}
       {selectedHotel && (
         <div style={s.mapPopup}>
-          <button style={s.popupClose} onClick={() => setSelectedHotel(null)}>x</button>
+          <button style={s.popupClose} onClick={() => setSelectedHotel(null)} aria-label="Close">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
           {selectedHotel.photoUrl && !imgErr && <img src={selectedHotel.photoUrl} alt={selectedHotel.name} style={s.popupImg} onError={() => setImgErr(true)} />}
           <div style={s.popupBody}>
             <h3 style={s.popupName}>{selectedHotel.name}</h3>
@@ -359,6 +387,7 @@ export default function Home() {
   const [lists, setLists]       = useState([]);
   const [addListDropdown, setAddListDropdown] = useState(null);
   const [addSuccess, setAddSuccess] = useState(null);
+  const [scanStatus, setScanStatus] = useState(null);
 
   // Per-tab state
   const [tabState, setTabState] = useState(() => {
@@ -398,7 +427,6 @@ export default function Home() {
   };
 
   const addToList = useCallback(async (hotel, listId) => {
-    // Check for duplicate in this list
     if (hotel.placeId) {
       const { data: existing } = await supabase
         .from("list_hotels")
@@ -406,11 +434,7 @@ export default function Home() {
         .eq("list_id", listId)
         .eq("place_id", hotel.placeId)
         .maybeSingle();
-      if (existing) {
-        alert("This hotel is already in that list.");
-        setAddListDropdown(null);
-        return;
-      }
+      if (existing) return "Already in this list.";
     }
     const { error } = await supabase.from("list_hotels").insert({
       user_id: user?.id,
@@ -421,15 +445,18 @@ export default function Home() {
       instagram: hotel.instagram || null,
       lat: hotel.lat || null, lng: hotel.lng || null,
     });
-    if (error) { alert("Could not add hotel: " + error.message); return; }
+    if (error) return "Couldn't add this property. Please try again.";
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
     setTimeout(() => setAddSuccess(null), 2500);
+    return null;
   }, [user]);
 
   const createListAndAdd = useCallback(async (hotel, name) => {
-    const { data } = await supabase.from("lists").insert({ name, user_id: user?.id }).select().single();
-    if (data) { setLists(prev => [data, ...prev]); await addToList(hotel, data.id); }
+    const { data, error } = await supabase.from("lists").insert({ name, user_id: user?.id }).select().single();
+    if (error || !data) return "Couldn't create the list. Please try again.";
+    setLists(prev => [data, ...prev]);
+    return addToList(hotel, data.id);
   }, [user, addToList]);
 
   useEffect(() => {
@@ -535,6 +562,8 @@ export default function Home() {
   const findContacts = async (tabId, hotelList) => {
     const withSite = hotelList.filter(h => h.website);
     if (!withSite.length) return;
+    setScanStatus({ done: 0, total: withSite.length });
+    let done = 0;
 
     setTabState(prev => ({
       ...prev,
@@ -559,6 +588,8 @@ export default function Home() {
           return { placeId: hotel.placeId, emailStatus: "notfound" };
         }
       }));
+      done += batch.length;
+      setScanStatus({ done, total: withSite.length });
 
       setTabState(prev => ({
         ...prev,
@@ -571,6 +602,7 @@ export default function Home() {
         },
       }));
     }
+    setScanStatus(null);
   };
 
   return (
@@ -578,8 +610,8 @@ export default function Home() {
       <div style={s.header}>
         <div style={s.headerInner}>
           <div>
-            <h1 style={s.headline}>Find Your Perfect <em style={s.headlineAccent}>Hotel Partner</em></h1>
-            <p style={s.tagline}>Search hotels by location and budget to start your outreach</p>
+            <h1 style={s.headline}>Find Hotels to Partner With</h1>
+            <p style={s.tagline}>Search by location and budget, then reach out directly</p>
           </div>
         </div>
       </div>
@@ -639,6 +671,14 @@ export default function Home() {
 
         {!activeLoading && activeSearched && activeHotels.length > 0 && (
           <>
+            {scanStatus && (
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, marginBottom:16, padding:"8px 14px", background:"#F0EBE5", borderRadius:20, fontSize:12, color:"#4A6A8A", fontWeight:500 }}>
+                <span style={{ width:7, height:7, borderRadius:"50%", background:"#E85D3D", flexShrink:0 }} />
+                {scanStatus.done < scanStatus.total
+                  ? `Scanning ${scanStatus.total} properties for contact details...`
+                  : `Found contacts across ${scanStatus.total} properties`}
+              </div>
+            )}
             <div style={s.resultsBar}>
               <div>
                 <h2 style={s.resultsTitle}>{activeHotels.length} {PROPERTY_TABS.find(t => t.id === activeTab)?.label} Found</h2>
@@ -687,26 +727,24 @@ const s = {
   header: { background:"#0F2544", padding:"28px 24px 64px" },
   headerInner: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:16, flexWrap:"wrap" },
   headline: { fontSize:"clamp(22px,4vw,36px)", fontWeight:700, color:"#F7F3EF", lineHeight:1.2, marginBottom:6, letterSpacing:"-0.5px" },
-  headlineAccent: { color:"#F5A882", fontStyle:"italic" },
-  tagline: { color:"#4A6A8A", fontSize:14, fontWeight:400 },
+  tagline: { color:"#9FB3C8", fontSize:14, fontWeight:400 },
   gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"rgba(247,243,239,0.1)", border:"1px solid rgba(247,243,239,0.2)", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:"#F7F3EF", flexShrink:0 },
   gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"rgba(42,157,143,0.2)", border:"1px solid rgba(42,157,143,0.4)", borderRadius:10, padding:"8px 14px" },
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#2A9D8F", flexShrink:0 },
   gmailText: { fontSize:12, color:"#A8E6E0", fontWeight:500 },
   gmailDisconnect: { fontSize:11, color:"#A8E6E0", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
   searchCard: { background:"#fff", borderRadius:20, padding:"28px 24px 24px", boxShadow:"0 8px 40px rgba(15,37,68,0.12)", maxWidth:640, width:"calc(100% - 32px)", margin:"-32px auto 0", position:"relative", zIndex:10, border:"1px solid rgba(15,37,68,0.06)" },
-  fieldLabel: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 },
+  fieldLabel: { display:"block", fontSize:11, fontWeight:700, color:"#4A6A8A", letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:8 },
   inputRow: { display:"flex", alignItems:"center", gap:10, border:"1.5px solid #DDD5CC", borderRadius:12, padding:"12px 16px", marginBottom:4 },
   input: { flex:1, border:"none", outline:"none", fontSize:15, color:"#1E3A5F", background:"transparent", width:"100%" },
   priceGrid: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:20 },
   priceBtn: { display:"flex", flexDirection:"column", alignItems:"center", padding:"10px 4px", border:"1.5px solid #DDD5CC", borderRadius:10, background:"#fff", cursor:"pointer", transition:"all 0.15s" },
   priceBtnActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC" },
   priceBtnLabel: { fontSize:12, fontWeight:600, color:"#1E3A5F", marginBottom:2 },
-  priceBtnSub: { fontSize:10, color:"#9FB3C8", textAlign:"center" },
+  priceBtnSub: { fontSize:12, color:"#4A6A8A", textAlign:"center" },
   searchBtn: { width:"100%", padding:14, background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s, background 0.2s" },
-  loadMoreBtn: { padding:"13px 36px", background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer" },
   spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  errorBox: { marginTop:12, padding:"12px 16px", background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:10, color:"#B83A22", fontSize:13 },
+  errorBox: { marginTop:12, padding:"12px 16px", background:"#FEF0EC", border:"1px solid #B83A22", borderRadius:10, color:"#B83A22", fontSize:13 },
   tabsWrap: { maxWidth:980, margin:"20px auto 0", padding:"0 16px" },
   tabs: { display:"flex", gap:8, flexWrap:"wrap" },
   tabBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 18px", borderRadius:24, border:"1.5px solid #DDD5CC", background:"#fff", color:"#0F2544", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
@@ -717,7 +755,7 @@ const s = {
   resultsWrap: { maxWidth:980, margin:"20px auto 80px", padding:"0 16px" },
   resultsBar: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 },
   resultsTitle: { fontSize:22, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" },
-  resultsSub: { fontSize:13, color:"#9FB3C8", marginTop:3 },
+  resultsSub: { fontSize:13, color:"#4A6A8A", marginTop:3 },
   viewToggle: { display:"flex", background:"#EDE8E3", borderRadius:10, padding:3, gap:3 },
   toggleBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 14px", border:"none", borderRadius:8, fontSize:13, fontWeight:500, cursor:"pointer", color:"#7A9BBF", background:"transparent", transition:"all 0.15s" },
   toggleActive: { background:"#fff", color:"#0F2544", boxShadow:"0 1px 4px rgba(15,37,68,0.1)" },
@@ -730,17 +768,18 @@ const s = {
   pricePill: { position:"absolute", top:10, right:10, background:"rgba(15,37,68,0.7)", color:"#F7F3EF", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, backdropFilter:"blur(4px)" },
   cardBody: { padding:"14px 16px 16px" },
   hotelName: { fontSize:16, fontWeight:700, color:"#0F2544", marginBottom:4, lineHeight:1.25, letterSpacing:"-0.2px" },
-  address: { fontSize:12, color:"#9FB3C8", marginBottom:6, lineHeight:1.4 },
+  address: { fontSize:12, color:"#4A6A8A", marginBottom:6, lineHeight:1.4 },
   desc: { fontSize:12, color:"#4A6A8A", lineHeight:1.6, marginBottom:10 },
   cardFooter: { paddingTop:10, borderTop:"1px solid #F0EBE5", marginBottom:8 },
-  ratingText: { fontSize:11, color:"#9FB3C8", marginLeft:4 },
+  ratingText: { fontSize:11, color:"#4A6A8A", marginLeft:4 },
   websiteLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none", marginBottom:2 },
-  igLink: { display:"inline-flex", alignItems:"center", gap:5, marginTop:4, fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
-  igNotFound: { fontSize:11, color:"#CBD5E1", marginTop:4 },
-  addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #DDD5CC", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.2s", background:"#FAF7F4", color:"#1E3A5F" },
-  addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0" },
+  igLink: { display:"inline-flex", alignItems:"center", gap:5, fontSize:12, color:"#1E3A5F", fontWeight:600, textDecoration:"none" },
+  emailLink: { display:"inline-flex", alignItems:"center", gap:5, marginTop:4, fontSize:12, color:"#0F2544", fontWeight:600, textDecoration:"none" },
+  igNotFound: { fontSize:11, color:"#9FB3C8", marginTop:4 },
+  addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #E85D3D", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.2s", background:"transparent", color:"#E85D3D" },
+  addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0", fontWeight:600 },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
-  emptyText: { color:"#9FB3C8", fontSize:15, maxWidth:300, lineHeight:1.6 },
+  emptyText: { color:"#4A6A8A", fontSize:15, maxWidth:300, lineHeight:1.6 },
   searchAreaBtn: { position:"absolute", top:12, left:"50%", transform:"translateX(-50%)", zIndex:10, display:"flex", alignItems:"center", gap:7, padding:"9px 20px", background:"#0F2544", color:"#fff", border:"none", borderRadius:24, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", boxShadow:"0 2px 12px rgba(15,37,68,0.25)", whiteSpace:"nowrap" },
   searchAreaSpinner: { display:"inline-block", width:12, height:12, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   mapWrap: { position:"relative", height:580, borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
@@ -750,6 +789,6 @@ const s = {
   popupImg: { width:"100%", height:130, objectFit:"cover", display:"block" },
   popupBody: { padding:"12px 14px 14px" },
   popupName: { fontSize:15, fontWeight:700, color:"#0F2544", marginBottom:3, letterSpacing:"-0.2px" },
-  popupAddr: { fontSize:11, color:"#9FB3C8", lineHeight:1.4, marginBottom:6 },
+  popupAddr: { fontSize:11, color:"#4A6A8A", lineHeight:1.4, marginBottom:6 },
   popupLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none" },
 };

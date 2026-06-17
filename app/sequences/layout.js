@@ -6,7 +6,7 @@ const TABS = [
   { href: "/sequences/templates", label: "Templates" },
   { href: "/sequences/builder",   label: "Sequences" },
   { href: "/sequences/compose",   label: "Compose" },
-  { href: "/sequences/tracking",  label: "Tracking" },
+  { href: "/sequences/tracking",  label: "Email Tracking" },
 ];
 
 export default function SequencesLayout({ children }) {
