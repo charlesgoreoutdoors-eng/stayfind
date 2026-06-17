@@ -260,6 +260,7 @@ function ComposeInner() {
               )}
             </div>
           ) : (
+            <>
             <div style={s.field}>
               <label style={s.label}>Subject Line</label>
               <input style={s.input} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Content Collaboration Opportunity" />
@@ -339,6 +340,7 @@ function ComposeInner() {
               )}
             </div>
             {!selectedListId && <p style={s.warning}>Select a list above to get started</p>}
+            </>
           )}
           </div>
         </div>
