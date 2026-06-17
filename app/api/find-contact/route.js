@@ -158,16 +158,29 @@ export async function GET(request) {
 
   const domain = getDomain(website);
 
-  // Check Instagram cache before scraping
+  const cacheCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
   if (domain) {
-    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: cached } = await supabase
+    // Check email cache
+    const { data: emailCached } = await supabase
+      .from("email_cache")
+      .select("email")
+      .eq("domain", domain)
+      .gte("scraped_at", cacheCutoff)
+      .maybeSingle();
+
+    // Check Instagram cache
+    const { data: igCached } = await supabase
       .from("instagram_cache")
       .select("instagram")
       .eq("domain", domain)
-      .gte("scraped_at", cutoff)
+      .gte("scraped_at", cacheCutoff)
       .maybeSingle();
-    if (cached) return Response.json({ email: null, instagram: cached.instagram });
+
+    // If both caches hit, return immediately without scraping
+    if (emailCached !== null && igCached !== null) {
+      return Response.json({ email: emailCached.email, instagram: igCached.instagram });
+    }
   }
 
   try {
@@ -215,12 +228,19 @@ export async function GET(request) {
 
     email = cleanEmails(allEmails)[0] || null;
 
-    // Save Instagram result to cache (even if null, to avoid re-scraping dead sites)
+    // Save both caches (even null results, to avoid re-scraping dead sites)
     if (domain) {
-      await supabase.from("instagram_cache").upsert(
-        { place_id: placeId ?? null, domain, instagram: instagram ?? null, scraped_at: new Date().toISOString() },
-        { onConflict: "domain" }
-      );
+      const now = new Date().toISOString();
+      await Promise.all([
+        supabase.from("email_cache").upsert(
+          { domain, email: email ?? null, scraped_at: now },
+          { onConflict: "domain" }
+        ),
+        supabase.from("instagram_cache").upsert(
+          { place_id: placeId ?? null, domain, instagram: instagram ?? null, scraped_at: now },
+          { onConflict: "domain" }
+        ),
+      ]);
     }
 
     return Response.json({ email, instagram });

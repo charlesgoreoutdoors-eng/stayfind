@@ -1,4 +1,14 @@
+import { createClient } from "@supabase/supabase-js";
+
 const PRICE_LEVEL_MAP = { 0: "Free", 1: "$", 2: "$$", 3: "$$$", 4: "$$$$" };
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+const makeCacheKey = (query, keyword) =>
+  `${query}_${keyword}`.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 200);
 
 // Geocode city — falls back gracefully if Geocoding API not enabled
 async function geocodeCity(query, key) {
@@ -123,6 +133,19 @@ export async function GET(request) {
   if (!query) return Response.json({ error: "Missing query" }, { status: 400 });
   if (!key)   return Response.json({ error: "API key not configured" }, { status: 500 });
 
+  // Check search cache
+  const cacheKey = makeCacheKey(query, keyword);
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: cached } = await supabase
+    .from("search_cache")
+    .select("results")
+    .eq("cache_key", cacheKey)
+    .gte("created_at", cutoff)
+    .maybeSingle();
+  if (cached?.results) {
+    return Response.json({ hotels: cached.results, total: cached.results.length, fromCache: true });
+  }
+
   try {
     const seen = new Set();
     const allPlaces = [];
@@ -196,6 +219,12 @@ export async function GET(request) {
 
     // Step 6 — sort by rating
     hotels.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+    // Save to search cache (fire and forget)
+    supabase.from("search_cache").upsert(
+      { cache_key: cacheKey, results: hotels, created_at: new Date().toISOString() },
+      { onConflict: "cache_key" }
+    ).then(() => {});
 
     return Response.json({ hotels, total: hotels.length });
 
