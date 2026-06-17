@@ -281,24 +281,16 @@ export default function SequenceBuilderPage() {
 
       if (hotels.length === 0) { alert("No hotels with email addresses found."); setLaunching(false); return; }
 
-      const now = new Date();
-      const jobs = hotels.map(hotel => ({
-        user_id: user.id,
-        sequence_id: launchModal.id,
-        hotel_id: hotel.id,
-        hotel_email: hotel.email,
-        hotel_name: hotel.name,
-        current_step: 1,
-        status: "active",
-        gmail_token: gmailToken,
-        next_send_at: now.toISOString(),
-      }));
+      const res = await fetch("/api/launch-sequence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sequenceId: launchModal.id, hotels, gmailToken, userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Launch failed");
 
-      const { error } = await supabase.from("sequence_jobs").insert(jobs);
-      if (error) throw error;
-
-      setSuccess(`Sequence launched for ${hotels.length} hotel${hotels.length !== 1 ? "s" : ""}!`);
-      setTimeout(() => setSuccess(""), 3000);
+      setSuccess(`Sequence launched! ${data.sent} email${data.sent !== 1 ? "s" : ""} sent immediately.`);
+      setTimeout(() => setSuccess(""), 4000);
       setLaunchModal(null);
     } catch (e) {
       alert("Could not launch: " + e.message);

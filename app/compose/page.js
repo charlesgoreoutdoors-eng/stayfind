@@ -72,20 +72,13 @@ function ComposeInner() {
     if (toSend.length === 0) { alert("No hotels with email addresses in this list."); return; }
     setLaunching(true);
     try {
-      const now = new Date().toISOString();
-      const jobs = toSend.map(hotel => ({
-        user_id: user.id,
-        sequence_id: selectedSequenceId,
-        hotel_id: hotel.id,
-        hotel_email: hotel.email,
-        hotel_name: hotel.name,
-        current_step: 1,
-        status: "active",
-        gmail_token: gmailToken,
-        next_send_at: now,
-      }));
-      const { error } = await supabase.from("sequence_jobs").insert(jobs);
-      if (error) throw error;
+      const res = await fetch("/api/launch-sequence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sequenceId: selectedSequenceId, hotels: toSend, gmailToken, userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Launch failed");
       setLaunched(true);
       setTimeout(() => setLaunched(false), 4000);
     } catch (e) {
