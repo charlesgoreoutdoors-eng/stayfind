@@ -500,7 +500,6 @@ export default function Home() {
     const pricePrefix = priceObj.keyword ? priceObj.keyword + " " : "";
     const kws = (keywords || ["hotel"]).map(k => pricePrefix + k);
     setError("");
-    setTab(activeTab, { loading: true, searched: true });
     try {
       const allResults = await Promise.all(kws.map(async kw => {
         const params = new URLSearchParams({ lat_ne, lng_ne, lat_sw, lng_sw, keyword: kw });
@@ -518,11 +517,10 @@ export default function Home() {
           seen.add(h.placeId); seenNames.add(n); return true;
         })
         .map(h => ({ ...h, emailStatus: null, email: null }));
-      setTab(activeTab, { hotels: hotelList, loading: false, searched: true });
+      setTab(activeTab, { hotels: hotelList, searched: true });
       findContacts(activeTab, hotelList);
     } catch {
       setError("Could not search this area. Please try again.");
-      setTab(activeTab, { loading: false });
     }
   }, [activeTab, price]);
 
