@@ -346,6 +346,20 @@ export default function Home() {
   };
 
   const addToList = useCallback(async (hotel, listId) => {
+    // Check for duplicate in this list
+    if (hotel.placeId) {
+      const { data: existing } = await supabase
+        .from("list_hotels")
+        .select("id")
+        .eq("list_id", listId)
+        .eq("place_id", hotel.placeId)
+        .maybeSingle();
+      if (existing) {
+        alert("This hotel is already in that list.");
+        setAddListDropdown(null);
+        return;
+      }
+    }
     const { error } = await supabase.from("list_hotels").insert({
       user_id: user?.id,
       list_id: listId, name: hotel.name, address: hotel.address || null,
@@ -405,10 +419,18 @@ export default function Home() {
         return data.hotels || [];
       }));
 
-      // Flatten and deduplicate by placeId
-      const seen = new Set();
+      // Flatten and deduplicate by placeId, then by normalised name
+      const seenIds = new Set();
+      const seenNames = new Set();
       const hotelList = allResults.flat()
-        .filter(h => { if (seen.has(h.placeId)) return false; seen.add(h.placeId); return true; })
+        .filter(h => {
+          if (seenIds.has(h.placeId)) return false;
+          const normName = (h.name || "").toLowerCase().trim();
+          if (seenNames.has(normName)) return false;
+          seenIds.add(h.placeId);
+          seenNames.add(normName);
+          return true;
+        })
         .map(h => ({ ...h, emailStatus: null, email: null }));
 
       setTab(tabId, { hotels: hotelList, loading: false, searched: true });
