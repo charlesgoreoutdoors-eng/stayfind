@@ -5,10 +5,16 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 
 const PRICE_RANGES = [
-  { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable hotel" },
-  { label: "Mid-range", sub: "$100-$250",  value: "midrange", keyword: "hotel" },
-  { label: "Upscale",   sub: "$250-$500",  value: "upscale",  keyword: "upscale boutique hotel" },
-  { label: "Luxury",    sub: "$500+",       value: "luxury",   keyword: "luxury resort 5 star hotel" },
+  { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable" },
+  { label: "Mid-range", sub: "$100-$250",  value: "midrange", keyword: "" },
+  { label: "Upscale",   sub: "$250-$500",  value: "upscale",  keyword: "upscale boutique" },
+  { label: "Luxury",    sub: "$500+",       value: "luxury",   keyword: "luxury 5 star" },
+];
+
+const PROPERTY_TABS = [
+  { id: "hotels",    label: "Hotels",           icon: "🏨", keywords: ["hotel"] },
+  { id: "vacation",  label: "Vacation Rentals", icon: "🏡", keywords: ["vacation rental", "luxury villa", "boutique guesthouse", "glamping"] },
+  { id: "apartments",label: "Apartments",       icon: "🏢", keywords: ["serviced apartment", "aparthotel", "extended stay", "furnished apartment"] },
 ];
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
@@ -288,34 +294,48 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
   return prevIds === nextIds && prevProps.apiKey === nextProps.apiKey;
 });
 
+const EMPTY_TAB_STATE = { hotels: [], loading: false, searched: false };
+
 export default function Home() {
   const _ss = (() => { try { const r = sessionStorage.getItem("sf_search"); return r ? JSON.parse(r) : {}; } catch { return {}; } })();
 
-  const [location, setLocation]           = useState(_ss.location || "");
-  const [price, setPrice]                 = useState(_ss.price || "midrange");
-  const [hotels, setHotels]               = useState(_ss.hotels || []);
-  const [loading, setLoading]             = useState(false);
-  const [error, setError]                 = useState("");
-  const [searched, setSearched]           = useState(_ss.searched || false);
-  const [searchLabel, setSearchLabel]     = useState(_ss.searchLabel || "");
-  const [view, setView]                   = useState(_ss.view || "list");
-  const [nextPageToken, setNextPageToken] = useState(_ss.nextPageToken || null);
-  const [loadingMore, setLoadingMore]     = useState(false);
-  const [selectedIds, setSelectedIds]     = useState([]);
-  const [lists, setLists]                 = useState([]);
+  const [location, setLocation] = useState(_ss.location || "");
+  const [price, setPrice]       = useState(_ss.price || "midrange");
+  const [activeTab, setActiveTab] = useState(_ss.activeTab || "hotels");
+  const [view, setView]         = useState(_ss.view || "list");
+  const [error, setError]       = useState("");
+  const [lists, setLists]       = useState([]);
   const [addListDropdown, setAddListDropdown] = useState(null);
-  const [addSuccess, setAddSuccess]       = useState(null);
+  const [addSuccess, setAddSuccess] = useState(null);
+
+  // Per-tab state
+  const [tabState, setTabState] = useState(() => {
+    const saved = _ss.tabState || {};
+    const init = {};
+    PROPERTY_TABS.forEach(t => {
+      init[t.id] = { hotels: saved[t.id]?.hotels || [], loading: false, searched: saved[t.id]?.searched || false };
+    });
+    return init;
+  });
 
   const inputRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   const { user } = useAuth();
 
-  // Persist search state to sessionStorage whenever it changes
+  const activeHotels  = tabState[activeTab]?.hotels || [];
+  const activeLoading = tabState[activeTab]?.loading || false;
+  const activeSearched = tabState[activeTab]?.searched || false;
+
+  const setTab = (tabId, patch) => setTabState(prev => ({ ...prev, [tabId]: { ...prev[tabId], ...patch } }));
+
+  // Persist search state
   useEffect(() => {
     try {
-      sessionStorage.setItem("sf_search", JSON.stringify({ location, price, hotels, searched, searchLabel, view, nextPageToken }));
+      const saveable = {};
+      PROPERTY_TABS.forEach(t => { saveable[t.id] = { hotels: tabState[t.id].hotels, searched: tabState[t.id].searched }; });
+      sessionStorage.setItem("sf_search", JSON.stringify({ location, price, activeTab, view, tabState: saveable }));
     } catch {}
-  }, [location, price, hotels, searched, searchLabel, view, nextPageToken]);
+  }, [location, price, activeTab, view, tabState]);
 
   useEffect(() => { if (user) fetchLists(); }, [user]);
 
@@ -366,52 +386,65 @@ export default function Home() {
     });
   }, []);
 
-
-  const search = async () => {
+  const searchTab = async (tabId) => {
     if (!location.trim()) return;
-    setLoading(true); setError(""); setHotels([]); setSearched(true); setSelectedIds([]); setNextPageToken(null);
+    const tab = PROPERTY_TABS.find(t => t.id === tabId);
     const priceObj = PRICE_RANGES.find(p => p.value === price);
-    setSearchLabel(`${priceObj.label} hotels in ${location}`);
+    setError("");
+    setTab(tabId, { loading: true, hotels: [], searched: true });
+
     try {
-      const res = await fetch(`/api/hotels?query=${encodeURIComponent(location)}&keyword=${encodeURIComponent(priceObj.keyword)}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      const hotelList = (data.hotels || []).map(h => ({ ...h, emailStatus: null, email: null }));
-      setHotels(hotelList);
-      setNextPageToken(null);
-      findContacts(hotelList);
-    } catch { setError("Could not find hotels. Please try again."); }
-    finally { setLoading(false); }
+      // Build keyword list: combine price modifier with each property keyword
+      const pricePrefix = priceObj.keyword ? priceObj.keyword + " " : "";
+      const keywords = tab.keywords.map(k => pricePrefix + k);
+
+      // Run all keyword searches in parallel
+      const allResults = await Promise.all(keywords.map(async kw => {
+        const res = await fetch(`/api/hotels?query=${encodeURIComponent(location)}&keyword=${encodeURIComponent(kw)}`);
+        const data = await res.json();
+        return data.hotels || [];
+      }));
+
+      // Flatten and deduplicate by placeId
+      const seen = new Set();
+      const hotelList = allResults.flat()
+        .filter(h => { if (seen.has(h.placeId)) return false; seen.add(h.placeId); return true; })
+        .map(h => ({ ...h, emailStatus: null, email: null }));
+
+      setTab(tabId, { hotels: hotelList, loading: false, searched: true });
+      findContacts(tabId, hotelList);
+    } catch {
+      setError("Could not find results. Please try again.");
+      setTab(tabId, { loading: false });
+    }
   };
 
-  const loadMore = async () => {
-    if (!nextPageToken || loadingMore) return;
-    setLoadingMore(true);
-    const priceObj = PRICE_RANGES.find(p => p.value === price);
-    try {
-      const res = await fetch(`/api/hotels?query=${encodeURIComponent(priceObj.keyword + " in " + location)}&pageToken=${encodeURIComponent(nextPageToken)}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      const newHotels = (data.hotels || []).map(h => ({ ...h, emailStatus: null, email: null }));
-      setHotels(prev => [...prev, ...newHotels]);
-      setNextPageToken(data.nextPageToken || null);
-      findContacts(newHotels);
-    } catch { setError("Could not load more."); }
-    finally { setLoadingMore(false); }
+  const search = () => searchTab(activeTab);
+
+  // When switching tabs, auto-fetch if location set but tab not yet searched
+  const handleTabSwitch = (tabId) => {
+    setActiveTab(tabId);
+    if (location.trim() && tabState[activeTab]?.searched && !tabState[tabId]?.searched) {
+      searchTab(tabId);
+    }
   };
 
-  const findContacts = async (hotelList) => {
+  const findContacts = async (tabId, hotelList) => {
     const withSite = hotelList.filter(h => h.website);
     if (!withSite.length) return;
 
-    // Mark all as finding
-    setHotels(prev => prev.map(h =>
-      withSite.find(w => w.placeId === h.placeId)
-        ? { ...h, emailStatus: "finding" }
-        : h.emailStatus ? h : { ...h, emailStatus: "notfound" }
-    ));
+    setTabState(prev => ({
+      ...prev,
+      [tabId]: {
+        ...prev[tabId],
+        hotels: prev[tabId].hotels.map(h =>
+          withSite.find(w => w.placeId === h.placeId)
+            ? { ...h, emailStatus: "finding" }
+            : h.emailStatus ? h : { ...h, emailStatus: "notfound" }
+        ),
+      },
+    }));
 
-    // Process in batches of 3 — update after each batch so results show quickly
     for (let i = 0; i < withSite.length; i += 3) {
       const batch = withSite.slice(i, i + 3);
       const batchResults = await Promise.all(batch.map(async hotel => {
@@ -424,15 +457,18 @@ export default function Home() {
         }
       }));
 
-      // Update state after each batch so users see results coming in
-      setHotels(prev => prev.map(h => {
-        const found = batchResults.find(r => r.placeId === h.placeId);
-        return found ? { ...h, ...found } : h;
+      setTabState(prev => ({
+        ...prev,
+        [tabId]: {
+          ...prev[tabId],
+          hotels: prev[tabId].hotels.map(h => {
+            const found = batchResults.find(r => r.placeId === h.placeId);
+            return found ? { ...h, ...found } : h;
+          }),
+        },
       }));
     }
   };
-
-  const toggleSelect = (hotel) => setSelectedIds(prev => prev.includes(hotel.placeId) ? prev.filter(id => id !== hotel.placeId) : [...prev, hotel.placeId]);
 
   return (
     <main>
@@ -461,27 +497,49 @@ export default function Home() {
             </button>
           ))}
         </div>
-        <button style={{ ...s.searchBtn, opacity: location.trim() && !loading ? 1 : 0.5 }} onClick={search} disabled={!location.trim() || loading}>
-          {loading ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Searching...</span> : "Search Hotels"}
+        <button style={{ ...s.searchBtn, opacity: location.trim() && !activeLoading ? 1 : 0.5 }} onClick={search} disabled={!location.trim() || activeLoading}>
+          {activeLoading ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Searching...</span> : "Search"}
         </button>
         {error && <div style={s.errorBox}>{error}</div>}
       </div>
 
+      {/* Property type tabs */}
+      <div style={s.tabsWrap}>
+        <div style={s.tabs}>
+          {PROPERTY_TABS.map(tab => {
+            const count = tabState[tab.id]?.hotels?.length;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                style={{ ...s.tabBtn, ...(isActive ? s.tabBtnActive : {}) }}
+                onClick={() => handleTabSwitch(tab.id)}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+                {count > 0 && <span style={{ ...s.tabCount, ...(isActive ? s.tabCountActive : {}) }}>{count}</span>}
+                {tabState[tab.id]?.loading && <span style={s.tabSpinner} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div style={s.resultsWrap}>
-        {loading && (
+        {activeLoading && (
           <div style={{ textAlign:"center", padding:"60px 24px" }}>
             <div style={{ width:40, height:40, border:"3px solid #DDD5CC", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 20px" }} />
             <p style={{ fontSize:15, fontWeight:600, color:"#0F2544", marginBottom:6 }}>Searching across the area...</p>
-            <p style={{ fontSize:13, color:"#9FB3C8" }}>This may take a few seconds — we search multiple zones to find every hotel</p>
+            <p style={{ fontSize:13, color:"#9FB3C8" }}>This may take a few seconds — we search multiple zones to find every property</p>
           </div>
         )}
 
-        {!loading && searched && hotels.length > 0 && (
+        {!activeLoading && activeSearched && activeHotels.length > 0 && (
           <>
             <div style={s.resultsBar}>
               <div>
-                <h2 style={s.resultsTitle}>{hotels.length} Hotels Found</h2>
-                <p style={s.resultsSub}>{searchLabel}</p>
+                <h2 style={s.resultsTitle}>{activeHotels.length} {PROPERTY_TABS.find(t => t.id === activeTab)?.label} Found</h2>
+                <p style={s.resultsSub}>{PRICE_RANGES.find(p => p.value === price)?.label} · {location}</p>
               </div>
               <div style={s.viewToggle}>
                 <button style={{ ...s.toggleBtn, ...(view==="list" ? s.toggleActive : {}) }} onClick={() => setView("list")}>
@@ -497,7 +555,7 @@ export default function Home() {
 
             {view === "list" && (
               <div style={s.grid}>
-                {hotels.map((hotel, i) => (
+                {activeHotels.map((hotel, i) => (
                   <HotelCard key={hotel.placeId || i} hotel={hotel}
                     lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd}
                     showDropdown={addListDropdown === hotel.placeId}
@@ -507,17 +565,15 @@ export default function Home() {
               </div>
             )}
 
-
-
-            {view === "map" && <MapView hotels={hotels} apiKey={apiKey} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd} />}
+            {view === "map" && <MapView key={activeTab} hotels={activeHotels} apiKey={apiKey} lists={lists} onAddToList={addToList} onCreateAndAdd={createListAndAdd} />}
           </>
         )}
 
-        {!loading && searched && hotels.length === 0 && !error && (
-          <div style={s.emptyState}><span style={{ fontSize:40 }}>🔍</span><p style={s.emptyText}>No hotels found. Try a different location.</p></div>
+        {!activeLoading && activeSearched && activeHotels.length === 0 && !error && (
+          <div style={s.emptyState}><span style={{ fontSize:40 }}>🔍</span><p style={s.emptyText}>No results found. Try a different location or price range.</p></div>
         )}
-        {!searched && !loading && (
-          <div style={s.emptyState}><span style={{ fontSize:40 }}>🏨</span><p style={s.emptyText}>Enter a location above to discover hotels</p></div>
+        {!activeSearched && !activeLoading && (
+          <div style={s.emptyState}><span style={{ fontSize:40 }}>{PROPERTY_TABS.find(t => t.id === activeTab)?.icon}</span><p style={s.emptyText}>Enter a location above to discover {PROPERTY_TABS.find(t => t.id === activeTab)?.label.toLowerCase()}</p></div>
         )}
       </div>
     </main>
@@ -548,7 +604,14 @@ const s = {
   loadMoreBtn: { padding:"13px 36px", background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer" },
   spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   errorBox: { marginTop:12, padding:"12px 16px", background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:10, color:"#B83A22", fontSize:13 },
-  resultsWrap: { maxWidth:980, margin:"32px auto 80px", padding:"0 16px" },
+  tabsWrap: { maxWidth:980, margin:"20px auto 0", padding:"0 16px" },
+  tabs: { display:"flex", gap:8, flexWrap:"wrap" },
+  tabBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 18px", borderRadius:24, border:"1.5px solid #DDD5CC", background:"#fff", color:"#0F2544", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
+  tabBtnActive: { background:"#E85D3D", color:"#fff", border:"1.5px solid #E85D3D" },
+  tabCount: { background:"#F0EBE5", color:"#0F2544", fontSize:11, fontWeight:700, padding:"2px 7px", borderRadius:12, minWidth:20, textAlign:"center" },
+  tabCountActive: { background:"rgba(255,255,255,0.25)", color:"#fff" },
+  tabSpinner: { display:"inline-block", width:11, height:11, border:"2px solid rgba(232,93,61,0.3)", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
+  resultsWrap: { maxWidth:980, margin:"20px auto 80px", padding:"0 16px" },
   resultsBar: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 },
   resultsTitle: { fontSize:22, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" },
   resultsSub: { fontSize:13, color:"#9FB3C8", marginTop:3 },
