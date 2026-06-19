@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../lib/auth";
 
+const ADMIN_EMAIL = "chgore618@gmail.com";
+
 const NAV = [
   {
     href: "/dashboard",
@@ -67,6 +69,15 @@ export default function Sidebar({ children }) {
   };
 
   if (pathname === "/login") return <>{children}</>;
+
+  const isAdmin = (user?.email || "").toLowerCase() === ADMIN_EMAIL;
+  const navItems = isAdmin
+    ? [...NAV, {
+        href: "/admin",
+        label: "Admin",
+        icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z",
+      }]
+    : NAV;
 
   return (
     <>
@@ -158,7 +169,7 @@ export default function Sidebar({ children }) {
 
           {/* Nav */}
           <nav style={{ display:"flex", flexDirection:"column", gap:2 }}>
-            {NAV.map(item => {
+            {navItems.map(item => {
               const isActive = pathname === item.href || (item.children && pathname.startsWith(item.href));
               const isExpanded = expanded[item.href];
 
