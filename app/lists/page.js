@@ -295,13 +295,16 @@ export default function ListsPage() {
     let cancelled = false;
 
     const init = async () => {
+      console.log("map init: start, hotels:", listHotels.length);
       await loadMaps(process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY);
+      console.log("map init: maps loaded, cancelled:", cancelled, "mapRef:", !!mapRef.current);
       if (cancelled || !mapRef.current) return;
 
       const coordMap = {};
       listHotels.forEach(h => { if (h.lat && h.lng) coordMap[h.id] = { lat: h.lat, lng: h.lng }; });
 
       const missing = listHotels.filter(h => !coordMap[h.id] && (h.place_id || h.address));
+      console.log("map init: coordMap size:", Object.keys(coordMap).length, "missing:", missing.length, "sample:", missing[0]?.name, missing[0]?.place_id, missing[0]?.address);
       if (missing.length > 0) {
         const geocoder = new window.google.maps.Geocoder();
         await Promise.all(missing.map(h => new Promise(resolve => {
