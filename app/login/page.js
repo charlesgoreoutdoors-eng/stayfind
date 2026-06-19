@@ -46,7 +46,7 @@ function LoginInner() {
         password,
       });
       if (error) setError(error.message);
-      else router.push("/");
+      else router.push("/dashboard");
     }
     setLoading(false);
   };
