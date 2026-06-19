@@ -330,6 +330,8 @@ export default function ListsPage() {
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
+        scrollwheel: true,
+        gestureHandling: "greedy",
       });
       map.fitBounds(bounds);
       const infoWindow = new window.google.maps.InfoWindow();
@@ -338,7 +340,7 @@ export default function ListsPage() {
           position: { lat: h.lat, lng: h.lng },
           map,
           title: h.name,
-          icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#E85D3D", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+          icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#1E3A5F", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
         });
         marker.addListener("click", () => {
           infoWindow.setContent(`<div style="font-family:sans-serif;font-size:13px;font-weight:600;color:#0F2544;max-width:180px">${h.name}${h.address ? `<div style="font-weight:400;color:#9FB3C8;font-size:11px;margin-top:3px">${h.address}</div>` : ""}</div>`);
