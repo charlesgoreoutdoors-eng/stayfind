@@ -632,20 +632,28 @@ export default function ListsPage() {
                         )}
                       </div>
                       {/* Notes */}
-                      <div style={{ minWidth:0, display:"flex", alignItems:"center" }}>
-                        <button
-                          style={{ ...s.noteBtn, ...(hotel.notes ? s.noteBtnFilled : {}) }}
-                          onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
-                          title={hotel.notes || "Add a note"}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                          </svg>
-                          {hotel.notes ? "Edit note" : "Add note"}
-                        </button>
+                      <div style={{ minWidth:0 }}>
+                        {hotel.notes ? (
+                          <div style={{ display:"flex", alignItems:"flex-start", gap:6 }}>
+                            <p style={{ fontSize:12, color:"#1E3A5F", lineHeight:1.45, flex:1, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", margin:0 }}>
+                              {hotel.notes}
+                            </p>
+                            <button
+                              style={s.noteEditIcon}
+                              onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
+                              title="Edit note"
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            style={s.noteAddBtn}
+                            onClick={() => { setEditingNote(hotel.id); setNoteText(""); }}
+                          >
+                            + Add note
+                          </button>
+                        )}
                       </div>
 
                       {/* Remove */}
@@ -807,7 +815,7 @@ export default function ListsPage() {
 }
 
 const s = {
-  root: { padding:"28px 20px 80px", maxWidth:1100, margin:"0 auto" },
+  root: { padding:"24px 16px 80px" },
   header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12, flexWrap:"wrap", padding:"0 0 4px" },
   title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:4 },
   subtitle: { fontSize:14, color:"#9FB3C8" },
@@ -831,8 +839,8 @@ const s = {
   detailTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
   detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  tableWrap: { overflowX:"auto", WebkitOverflowScrolling:"touch" },
-  tableGrid: { display:"grid", gridTemplateColumns:"220px 180px 160px 110px 180px 40px", alignItems:"center", gap:"0 12px", minWidth:940 },
+  tableWrap: { overflowX:"visible" },
+  tableGrid: { display:"grid", gridTemplateColumns:"2fr 1.3fr 1.2fr 100px 1.4fr 36px", alignItems:"center", gap:"0 10px" },
   tableHead: { padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
   tableRow: { padding:"14px 20px", borderBottom:"1px solid #f8fafc" },
   colHd: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
@@ -874,6 +882,8 @@ const s = {
   igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   noteBtn: { display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:600, color:"#9FB3C8", background:"#F8FAFC", border:"1px dashed #DDD5CC", borderRadius:7, padding:"5px 10px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
   noteBtnFilled: { color:"#0F2544", background:"#F0EBE5", border:"1px solid #DDD5CC" },
+  noteAddBtn: { fontSize:11, fontWeight:600, color:"#9FB3C8", background:"none", border:"1px dashed #DDD5CC", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
+  noteEditIcon: { background:"none", border:"none", cursor:"pointer", padding:2, color:"#9FB3C8", display:"flex", alignItems:"center", flexShrink:0 },
   notesModal: { background:"#fff", borderRadius:16, padding:"24px", width:"90vw", maxWidth:480 },
   notesModalTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"12px 14px", fontSize:14, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7, boxSizing:"border-box" },
   mapBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#EEF4FF", border:"1px solid #c3d4f5", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#3B6FD4", fontFamily:"inherit" },
