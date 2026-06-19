@@ -136,7 +136,7 @@ export default function Sidebar({ children }) {
 
         <div className={`sf-sidebar${open ? " open" : ""}`}>
           {/* Logo */}
-          <div style={{ display:"flex", alignItems:"center", gap:10, padding:"24px 8px 28px" }}>
+          <Link href="/" onClick={() => { try { sessionStorage.removeItem("sf_search"); } catch {} }} style={{ display:"flex", alignItems:"center", gap:10, padding:"24px 8px 28px", textDecoration:"none" }}>
             <div style={{ width:32, height:32, background:"#E85D3D", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -144,7 +144,7 @@ export default function Sidebar({ children }) {
               </svg>
             </div>
             <span style={{ fontSize:16, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px" }}>StayFind</span>
-          </div>
+          </Link>
 
           {/* Nav */}
           <nav style={{ display:"flex", flexDirection:"column", gap:2 }}>
