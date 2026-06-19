@@ -609,32 +609,24 @@ export default function Home() {
     <main>
       <div style={s.header}>
         <div style={s.headerInner}>
-          <div>
-            <h1 style={s.headline}>Find Hotels to Partner With</h1>
-            <p style={s.tagline}>Search by location and budget, then reach out directly</p>
+          <h1 style={s.headline}>Find Hotels to Partner With</h1>
+          <div style={s.searchBar}>
+            <div style={s.searchInputWrap}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input ref={inputRef} style={s.searchInput} placeholder="City, region or destination"
+                value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
+            </div>
+            <div style={s.searchDivider} />
+            <select style={s.priceSelect} value={price} onChange={e => setPrice(e.target.value)}>
+              {PRICE_RANGES.map(p => (
+                <option key={p.value} value={p.value}>{p.label} · {p.sub}</option>
+              ))}
+            </select>
+            <button style={{ ...s.searchBtn, opacity: location.trim() && !activeLoading ? 1 : 0.6 }} onClick={search} disabled={!location.trim() || activeLoading}>
+              {activeLoading ? <><span style={s.spinner} />Searching</> : "Search"}
+            </button>
           </div>
         </div>
-      </div>
-
-      <div style={s.searchCard}>
-        <label style={s.fieldLabel}>Location</label>
-        <div style={s.inputRow}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input ref={inputRef} style={s.input} placeholder="e.g. Malibu, Miami Beach, Santorini"
-            value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
-        </div>
-        <label style={{ ...s.fieldLabel, marginTop:20 }}>Price Range</label>
-        <div style={s.priceGrid}>
-          {PRICE_RANGES.map(p => (
-            <button key={p.value} style={{ ...s.priceBtn, ...(price===p.value ? s.priceBtnActive : {}) }} onClick={() => setPrice(p.value)}>
-              <span style={s.priceBtnLabel}>{p.label}</span>
-              <span style={s.priceBtnSub}>{p.sub}</span>
-            </button>
-          ))}
-        </div>
-        <button style={{ ...s.searchBtn, opacity: location.trim() && !activeLoading ? 1 : 0.5 }} onClick={search} disabled={!location.trim() || activeLoading}>
-          {activeLoading ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><span style={s.spinner} />Searching...</span> : "Search"}
-        </button>
         {error && <div style={s.errorBox}>{error}</div>}
       </div>
 
@@ -724,28 +716,23 @@ export default function Home() {
 }
 
 const s = {
-  header: { background:"#0F2544", padding:"28px 24px 64px" },
-  headerInner: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:16, flexWrap:"wrap" },
-  headline: { fontSize:"clamp(22px,4vw,36px)", fontWeight:700, color:"#F7F3EF", lineHeight:1.2, marginBottom:6, letterSpacing:"-0.5px" },
-  tagline: { color:"#9FB3C8", fontSize:14, fontWeight:400 },
+  header: { background:"#0F2544", padding:"20px 24px 20px" },
+  headerInner: { display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:16, flexWrap:"wrap" },
+  headline: { fontSize:18, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px", flexShrink:0 },
+  searchBar: { display:"flex", alignItems:"center", gap:0, background:"#fff", borderRadius:12, overflow:"hidden", border:"1px solid rgba(15,37,68,0.06)", flex:1, maxWidth:600, boxShadow:"0 2px 12px rgba(15,37,68,0.15)" },
+  searchInputWrap: { display:"flex", alignItems:"center", gap:8, flex:1, padding:"0 14px", minWidth:0 },
+  searchInput: { flex:1, border:"none", outline:"none", fontSize:14, color:"#1E3A5F", background:"transparent", padding:"12px 0", minWidth:0 },
+  searchDivider: { width:1, height:24, background:"#DDD5CC", flexShrink:0 },
+  priceSelect: { border:"none", outline:"none", fontSize:13, color:"#4A6A8A", fontWeight:500, padding:"12px 14px", background:"transparent", cursor:"pointer", fontFamily:"inherit", flexShrink:0 },
   gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"rgba(247,243,239,0.1)", border:"1px solid rgba(247,243,239,0.2)", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:"#F7F3EF", flexShrink:0 },
   gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"rgba(42,157,143,0.2)", border:"1px solid rgba(42,157,143,0.4)", borderRadius:10, padding:"8px 14px" },
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#2A9D8F", flexShrink:0 },
   gmailText: { fontSize:12, color:"#A8E6E0", fontWeight:500 },
   gmailDisconnect: { fontSize:11, color:"#A8E6E0", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
-  searchCard: { background:"#fff", borderRadius:20, padding:"28px 24px 24px", boxShadow:"0 8px 40px rgba(15,37,68,0.12)", maxWidth:640, width:"calc(100% - 32px)", margin:"-32px auto 0", position:"relative", zIndex:10, border:"1px solid rgba(15,37,68,0.06)" },
-  fieldLabel: { display:"block", fontSize:11, fontWeight:700, color:"#4A6A8A", letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:8 },
-  inputRow: { display:"flex", alignItems:"center", gap:10, border:"1.5px solid #DDD5CC", borderRadius:12, padding:"12px 16px", marginBottom:4 },
-  input: { flex:1, border:"none", outline:"none", fontSize:15, color:"#1E3A5F", background:"transparent", width:"100%" },
-  priceGrid: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:20 },
-  priceBtn: { display:"flex", flexDirection:"column", alignItems:"center", padding:"10px 4px", border:"1.5px solid #DDD5CC", borderRadius:10, background:"#fff", cursor:"pointer", transition:"all 0.15s" },
-  priceBtnActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC" },
-  priceBtnLabel: { fontSize:12, fontWeight:600, color:"#1E3A5F", marginBottom:2 },
-  priceBtnSub: { fontSize:12, color:"#4A6A8A", textAlign:"center" },
-  searchBtn: { width:"100%", padding:14, background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:15, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s, background 0.2s" },
+  searchBtn: { padding:"12px 20px", background:"#E85D3D", color:"#fff", border:"none", fontSize:14, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s", display:"flex", alignItems:"center", gap:8, flexShrink:0, fontFamily:"inherit" },
   spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  errorBox: { marginTop:12, padding:"12px 16px", background:"#FEF0EC", border:"1px solid #B83A22", borderRadius:10, color:"#B83A22", fontSize:13 },
-  tabsWrap: { maxWidth:980, margin:"20px auto 0", padding:"0 16px" },
+  errorBox: { marginTop:10, padding:"10px 16px", background:"#FEF0EC", border:"1px solid #B83A22", borderRadius:8, color:"#B83A22", fontSize:13, maxWidth:980, margin:"10px auto 0" },
+  tabsWrap: { maxWidth:980, margin:"16px auto 0", padding:"0 16px" },
   tabs: { display:"flex", gap:8, flexWrap:"wrap" },
   tabBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 18px", borderRadius:24, border:"1.5px solid #DDD5CC", background:"#fff", color:"#0F2544", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
   tabBtnActive: { background:"#E85D3D", color:"#fff", border:"1.5px solid #E85D3D" },
