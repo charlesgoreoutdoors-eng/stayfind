@@ -43,6 +43,7 @@ export default function ListsPage() {
   const [bulkIgSelected, setBulkIgSelected] = useState([]);
   const [bulkIgIndex, setBulkIgIndex] = useState(0);
   const [showMap, setShowMap]         = useState(false);
+  const [mapEmpty, setMapEmpty]       = useState(false);
   const mapRef                        = useRef(null);
   const editingIgRef                  = useRef(null);
   const [editingIg, setEditingIg]     = useState(null);
@@ -295,22 +296,18 @@ export default function ListsPage() {
     let cancelled = false;
 
     const init = async () => {
-      console.log("map init: start, hotels:", listHotels.length);
       await loadMaps(process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY);
-      console.log("map init: maps loaded, cancelled:", cancelled, "mapRef:", !!mapRef.current);
       if (cancelled || !mapRef.current) return;
 
       const coordMap = {};
       listHotels.forEach(h => { if (h.lat && h.lng) coordMap[h.id] = { lat: h.lat, lng: h.lng }; });
 
       const missing = listHotels.filter(h => !coordMap[h.id] && (h.place_id || h.address));
-      console.log("map init: coordMap size:", Object.keys(coordMap).length, "missing:", missing.length, "sample:", missing[0]?.name, missing[0]?.place_id, missing[0]?.address);
       if (missing.length > 0) {
         const geocoder = new window.google.maps.Geocoder();
         await Promise.all(missing.map(h => new Promise(resolve => {
           const query = h.place_id ? { placeId: h.place_id } : { address: h.address };
           geocoder.geocode(query, (results, status) => {
-            console.log("geocode", h.name, "query:", query, "status:", status, "results:", results?.length);
             if (status === "OK" && results[0]) {
               const loc = results[0].geometry.location;
               const lat = loc.lat(), lng = loc.lng();
@@ -325,7 +322,7 @@ export default function ListsPage() {
 
       if (cancelled || !mapRef.current) return;
       const hotels = listHotels.map(h => ({ ...h, ...(coordMap[h.id] || {}) })).filter(h => h.lat && h.lng);
-      if (hotels.length === 0) return;
+      if (hotels.length === 0) { setMapEmpty(true); return; }
 
       const bounds = new window.google.maps.LatLngBounds();
       hotels.forEach(h => bounds.extend({ lat: h.lat, lng: h.lng }));
@@ -502,7 +499,7 @@ export default function ListsPage() {
                       Find Emails
                     </button>
                   )}
-                  <button style={s.mapBtn} onClick={() => setShowMap(true)} title="View hotels on a map">
+                  <button style={s.mapBtn} onClick={() => { setShowMap(true); setMapEmpty(false); }} title="View hotels on a map">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
                       <line x1="8" y1="2" x2="8" y2="18"/>
@@ -728,14 +725,13 @@ export default function ListsPage() {
               </div>
               <button style={s.mapCloseBtn} onClick={() => setShowMap(false)}>✕</button>
             </div>
-            {listHotels.filter(h => h.lat && h.lng).length === 0 ? (
-              <div style={{ ...s.empty, padding:"40px 0" }}>
-                <span style={{ fontSize:32 }}>📍</span>
-                <p>No location data for hotels in this list.</p>
-              </div>
-            ) : (
-              <div ref={mapRef} style={s.mapContainer} />
-            )}
+            {mapEmpty
+              ? <div style={{ ...s.empty, padding:"40px 0" }}>
+                  <span style={{ fontSize:32 }}>📍</span>
+                  <p>No location data for hotels in this list.</p>
+                </div>
+              : <div ref={mapRef} style={s.mapContainer} />
+            }
           </div>
         </div>
       )}
