@@ -35,6 +35,9 @@ export default function TrackingPage() {
   const [loading, setLoading]         = useState(true);
   const [selectedSeq, setSelectedSeq] = useState("all");
   const [cancelConfirm, setCancelConfirm] = useState(null);
+  const [dailySent, setDailySent]         = useState(0);
+  const [dailyLimit, setDailyLimit]       = useState(30);
+  const [queuedTomorrow, setQueuedTomorrow] = useState(0);
   const [warnDismissed, setWarnDismissed] = useState(() => {
     try { return localStorage.getItem("seq_warn_dismissed") === "1"; } catch { return false; }
   });
@@ -48,12 +51,19 @@ export default function TrackingPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [jobsRes, seqRes] = await Promise.all([
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const [jobsRes, seqRes, logRes, profileRes, tomorrowRes] = await Promise.all([
       supabase.from("sequence_jobs").select("*, sequences(name)").eq("user_id", user.id).order("started_at", { ascending: false }),
       supabase.from("sequences").select("*").eq("user_id", user.id),
+      supabase.from("email_send_log").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("sent_at", `${todayStr}T00:00:00.000Z`).lte("sent_at", `${todayStr}T23:59:59.999Z`),
+      supabase.from("profiles").select("daily_email_limit").eq("id", user.id).single(),
+      supabase.from("sequence_jobs").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "active").gte("next_send_at", `${todayStr}T23:59:59.999Z`),
     ]);
     setJobs(jobsRes.data || []);
     setSequences(seqRes.data || []);
+    setDailySent(logRes.count || 0);
+    setDailyLimit(profileRes.data?.daily_email_limit ?? 30);
+    setQueuedTomorrow(tomorrowRes.count || 0);
     setLoading(false);
   };
 
@@ -105,6 +115,25 @@ export default function TrackingPage() {
           </button>
         </div>
       )}
+
+      {/* Daily usage bar */}
+      <div style={s.usageCard}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+          <p style={{ fontSize:13, fontWeight:600, color:"#0F2544" }}>
+            Emails sent today: <span style={{ color: dailySent >= dailyLimit ? "#ef4444" : "#E85D3D" }}>{dailySent}</span>
+            <span style={{ color:"#9FB3C8" }}> / {dailyLimit}</span>
+          </p>
+          <a href="/settings" style={{ fontSize:12, color:"#4A6A8A", textDecoration:"none", fontWeight:500 }}>Edit limit →</a>
+        </div>
+        <div style={s.usageTrack}>
+          <div style={{ ...s.usageFill, width:`${Math.min(100, (dailySent / dailyLimit) * 100)}%`, background: dailySent >= dailyLimit ? "#ef4444" : "#E85D3D" }} />
+        </div>
+        {queuedTomorrow > 0 && (
+          <p style={{ fontSize:11, color:"#9FB3C8", marginTop:8 }}>
+            {queuedTomorrow} email{queuedTomorrow !== 1 ? "s" : ""} queued for tomorrow
+          </p>
+        )}
+      </div>
 
       {/* Stats */}
       <div style={{ ...s.statsRow, gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)" }}>
@@ -242,6 +271,9 @@ const s = {
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 24px", gap:8 },
   spinner: { width:24, height:24, border:"2.5px solid #F0EBE5", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
   overlay: { position:"fixed", inset:0, background:"rgba(15,37,68,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  usageCard: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", padding:"16px 20px", marginBottom:20 },
+  usageTrack: { height:8, background:"#F0EBE5", borderRadius:99, overflow:"hidden" },
+  usageFill: { height:"100%", borderRadius:99, transition:"width 0.4s ease" },
   warnBanner: { display:"flex", alignItems:"flex-start", gap:10, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:12, padding:"12px 14px", marginBottom:20 },
   warnText: { fontSize:12, color:"#92400e", lineHeight:1.6, flex:1 },
   warnClose: { background:"none", border:"none", cursor:"pointer", color:"#92400e", padding:2, display:"flex", alignItems:"center", flexShrink:0, opacity:0.6 },

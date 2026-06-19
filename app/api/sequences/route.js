@@ -43,16 +43,28 @@ export async function POST(request) {
       }
 
       for (const [userId, jobs] of Object.entries(byUser)) {
-        // How many emails has this user already sent today?
+        // Get this user's daily limit from profiles
+        const { data: profileData } = await supabase
+          .from("profiles").select("daily_email_limit").eq("id", userId).single();
+        const MAX_PER_DAY = profileData?.daily_email_limit ?? 30;
+
+        // How many emails already sent today via email_send_log?
         const { count: sentToday } = await supabase
+          .from("email_send_log")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("sent_at", `${todayStr}T00:00:00.000Z`)
+          .lte("sent_at", `${todayStr}T23:59:59.999Z`);
+
+        // How many are already scheduled for today (not yet sent)?
+        const { count: scheduledToday } = await supabase
           .from("sequence_jobs")
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId)
           .eq("scheduled_for_date", todayStr)
           .eq("status", "active");
 
-        const MAX_PER_DAY = 30;
-        const alreadyScheduled = sentToday || 0;
+        const alreadyScheduled = (sentToday || 0) + (scheduledToday || 0);
         const remaining = MAX_PER_DAY - alreadyScheduled;
 
         // Start assigning from the later of: now or window start
@@ -135,6 +147,14 @@ export async function POST(request) {
         const body    = (step.body    || "").replace(/\{hotel_name\}/g, job.hotel_name);
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
         await sendEmail(job.gmail_token, job.hotel_email, subject, body);
+
+        // 3b. Log to email_send_log
+        await supabase.from("email_send_log").insert({
+          user_id: job.user_id,
+          sequence_job_id: job.id,
+          hotel_email: job.hotel_email,
+          hotel_name: job.hotel_name,
+        });
 
         // 4. Schedule next step or mark complete
         const { data: nextStep } = await supabase
