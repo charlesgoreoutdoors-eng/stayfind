@@ -445,7 +445,7 @@ export default function Home() {
       instagram: hotel.instagram || null,
       lat: hotel.lat || null, lng: hotel.lng || null,
     });
-    if (error) return "Couldn't add this property. Please try again.";
+    if (error) { console.error("list_hotels insert error:", error); return "Couldn't add this property. Please try again."; }
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
     setTimeout(() => setAddSuccess(null), 2500);
