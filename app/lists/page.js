@@ -241,12 +241,12 @@ export default function ListsPage() {
   };
 
   const toggleContacted = async (hotel) => {
-    const updated = !hotel.contacted;
+    const updated = !hotel.ig_contacted;
     await supabase.from("list_hotels").update({
-      contacted: updated,
-      contacted_at: updated ? new Date().toISOString() : null,
+      ig_contacted: updated,
+      ig_contacted_at: updated ? new Date().toISOString() : null,
     }).eq("id", hotel.id);
-    setListHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, contacted: updated, contacted_at: updated ? new Date().toISOString() : null } : h));
+    setListHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, ig_contacted: updated, ig_contacted_at: updated ? new Date().toISOString() : null } : h));
   };
 
   const saveNote = async (hotelId, note) => {
