@@ -38,14 +38,6 @@ export default function TrackingPage() {
   const [dailySent, setDailySent]         = useState(0);
   const [dailyLimit, setDailyLimit]       = useState(30);
   const [queuedTomorrow, setQueuedTomorrow] = useState(0);
-  const [warnDismissed, setWarnDismissed] = useState(() => {
-    try { return localStorage.getItem("seq_warn_dismissed") === "1"; } catch { return false; }
-  });
-
-  const dismissWarning = () => {
-    setWarnDismissed(true);
-    try { localStorage.setItem("seq_warn_dismissed", "1"); } catch {}
-  };
 
   useEffect(() => { if (user) fetchData(); }, [user]);
 
@@ -101,20 +93,6 @@ export default function TrackingPage() {
   return (
     <div>
       <h2 style={{ fontSize:20, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px", marginBottom:16 }}>Email Tracking</h2>
-
-      {!warnDismissed && (
-        <div style={s.warnBanner}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <p style={s.warnText}>
-            StayFind spaces your emails randomly throughout the day with minimum 30-minute gaps to protect your Gmail reputation. We recommend no more than 30 emails per day. By using sequences you accept responsibility for your Gmail account.
-          </p>
-          <button style={s.warnClose} onClick={dismissWarning} aria-label="Dismiss">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-      )}
 
       {/* Daily usage bar */}
       <div style={s.usageCard}>
@@ -274,7 +252,4 @@ const s = {
   usageCard: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", padding:"16px 20px", marginBottom:20 },
   usageTrack: { height:8, background:"#F0EBE5", borderRadius:99, overflow:"hidden" },
   usageFill: { height:"100%", borderRadius:99, transition:"width 0.4s ease" },
-  warnBanner: { display:"flex", alignItems:"flex-start", gap:10, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:12, padding:"12px 14px", marginBottom:20 },
-  warnText: { fontSize:12, color:"#92400e", lineHeight:1.6, flex:1 },
-  warnClose: { background:"none", border:"none", cursor:"pointer", color:"#92400e", padding:2, display:"flex", alignItems:"center", flexShrink:0, opacity:0.6 },
 };
