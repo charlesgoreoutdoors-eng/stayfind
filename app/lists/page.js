@@ -5,6 +5,20 @@ import Link from "next/link";
 import { useAuth } from "../../lib/auth";
 import { useIsMobile } from "../../lib/useIsMobile";
 
+let mapsPromise = null;
+function loadMaps(apiKey) {
+  if (mapsPromise) return mapsPromise;
+  mapsPromise = new Promise((resolve) => {
+    if (window.google?.maps) { resolve(); return; }
+    window.__mapsResolve = resolve;
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=__mapsResolve`;
+    s.async = true;
+    document.head.appendChild(s);
+  });
+  return mapsPromise;
+}
+
 export default function ListsPage() {
   const [lists, setLists]             = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -278,14 +292,16 @@ export default function ListsPage() {
   // Load Google Maps and render pins whenever the map modal opens
   useEffect(() => {
     if (!showMap) return;
+    let cancelled = false;
 
     const init = async () => {
-      if (!mapRef.current) return;
+      await loadMaps(process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY);
+      if (cancelled || !mapRef.current) return;
 
-      // Backfill lat/lng for hotels missing coords using Geocoder
       const coordMap = {};
       listHotels.forEach(h => { if (h.lat && h.lng) coordMap[h.id] = { lat: h.lat, lng: h.lng }; });
-      const missing = listHotels.filter(h => !h.lat && (h.place_id || h.address));
+
+      const missing = listHotels.filter(h => !coordMap[h.id] && (h.place_id || h.address));
       if (missing.length > 0) {
         const geocoder = new window.google.maps.Geocoder();
         await Promise.all(missing.map(h => new Promise(resolve => {
@@ -303,8 +319,10 @@ export default function ListsPage() {
         })));
       }
 
+      if (cancelled || !mapRef.current) return;
       const hotels = listHotels.map(h => ({ ...h, ...(coordMap[h.id] || {}) })).filter(h => h.lat && h.lng);
       if (hotels.length === 0) return;
+
       const bounds = new window.google.maps.LatLngBounds();
       hotels.forEach(h => bounds.extend({ lat: h.lat, lng: h.lng }));
       const map = new window.google.maps.Map(mapRef.current, {
@@ -328,18 +346,8 @@ export default function ListsPage() {
       });
     };
 
-    if (window.google?.maps) { init(); return; }
-    if (document.getElementById("gmap-script")) {
-      // script already loading — wait for it
-      window.__gmapCallback = init;
-      return;
-    }
-    window.__gmapCallback = init;
-    const script = document.createElement("script");
-    script.id = "gmap-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&callback=__gmapCallback`;
-    script.async = true;
-    document.head.appendChild(script);
+    init();
+    return () => { cancelled = true; };
   }, [showMap, listHotels]);
 
   const [hotelCounts, setHotelCounts] = useState({});
