@@ -6,6 +6,11 @@ import { useAuth } from "../lib/auth";
 
 const NAV = [
   {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6",
+  },
+  {
     href: "/",
     label: "Search",
     icon: "M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z",
