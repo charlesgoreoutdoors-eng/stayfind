@@ -443,9 +443,8 @@ export default function Home() {
       photo_url: hotel.photoUrl || null, rating: hotel.rating || null,
       price_level: hotel.priceLevel || null, place_id: hotel.placeId || null,
       instagram: hotel.instagram || null,
-      lat: hotel.lat || null, lng: hotel.lng || null,
     });
-    if (error) { console.error("list_hotels insert error:", error); return "Couldn't add this property. Please try again."; }
+    if (error) return "Couldn't add this property. Please try again.";
     setAddListDropdown(null);
     setAddSuccess(hotel.placeId);
     setTimeout(() => setAddSuccess(null), 2500);

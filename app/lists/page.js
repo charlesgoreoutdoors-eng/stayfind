@@ -311,7 +311,7 @@ export default function ListsPage() {
               const loc = results[0].geometry.location;
               const lat = loc.lat(), lng = loc.lng();
               coordMap[h.id] = { lat, lng };
-              supabase.from("list_hotels").update({ lat, lng }).eq("id", h.id).then(() => {});
+              // lat/lng not in list_hotels schema — coords live in coordMap only
               setListHotels(prev => prev.map(p => p.id === h.id ? { ...p, lat, lng } : p));
             }
             resolve();
