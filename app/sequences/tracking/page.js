@@ -35,6 +35,14 @@ export default function TrackingPage() {
   const [loading, setLoading]         = useState(true);
   const [selectedSeq, setSelectedSeq] = useState("all");
   const [cancelConfirm, setCancelConfirm] = useState(null);
+  const [warnDismissed, setWarnDismissed] = useState(() => {
+    try { return localStorage.getItem("seq_warn_dismissed") === "1"; } catch { return false; }
+  });
+
+  const dismissWarning = () => {
+    setWarnDismissed(true);
+    try { localStorage.setItem("seq_warn_dismissed", "1"); } catch {}
+  };
 
   useEffect(() => { if (user) fetchData(); }, [user]);
 
@@ -82,7 +90,22 @@ export default function TrackingPage() {
 
   return (
     <div>
-      <h2 style={{ fontSize:20, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px", marginBottom:20 }}>Email Tracking</h2>
+      <h2 style={{ fontSize:20, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px", marginBottom:16 }}>Email Tracking</h2>
+
+      {!warnDismissed && (
+        <div style={s.warnBanner}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p style={s.warnText}>
+            StayFind spaces your emails randomly throughout the day with minimum 30-minute gaps to protect your Gmail reputation. We recommend no more than 30 emails per day. By using sequences you accept responsibility for your Gmail account.
+          </p>
+          <button style={s.warnClose} onClick={dismissWarning} aria-label="Dismiss">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      )}
+
       {/* Stats */}
       <div style={{ ...s.statsRow, gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)" }}>
         {[
@@ -218,5 +241,8 @@ const s = {
   cancelBtn: { background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", justifyContent:"center" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 24px", gap:8 },
   spinner: { width:24, height:24, border:"2.5px solid #F0EBE5", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
-  overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  overlay: { position:"fixed", inset:0, background:"rgba(15,37,68,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  warnBanner: { display:"flex", alignItems:"flex-start", gap:10, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:12, padding:"12px 14px", marginBottom:20 },
+  warnText: { fontSize:12, color:"#92400e", lineHeight:1.6, flex:1 },
+  warnClose: { background:"none", border:"none", cursor:"pointer", color:"#92400e", padding:2, display:"flex", alignItems:"center", flexShrink:0, opacity:0.6 },
 };

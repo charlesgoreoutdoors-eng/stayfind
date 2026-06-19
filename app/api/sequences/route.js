@@ -1,25 +1,100 @@
 import { createClient } from "@supabase/supabase-js";
 import { google } from "googleapis";
 
-// This route is called by Supabase pg_cron daily
-// It processes due sequence jobs, checks for replies, and sends emails
+// Called by Supabase pg_cron hourly (0 * * * *)
+// Assigns random send times to newly-due jobs, then sends whatever is due right now
 export async function POST(request) {
   try {
     const { secret } = await request.json();
-
-    // Basic auth to prevent unauthorized calls
     if (secret !== process.env.CRON_SECRET) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY // needs service role for cron
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-    // Get all active jobs that are due to send
+    // SEND WINDOW: 8am–6pm UTC (adjust to match your user timezone if needed)
+    const windowStart = new Date(`${todayStr}T08:00:00.000Z`);
+    const windowEnd   = new Date(`${todayStr}T18:00:00.000Z`);
+
+    // ── Step 1: Find all unscheduled active jobs that are overdue ──────────
+    // "Unscheduled" = next_send_at is in the past but has no random time
+    // assigned yet for today. We identify these as jobs where next_send_at
+    // is before now and scheduled_for_date != today.
+    const { data: overdueJobs } = await supabase
+      .from("sequence_jobs")
+      .select("*, sequence_steps!inner(*)")
+      .eq("status", "active")
+      .lte("next_send_at", now.toISOString())
+      .or(`scheduled_for_date.is.null,scheduled_for_date.neq.${todayStr}`);
+
+    // ── Step 2: For each user, assign random send times ───────────────────
+    if (overdueJobs && overdueJobs.length > 0) {
+      // Group jobs by user
+      const byUser = {};
+      for (const job of overdueJobs) {
+        if (!byUser[job.user_id]) byUser[job.user_id] = [];
+        byUser[job.user_id].push(job);
+      }
+
+      for (const [userId, jobs] of Object.entries(byUser)) {
+        // How many emails has this user already sent today?
+        const { count: sentToday } = await supabase
+          .from("sequence_jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("scheduled_for_date", todayStr)
+          .eq("status", "active");
+
+        const MAX_PER_DAY = 30;
+        const alreadyScheduled = sentToday || 0;
+        const remaining = MAX_PER_DAY - alreadyScheduled;
+
+        // Start assigning from the later of: now or window start
+        let cursor = new Date(Math.max(now.getTime(), windowStart.getTime()));
+
+        for (let i = 0; i < jobs.length; i++) {
+          const job = jobs[i];
+
+          if (i >= remaining) {
+            // Over daily limit — push to tomorrow 8am
+            const tomorrow = new Date(windowStart.getTime() + 24 * 60 * 60 * 1000);
+            await supabase.from("sequence_jobs").update({
+              next_send_at: tomorrow.toISOString(),
+              scheduled_for_date: null, // will be assigned tomorrow
+            }).eq("id", job.id);
+            continue;
+          }
+
+          // If cursor has gone past window end, push to tomorrow
+          if (cursor >= windowEnd) {
+            const tomorrow = new Date(windowStart.getTime() + 24 * 60 * 60 * 1000);
+            await supabase.from("sequence_jobs").update({
+              next_send_at: tomorrow.toISOString(),
+              scheduled_for_date: null,
+            }).eq("id", job.id);
+            continue;
+          }
+
+          // Assign this slot
+          await supabase.from("sequence_jobs").update({
+            next_send_at: cursor.toISOString(),
+            scheduled_for_date: todayStr,
+          }).eq("id", job.id);
+
+          // Advance cursor by 30–90 random minutes
+          const gapMinutes = 30 + Math.floor(Math.random() * 61);
+          cursor = new Date(cursor.getTime() + gapMinutes * 60 * 1000);
+        }
+      }
+    }
+
+    // ── Step 3: Send everything due right now ─────────────────────────────
     const { data: dueJobs } = await supabase
       .from("sequence_jobs")
       .select("*, sequence_steps!inner(*)")
@@ -27,10 +102,10 @@ export async function POST(request) {
       .lte("next_send_at", now.toISOString());
 
     if (!dueJobs || dueJobs.length === 0) {
-      return Response.json({ processed: 0 });
+      return Response.json({ scheduled: overdueJobs?.length || 0, sent: 0 });
     }
 
-    let processed = 0;
+    let sent = 0;
 
     for (const job of dueJobs) {
       try {
@@ -42,11 +117,11 @@ export async function POST(request) {
             replied_at: now.toISOString(),
             completed_at: now.toISOString(),
           }).eq("id", job.id);
-          processed++;
+          sent++;
           continue;
         }
 
-        // 2. Get the current step details
+        // 2. Get the current step
         const { data: step } = await supabase
           .from("sequence_steps")
           .select("*")
@@ -57,11 +132,11 @@ export async function POST(request) {
         if (!step) continue;
 
         // 3. Send the email
-        const body = (step.body || "").replace(/\{hotel_name\}/g, job.hotel_name);
+        const body    = (step.body    || "").replace(/\{hotel_name\}/g, job.hotel_name);
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
         await sendEmail(job.gmail_token, job.hotel_email, subject, body);
 
-        // 4. Check if there's a next step
+        // 4. Schedule next step or mark complete
         const { data: nextStep } = await supabase
           .from("sequence_steps")
           .select("*")
@@ -70,27 +145,26 @@ export async function POST(request) {
           .single();
 
         if (nextStep) {
-          // Schedule next step
           const nextSendAt = new Date(now.getTime() + nextStep.delay_days * 24 * 60 * 60 * 1000);
           await supabase.from("sequence_jobs").update({
             current_step: job.current_step + 1,
             next_send_at: nextSendAt.toISOString(),
+            scheduled_for_date: null, // will be randomised when due
           }).eq("id", job.id);
         } else {
-          // Sequence complete
           await supabase.from("sequence_jobs").update({
             status: "completed",
             completed_at: now.toISOString(),
           }).eq("id", job.id);
         }
 
-        processed++;
+        sent++;
       } catch (e) {
         console.error(`Error processing job ${job.id}:`, e);
       }
     }
 
-    return Response.json({ processed });
+    return Response.json({ scheduled: overdueJobs?.length || 0, sent });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
@@ -101,13 +175,11 @@ async function checkForReply(hotelEmail, accessToken) {
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({ access_token: accessToken });
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
-
     const res = await gmail.users.messages.list({
       userId: "me",
       q: `from:${hotelEmail} in:inbox`,
       maxResults: 1,
     });
-
     return (res.data.messages || []).length > 0;
   } catch {
     return false;
