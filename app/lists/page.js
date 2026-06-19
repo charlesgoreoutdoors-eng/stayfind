@@ -307,6 +307,7 @@ export default function ListsPage() {
         await Promise.all(missing.map(h => new Promise(resolve => {
           const query = h.place_id ? { placeId: h.place_id } : { address: h.address };
           geocoder.geocode(query, (results, status) => {
+            console.log("geocode", h.name, "query:", query, "status:", status, "results:", results?.length);
             if (status === "OK" && results[0]) {
               const loc = results[0].geometry.location;
               const lat = loc.lat(), lng = loc.lng();
