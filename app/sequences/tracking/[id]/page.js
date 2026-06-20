@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { useAuth } from "../../../../lib/auth";
 import { useIsMobile } from "../../../../lib/useIsMobile";
@@ -32,12 +32,15 @@ function nextSend(ts) {
 export default function SequenceDetailPage() {
   const { user } = useAuth();
   const { id } = useParams();
+  const router = useRouter();
   const isMobile = useIsMobile();
 
   const [sequence, setSequence]       = useState(null);
   const [jobs, setJobs]               = useState([]);
   const [loading, setLoading]         = useState(true);
   const [cancelConfirm, setCancelConfirm] = useState(null);
+  const [showDelete, setShowDelete]   = useState(false);
+  const [deleting, setDeleting]       = useState(false);
 
   useEffect(() => { if (user && id) fetchData(); }, [user, id]);
 
@@ -56,6 +59,14 @@ export default function SequenceDetailPage() {
     await supabase.from("sequence_jobs").update({ status: "cancelled", completed_at: new Date().toISOString() }).eq("id", jobId);
     setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: "cancelled", completed_at: new Date().toISOString() } : j));
     setCancelConfirm(null);
+  };
+
+  const deleteSequence = async () => {
+    setDeleting(true);
+    // Cancel all active jobs first, then delete jobs and the sequence
+    await supabase.from("sequence_jobs").delete().eq("sequence_id", id).eq("user_id", user.id);
+    await supabase.from("sequences").delete().eq("id", id).eq("user_id", user.id);
+    router.push("/sequences/tracking");
   };
 
   const cancelAll = async () => {
@@ -96,11 +107,16 @@ export default function SequenceDetailPage() {
         <h2 style={{ fontSize:20, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" }}>
           {sequence?.name || "Sequence"}
         </h2>
-        {active > 0 && (
-          <button style={s.cancelAllBtn} onClick={() => setCancelConfirm("all")}>
-            Cancel All Active
+        <div style={{ display:"flex", gap:8 }}>
+          {active > 0 && (
+            <button style={s.cancelAllBtn} onClick={() => setCancelConfirm("all")}>
+              Cancel All Active
+            </button>
+          )}
+          <button style={s.deleteBtn} onClick={() => setShowDelete(true)}>
+            Delete Sequence
           </button>
-        )}
+        </div>
       </div>
 
       {/* Stats for this sequence */}
@@ -181,6 +197,23 @@ export default function SequenceDetailPage() {
       )}
 
       {/* Cancel confirm modal */}
+      {showDelete && (
+        <div style={s.overlay}>
+          <div style={{ background:"#fff", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
+            <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", marginBottom:8 }}>Delete this sequence?</h3>
+            <p style={{ fontSize:13, color:"#64748b", marginBottom:20 }}>
+              This will permanently delete <strong>{sequence?.name}</strong> and all its tracking data. Any active jobs will be cancelled. This cannot be undone.
+            </p>
+            <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+              <button style={s.keepBtn} onClick={() => setShowDelete(false)} disabled={deleting}>Keep It</button>
+              <button style={s.confirmCancelBtn} onClick={deleteSequence} disabled={deleting}>
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {cancelConfirm && (
         <div style={s.overlay}>
           <div style={{ background:"#fff", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
@@ -216,6 +249,7 @@ const s = {
   statValue: { fontSize:28, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
   statLabel: { fontSize:12, color:"#9FB3C8", fontWeight:500 },
   cancelAllBtn: { padding:"8px 16px", background:"#fff", border:"1.5px solid #ef4444", borderRadius:9, fontSize:13, fontWeight:600, color:"#ef4444", cursor:"pointer" },
+  deleteBtn: { padding:"8px 16px", background:"#ef4444", border:"none", borderRadius:9, fontSize:13, fontWeight:600, color:"#fff", cursor:"pointer" },
   tableWrap: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", overflow:"auto" },
   tableHead: { display:"flex", padding:"10px 20px", background:"#FAF7F4", borderBottom:"1px solid #F0EBE5", minWidth:600 },
   th: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
