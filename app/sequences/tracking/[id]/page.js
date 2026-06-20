@@ -35,23 +35,48 @@ export default function SequenceDetailPage() {
   const router = useRouter();
   const isMobile = useIsMobile();
 
-  const [sequence, setSequence]       = useState(null);
-  const [jobs, setJobs]               = useState([]);
-  const [loading, setLoading]         = useState(true);
+  const [sequence, setSequence]         = useState(null);
+  const [jobs, setJobs]                 = useState([]);
+  const [lists, setLists]               = useState([]);
+  const [loading, setLoading]           = useState(true);
   const [cancelConfirm, setCancelConfirm] = useState(null);
-  const [showDelete, setShowDelete]   = useState(false);
-  const [deleting, setDeleting]       = useState(false);
+  const [showDelete, setShowDelete]     = useState(false);
+  const [deleting, setDeleting]         = useState(false);
+
+  // Filters
+  const [filterStep, setFilterStep]     = useState("all");
+  const [filterList, setFilterList]     = useState("all");
 
   useEffect(() => { if (user && id) fetchData(); }, [user, id]);
 
   const fetchData = async () => {
     setLoading(true);
-    const [seqRes, jobsRes] = await Promise.all([
+    const [seqRes, jobsRes, listsRes, hotelsRes] = await Promise.all([
       supabase.from("sequences").select("*").eq("id", id).eq("user_id", user.id).single(),
       supabase.from("sequence_jobs").select("*").eq("sequence_id", id).eq("user_id", user.id).order("started_at", { ascending: false }),
+      supabase.from("lists").select("id, name").eq("user_id", user.id),
+      supabase.from("list_hotels").select("id, list_id, email").eq("user_id", user.id),
     ]);
+
+    const listsData = listsRes.data || [];
+    const hotelsData = hotelsRes.data || [];
+
+    // Build email → list_id map for enriching jobs
+    const emailToListId = {};
+    hotelsData.forEach(h => {
+      if (h.email) emailToListId[h.email.toLowerCase()] = h.list_id;
+    });
+
+    // Enrich jobs with list info
+    const enrichedJobs = (jobsRes.data || []).map(job => {
+      const listId = emailToListId[job.hotel_email?.toLowerCase()] || null;
+      const list = listsData.find(l => l.id === listId) || null;
+      return { ...job, list_id: listId, list_name: list?.name || null };
+    });
+
     setSequence(seqRes.data);
-    setJobs(jobsRes.data || []);
+    setJobs(enrichedJobs);
+    setLists(listsData);
     setLoading(false);
   };
 
@@ -63,7 +88,6 @@ export default function SequenceDetailPage() {
 
   const deleteSequence = async () => {
     setDeleting(true);
-    // Cancel all active jobs first, then delete jobs and the sequence
     await supabase.from("sequence_jobs").delete().eq("sequence_id", id).eq("user_id", user.id);
     await supabase.from("sequences").delete().eq("id", id).eq("user_id", user.id);
     router.push("/sequences/tracking");
@@ -77,11 +101,21 @@ export default function SequenceDetailPage() {
     setCancelConfirm(null);
   };
 
+  // Derived filter options
+  const stepOptions = [...new Set(jobs.map(j => j.current_step))].sort((a, b) => a - b);
+  const listOptions = lists.filter(l => jobs.some(j => j.list_id === l.id));
+
+  // Apply filters
+  const filteredJobs = jobs.filter(job => {
+    if (filterStep !== "all" && job.current_step !== Number(filterStep)) return false;
+    if (filterList !== "all" && job.list_id !== filterList) return false;
+    return true;
+  });
+
   const total     = new Set(jobs.map(j => j.hotel_email)).size;
   const active    = jobs.filter(j => j.status === "active").length;
   const replied   = jobs.filter(j => j.replied_at).length;
   const completed = jobs.filter(j => j.status === "completed").length;
-  const cancelled = jobs.filter(j => j.status === "cancelled").length;
   const replyRate = total > 0 ? Math.round((replied / total) * 100) : 0;
 
   const statusColor = (status) => {
@@ -91,6 +125,8 @@ export default function SequenceDetailPage() {
     if (status === "cancelled") return { bg:"#f1f5f9", color:"#64748b" };
     return { bg:"#f1f5f9", color:"#64748b" };
   };
+
+  const hasFilters = filterStep !== "all" || filterList !== "all";
 
   return (
     <div>
@@ -119,14 +155,14 @@ export default function SequenceDetailPage() {
         </div>
       </div>
 
-      {/* Stats for this sequence */}
+      {/* Stats */}
       <div style={{ ...s.statsRow, gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", marginBottom:24 }}>
         {[
-          { label:"Hotels",      value: total,      color:"#0F2544" },
-          { label:"Active",      value: active,     color:"#E85D3D" },
-          { label:"Replied",     value: replied,    color:"#2A9D8F" },
-          { label:"Completed",   value: completed,  color:"#4338ca" },
-          { label:"Reply Rate",  value: `${replyRate}%`, color:"#C13584" },
+          { label:"Hotels",     value: total,        color:"#0F2544" },
+          { label:"Active",     value: active,       color:"#E85D3D" },
+          { label:"Replied",    value: replied,      color:"#2A9D8F" },
+          { label:"Completed",  value: completed,    color:"#4338ca" },
+          { label:"Reply Rate", value: `${replyRate}%`, color:"#C13584" },
         ].map((stat, i) => (
           <div key={i} style={s.statCard}>
             <p style={{ ...s.statValue, color: stat.color }}>{loading ? "—" : stat.value}</p>
@@ -135,31 +171,81 @@ export default function SequenceDetailPage() {
         ))}
       </div>
 
+      {/* Filters */}
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16, flexWrap:"wrap" }}>
+        <select
+          value={filterStep}
+          onChange={e => setFilterStep(e.target.value)}
+          style={s.filterSelect}
+        >
+          <option value="all">All Steps</option>
+          {stepOptions.map(step => (
+            <option key={step} value={step}>Step {step}</option>
+          ))}
+        </select>
+
+        <select
+          value={filterList}
+          onChange={e => setFilterList(e.target.value)}
+          style={s.filterSelect}
+        >
+          <option value="all">All Lists</option>
+          {listOptions.map(l => (
+            <option key={l.id} value={l.id}>{l.name}</option>
+          ))}
+        </select>
+
+        {hasFilters && (
+          <button
+            onClick={() => { setFilterStep("all"); setFilterList("all"); }}
+            style={s.clearBtn}
+          >
+            Clear filters
+          </button>
+        )}
+
+        {hasFilters && (
+          <span style={{ fontSize:12, color:"#9FB3C8", marginLeft:"auto" }}>
+            Showing {filteredJobs.length} of {jobs.length}
+          </span>
+        )}
+      </div>
+
       {/* Jobs table */}
       {loading ? (
         <div style={s.empty}><div style={s.spinner} /></div>
-      ) : jobs.length === 0 ? (
+      ) : filteredJobs.length === 0 ? (
         <div style={s.empty}>
           <span style={{ fontSize:36 }}>📭</span>
-          <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12 }}>No jobs in this sequence yet.</p>
+          <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12 }}>
+            {hasFilters ? "No jobs match these filters." : "No jobs in this sequence yet."}
+          </p>
         </div>
       ) : (
         <div style={s.tableWrap}>
           <div style={s.tableHead}>
             <div style={{ ...s.th, flex:2 }}>Hotel</div>
+            <div style={{ ...s.th, flex:2 }}>List</div>
             <div style={{ ...s.th, flex:1 }}>Step</div>
             <div style={{ ...s.th, flex:1 }}>Status</div>
             <div style={{ ...s.th, flex:2 }}>Next Send</div>
             <div style={{ ...s.th, flex:1 }}>Started</div>
             <div style={{ width:40 }} />
           </div>
-          {jobs.map(job => {
+          {filteredJobs.map(job => {
             const sc = statusColor(job.status);
             return (
               <div key={job.id} style={s.tableRow}>
                 <div style={{ flex:2, paddingRight:12 }}>
                   <p style={s.hotelName}>{job.hotel_name}</p>
                   <p style={s.hotelEmail}>{job.hotel_email}</p>
+                </div>
+                <div style={{ flex:2, paddingRight:12 }}>
+                  {job.list_name ? (
+                    <span style={s.listBadge}>{job.list_name}</span>
+                  ) : (
+                    <span style={{ fontSize:12, color:"#C4C4C4" }}>—</span>
+                  )}
                 </div>
                 <div style={{ flex:1, paddingRight:12 }}>
                   <span style={s.stepBadge}>Step {job.current_step}</span>
@@ -196,7 +282,7 @@ export default function SequenceDetailPage() {
         </div>
       )}
 
-      {/* Cancel confirm modal */}
+      {/* Delete modal */}
       {showDelete && (
         <div style={s.overlay}>
           <div style={{ background:"#fff", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
@@ -214,6 +300,7 @@ export default function SequenceDetailPage() {
         </div>
       )}
 
+      {/* Cancel confirm modal */}
       {cancelConfirm && (
         <div style={s.overlay}>
           <div style={{ background:"#fff", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
@@ -250,12 +337,15 @@ const s = {
   statLabel: { fontSize:12, color:"#9FB3C8", fontWeight:500 },
   cancelAllBtn: { padding:"8px 16px", background:"#fff", border:"1.5px solid #ef4444", borderRadius:9, fontSize:13, fontWeight:600, color:"#ef4444", cursor:"pointer" },
   deleteBtn: { padding:"8px 16px", background:"#ef4444", border:"none", borderRadius:9, fontSize:13, fontWeight:600, color:"#fff", cursor:"pointer" },
+  filterSelect: { padding:"7px 12px", border:"1.5px solid #DDD5CC", borderRadius:9, fontSize:13, color:"#0F2544", background:"#fff", cursor:"pointer", fontFamily:"inherit", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239FB3C8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center", paddingRight:30 },
+  clearBtn: { padding:"7px 12px", background:"none", border:"1.5px solid #DDD5CC", borderRadius:9, fontSize:12, color:"#9FB3C8", cursor:"pointer", fontFamily:"inherit", fontWeight:500 },
   tableWrap: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", overflow:"auto" },
-  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF7F4", borderBottom:"1px solid #F0EBE5", minWidth:600 },
+  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF7F4", borderBottom:"1px solid #F0EBE5", minWidth:700 },
   th: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
-  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #F8F4F0", alignItems:"center", minWidth:600 },
+  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #F8F4F0", alignItems:"center", minWidth:700 },
   hotelName: { fontSize:13, fontWeight:600, color:"#0F2544", marginBottom:2 },
   hotelEmail: { fontSize:11, color:"#9FB3C8" },
+  listBadge: { fontSize:11, fontWeight:600, background:"#EEF2FF", color:"#4338ca", padding:"3px 10px", borderRadius:20, display:"inline-block", maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
   stepBadge: { fontSize:11, fontWeight:700, background:"#F0EBE5", color:"#4A6A8A", padding:"3px 10px", borderRadius:20 },
   statusBadge: { fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20 },
   nextSend: { fontSize:12, color:"#1E3A5F", fontWeight:500 },
