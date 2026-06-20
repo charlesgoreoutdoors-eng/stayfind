@@ -85,8 +85,8 @@ export default function AnalyticsPage() {
       const hotelsContacted = hotelList.filter(h => h.contacted).length;
       const hotelsIgContacted = hotelList.filter(h => h.ig_contacted).length;
       const hotelsReplied = jobList.filter(j => j.replied_at).length;
-      const activeJobs = jobList.filter(j => j.status === "active").length;
-      const completedJobs = jobList.filter(j => j.status === "completed").length;
+      const activeJobs = new Set(jobList.filter(j => j.status === "active").map(j => j.sequence_id)).size;
+      const completedJobs = new Set(jobList.filter(j => j.status === "completed" || j.status === "replied").map(j => j.sequence_id)).size;
 
       // Per-list breakdown
       const listBreakdown = listList.map(list => {
