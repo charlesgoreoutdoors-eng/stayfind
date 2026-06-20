@@ -7,7 +7,7 @@ import GmailButton from "../../components/GmailButton";
 import { useIsMobile } from "../../lib/useIsMobile";
 
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
-const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email";
+const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email";
 
 function timeAgo(timestamp) {
   const diff = Date.now() - timestamp;
@@ -53,7 +53,7 @@ export default function MessagesPage() {
   const [mobileView, setMobileView] = useState("list"); // "list" | "conversation"
 
   useEffect(() => { fetchListsAndHotels(); }, []);
-  useEffect(() => { if (gmailToken && allHotels.length > 0) fetchThreads(); }, [gmailToken, allHotels]);
+  useEffect(() => { if (gmailToken) fetchThreads(); }, [gmailToken]);
   useEffect(() => { if (activeThread) messagesEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [activeThread]);
 
   const fetchListsAndHotels = async () => {
@@ -67,17 +67,17 @@ export default function MessagesPage() {
 
 
   const fetchThreads = async () => {
-    if (!gmailToken || allHotels.length === 0) return;
+    if (!gmailToken) return;
     setLoading(true);
     setError("");
     try {
-      const hotelEmails = [...new Set(allHotels.filter(h => h.email).map(h => h.email))];
-      if (hotelEmails.length === 0) { setLoading(false); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || "";
 
       const res = await fetch("/api/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken: gmailToken, hotelEmails }),
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
+        body: JSON.stringify({ accessToken: gmailToken }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);

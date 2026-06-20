@@ -1,30 +1,66 @@
 import { google } from "googleapis";
+import { requireUser, gmailAdmin } from "../../../lib/gmailServer";
+
+const LABEL_NAME = "StayFind";
+
+async function getOrCreateLabel(gmail) {
+  const listRes = await gmail.users.labels.list({ userId: "me" });
+  const existing = (listRes.data.labels || []).find(l => l.name === LABEL_NAME);
+  if (existing) return existing.id;
+  const createRes = await gmail.users.labels.create({
+    userId: "me",
+    requestBody: { name: LABEL_NAME, labelListVisibility: "labelShow", messageListVisibility: "show" },
+  });
+  return createRes.data.id;
+}
 
 export async function POST(request) {
   try {
-    const { accessToken, hotelEmails } = await request.json();
+    const user = await requireUser(request);
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
+    const body = await request.json();
+    const accessToken = body.accessToken;
     if (!accessToken) return Response.json({ error: "No access token" }, { status: 401 });
 
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({ access_token: accessToken });
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    // Build a query to find emails from any of the hotel email addresses
-    if (!hotelEmails || hotelEmails.length === 0) {
-      return Response.json({ threads: [] });
+    // Ensure StayFind label exists
+    let labelId = null;
+    try {
+      const { data: gmailRow } = await gmailAdmin
+        .from("gmail_accounts").select("label_id").eq("user_id", user.id).maybeSingle();
+      labelId = gmailRow?.label_id || null;
+
+      if (!labelId) {
+        labelId = await getOrCreateLabel(gmail);
+        if (labelId) {
+          await gmailAdmin.from("gmail_accounts")
+            .update({ label_id: labelId }).eq("user_id", user.id);
+        }
+      }
+    } catch (e) {
+      console.error("[messages] label lookup failed:", e.message);
     }
 
-    const fromQuery = hotelEmails.map(e => `from:${e}`).join(" OR ");
-    const query = `(${fromQuery})`;
+    // Fetch my Gmail address once (to distinguish sent vs received)
+    let myEmail = "";
+    try {
+      const meRes = await gmail.users.getProfile({ userId: "me" });
+      myEmail = meRes.data.emailAddress || "";
+    } catch {}
 
+    // Query threads in the StayFind label
     const listRes = await gmail.users.threads.list({
       userId: "me",
-      q: query,
+      q: `label:${LABEL_NAME}`,
       maxResults: 50,
     });
 
     const threadItems = listRes.data.threads || [];
+    if (threadItems.length === 0) return Response.json({ threads: [] });
 
     // Fetch full thread details
     const threads = await Promise.all(
@@ -45,7 +81,6 @@ export async function POST(request) {
             const subject = get("Subject");
             const date = get("Date");
 
-            // Extract body
             let body = "";
             const extractBody = (part) => {
               if (!part) return;
@@ -60,7 +95,6 @@ export async function POST(request) {
             };
             extractBody(msg.payload);
 
-            // Strip quoted reply chains (lines starting with >)
             const cleanBody = body
               .split("\n")
               .filter(line => !line.trim().startsWith(">"))
@@ -78,23 +112,47 @@ export async function POST(request) {
               timestamp: new Date(date).getTime(),
               body: cleanBody,
               snippet: msg.snippet || "",
+              labelIds: msg.labelIds || [],
             };
           });
 
-          // Determine hotel email from the thread
-          const hotelMsg = messages.find(m => hotelEmails.some(e => m.from.includes(e)));
-          const hotelEmail = hotelEmails.find(e => messages.some(m => m.from.includes(e)));
+          // Auto-label any messages in this thread missing the StayFind label
+          if (labelId) {
+            const unlabeled = messages.filter(m => !m.labelIds.includes(labelId));
+            if (unlabeled.length > 0) {
+              await Promise.allSettled(unlabeled.map(m =>
+                gmail.users.messages.modify({
+                  userId: "me",
+                  id: m.id,
+                  requestBody: { addLabelIds: [labelId] },
+                })
+              ));
+            }
+          }
+
+          // Find hotel email (any sender that isn't me)
+          const hotelEmail = messages
+            .map(m => {
+              const match = m.from.match(/<(.+?)>/) || [null, m.from];
+              return match[1];
+            })
+            .find(e => e && myEmail && !e.toLowerCase().includes(myEmail.toLowerCase())) || "";
+
+          const lastReply = messages
+            .filter(m => hotelEmail && m.from.toLowerCase().includes(hotelEmail.toLowerCase()))
+            .pop();
 
           return {
             id: t.id,
             hotelEmail,
             subject: messages[0]?.subject || "(no subject)",
             messages: messages.sort((a, b) => a.timestamp - b.timestamp),
-            lastReply: messages.filter(m => hotelEmail && m.from.includes(hotelEmail)).pop(),
+            lastReply,
             messageCount: messages.length,
-            lastTimestamp: Math.max(...messages.map(m => m.timestamp)),
+            lastTimestamp: Math.max(...messages.map(m => m.timestamp || 0)),
           };
         } catch (e) {
+          console.error("[messages] thread fetch failed:", e.message);
           return null;
         }
       })
@@ -103,7 +161,7 @@ export async function POST(request) {
     return Response.json({
       threads: threads
         .filter(Boolean)
-        .filter(t => t.hotelEmail && t.lastReply)
+        .filter(t => t.lastReply)
         .sort((a, b) => b.lastTimestamp - a.lastTimestamp),
     });
   } catch (err) {

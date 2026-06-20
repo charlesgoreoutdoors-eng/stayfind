@@ -1,4 +1,27 @@
 import { requireUser, exchangeCodeForTokens, gmailAdmin } from "../../../../lib/gmailServer";
+import { google } from "googleapis";
+
+const LABEL_NAME = "StayFind";
+
+async function getOrCreateLabel(accessToken) {
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({ access_token: accessToken });
+  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+  const listRes = await gmail.users.labels.list({ userId: "me" });
+  const existing = (listRes.data.labels || []).find(l => l.name === LABEL_NAME);
+  if (existing) return existing.id;
+
+  const createRes = await gmail.users.labels.create({
+    userId: "me",
+    requestBody: {
+      name: LABEL_NAME,
+      labelListVisibility: "labelShow",
+      messageListVisibility: "show",
+    },
+  });
+  return createRes.data.id;
+}
 
 // Called by the client after the OAuth popup returns an authorization code.
 // Exchanges the code for tokens, stores the refresh token, returns a fresh access token.
@@ -26,13 +49,21 @@ export async function POST(request) {
       email = udata.email || "";
     } catch {}
 
+    // Create (or find) the StayFind label in Gmail
+    let labelId = null;
+    try {
+      labelId = await getOrCreateLabel(tokens.access_token);
+    } catch (e) {
+      console.error("[gmail connect] label create failed:", e.message);
+    }
+
     // Persist the refresh token. Only overwrite it when Google actually returned one
     // (it does whenever prompt=consent, which we always send).
     const row = { user_id: user.id, gmail_email: email, updated_at: new Date().toISOString() };
     if (tokens.refresh_token) row.refresh_token = tokens.refresh_token;
+    if (labelId) row.label_id = labelId;
 
     if (!tokens.refresh_token) {
-      // No refresh token and no existing record means we can't persist the connection.
       const { data: existing } = await gmailAdmin
         .from("gmail_accounts").select("refresh_token").eq("user_id", user.id).maybeSingle();
       if (!existing?.refresh_token) {

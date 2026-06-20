@@ -29,10 +29,20 @@ export default function GmailButton({ gmailToken, gmailEmail, gmailLoading, toke
   }
 
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"8px 14px" }}>
+    <div style={{ display:"flex", alignItems:"center", gap:10, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"7px 12px" }}>
       <div style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", flexShrink:0 }} />
       <span style={{ fontSize:12, color:"#166534", fontWeight:500 }}>{gmailEmail}</span>
-      <button onClick={onDisconnect} style={{ fontSize:11, color:"#16a34a", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", fontFamily:"inherit" }}>
+      <div style={{ width:1, height:14, background:"#86efac" }} />
+      <button
+        onClick={onConnect}
+        style={{ fontSize:12, color:"#15803d", fontWeight:600, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", padding:0 }}
+      >
+        Reconnect
+      </button>
+      <button
+        onClick={onDisconnect}
+        style={{ fontSize:12, color:"#dc2626", fontWeight:600, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", padding:0 }}
+      >
         Disconnect
       </button>
     </div>

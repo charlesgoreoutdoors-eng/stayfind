@@ -120,13 +120,17 @@ export async function POST(request) {
 
     let sent = 0;
     const tokenCache = {}; // user_id -> access token (minted from refresh token)
+    const labelCache = {}; // user_id -> StayFind label_id
 
     for (const job of dueJobs) {
       try {
-        // 0. Get a fresh access token for this user (from their stored refresh token)
+        // 0. Get a fresh access token + label id for this user
         if (!(job.user_id in tokenCache)) {
           const tok = await getAccessTokenForUser(job.user_id);
           tokenCache[job.user_id] = tok?.accessToken || null;
+          const { data: gmailRow } = await supabase
+            .from("gmail_accounts").select("label_id").eq("user_id", job.user_id).maybeSingle();
+          labelCache[job.user_id] = gmailRow?.label_id || null;
         }
         const accessToken = tokenCache[job.user_id];
         if (!accessToken) {
@@ -135,7 +139,8 @@ export async function POST(request) {
         }
 
         // 1. Check for replies first
-        const hasReply = await checkForReply(job.hotel_email, accessToken);
+        const labelId = labelCache[job.user_id];
+        const hasReply = await checkForReply(job.hotel_email, accessToken, labelId);
         if (hasReply) {
           await supabase.from("sequence_jobs").update({
             status: "replied",
@@ -159,7 +164,16 @@ export async function POST(request) {
         // 3. Send the email
         const body    = (step.body    || "").replace(/\{hotel_name\}/g, job.hotel_name);
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
-        await sendEmail(accessToken, job.hotel_email, subject, body);
+        const sentMessageId = await sendEmail(accessToken, job.hotel_email, subject, body);
+
+        // 3a. Apply StayFind label to the sent message
+        if (sentMessageId && labelId) {
+          try {
+            await applyLabel(accessToken, sentMessageId, labelId);
+          } catch (e) {
+            console.error("[gmail label] apply failed:", e.message);
+          }
+        }
 
         // 3b. Log to email_send_log
         await supabase.from("email_send_log").insert({
@@ -203,7 +217,7 @@ export async function POST(request) {
   }
 }
 
-async function checkForReply(hotelEmail, accessToken) {
+async function checkForReply(hotelEmail, accessToken, labelId) {
   try {
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({ access_token: accessToken });
@@ -211,12 +225,28 @@ async function checkForReply(hotelEmail, accessToken) {
     const res = await gmail.users.messages.list({
       userId: "me",
       q: `from:${hotelEmail} in:inbox`,
-      maxResults: 1,
+      maxResults: 5,
     });
-    return (res.data.messages || []).length > 0;
+    const messages = res.data.messages || [];
+    // Auto-label incoming replies with StayFind label
+    if (messages.length > 0 && labelId) {
+      await Promise.allSettled(messages.map(m => applyLabel(accessToken, m.id, labelId)));
+    }
+    return messages.length > 0;
   } catch {
     return false;
   }
+}
+
+async function applyLabel(accessToken, messageId, labelId) {
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({ access_token: accessToken });
+  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+  await gmail.users.messages.modify({
+    userId: "me",
+    id: messageId,
+    requestBody: { addLabelIds: [labelId] },
+  });
 }
 
 async function sendEmail(accessToken, to, subject, body) {
@@ -234,8 +264,9 @@ async function sendEmail(accessToken, to, subject, body) {
     .toString("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
-  await gmail.users.messages.send({
+  const res = await gmail.users.messages.send({
     userId: "me",
     requestBody: { raw },
   });
+  return res.data.id; // return message id so caller can apply label
 }
