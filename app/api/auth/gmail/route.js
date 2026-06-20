@@ -5,15 +5,15 @@ export async function GET(request) {
 <head><title>Connecting Gmail...</title></head>
 <body>
 <script>
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  const token = params.get('access_token');
-  const expiresIn = parseInt(params.get('expires_in') || '3600');
-  if (token && window.opener) {
-    window.opener.postMessage(
-      { type: 'gmail_token', token, expiresIn },
-      window.location.origin
-    );
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+  if (window.opener) {
+    if (code) {
+      window.opener.postMessage({ type: 'gmail_code', code }, window.location.origin);
+    } else {
+      window.opener.postMessage({ type: 'gmail_error', error: error || 'cancelled' }, window.location.origin);
+    }
   }
   window.close();
 </script>

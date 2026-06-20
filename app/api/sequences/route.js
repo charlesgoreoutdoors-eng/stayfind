@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { google } from "googleapis";
+import { getAccessTokenForUser } from "../../../lib/gmailServer";
 
 // Called by Supabase pg_cron hourly (0 * * * *)
 // Assigns random send times to newly-due jobs, then sends whatever is due right now
@@ -118,11 +119,23 @@ export async function POST(request) {
     }
 
     let sent = 0;
+    const tokenCache = {}; // user_id -> access token (minted from refresh token)
 
     for (const job of dueJobs) {
       try {
+        // 0. Get a fresh access token for this user (from their stored refresh token)
+        if (!(job.user_id in tokenCache)) {
+          const tok = await getAccessTokenForUser(job.user_id);
+          tokenCache[job.user_id] = tok?.accessToken || null;
+        }
+        const accessToken = tokenCache[job.user_id];
+        if (!accessToken) {
+          // User has no connected Gmail / refresh token is dead — skip; they can reconnect.
+          continue;
+        }
+
         // 1. Check for replies first
-        const hasReply = await checkForReply(job.hotel_email, job.gmail_token);
+        const hasReply = await checkForReply(job.hotel_email, accessToken);
         if (hasReply) {
           await supabase.from("sequence_jobs").update({
             status: "replied",
@@ -146,7 +159,7 @@ export async function POST(request) {
         // 3. Send the email
         const body    = (step.body    || "").replace(/\{hotel_name\}/g, job.hotel_name);
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
-        await sendEmail(job.gmail_token, job.hotel_email, subject, body);
+        await sendEmail(accessToken, job.hotel_email, subject, body);
 
         // 3b. Log to email_send_log
         await supabase.from("email_send_log").insert({
