@@ -52,10 +52,18 @@ export default function ListsPage() {
   const [igScrapeProgress, setIgScrapeProgress] = useState({ done: 0, total: 0, found: 0 });
   const [emailScraping, setEmailScraping] = useState(false);
   const [emailScrapeProgress, setEmailScrapeProgress] = useState({ done: 0, total: 0, found: 0 });
+  const [hunterScraping, setHunterScraping] = useState(false);
+  const [hunterProgress, setHunterProgress] = useState({ done: 0, total: 0, found: 0 });
+  const [userPlan, setUserPlan] = useState("free");
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
   useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("plan").eq("id", user.id).single()
+      .then(({ data }) => { if (data?.plan) setUserPlan(data.plan); });
+  }, [user]);
 
   // Restore active list from localStorage after lists load
   useEffect(() => {
@@ -240,6 +248,56 @@ export default function ListsPage() {
     setEmailScraping(false);
     setEmailScrapeProgress({ done: 0, total: 0, found: 0 });
     alert(`Found ${found} email${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
+  };
+
+  const findHunterEmails = async () => {
+    const hotelsToSearch = listHotels.filter(h => h.website && !h.contact_email);
+    if (hotelsToSearch.length === 0) {
+      alert("All hotels in this list already have direct contacts, or none have websites.");
+      return;
+    }
+    setHunterScraping(true);
+    setHunterProgress({ done: 0, total: hotelsToSearch.length, found: 0 });
+
+    let found = 0;
+    for (let i = 0; i < hotelsToSearch.length; i += 3) {
+      const batch = hotelsToSearch.slice(i, i + 3);
+      const results = await Promise.all(batch.map(async hotel => {
+        try {
+          // Extract root domain from website URL
+          const url = hotel.website.startsWith("http") ? hotel.website : "https://" + hotel.website;
+          const domain = new URL(url).hostname.replace(/^www\./, "");
+          const res = await fetch("/api/hunter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ domain, hotelId: hotel.id, userId: user.id }),
+          });
+          const data = await res.json();
+          return { id: hotel.id, contact: data.contact || null };
+        } catch {
+          return { id: hotel.id, contact: null };
+        }
+      }));
+
+      for (const result of results) {
+        if (result.contact?.value) {
+          found++;
+          const updates = {
+            contact_email: result.contact.value,
+            contact_name: result.contact.name || null,
+            contact_title: result.contact.position || null,
+            hunter_confidence: result.contact.confidence || null,
+          };
+          await supabase.from("list_hotels").update(updates).eq("id", result.id);
+          setListHotels(prev => prev.map(h => h.id === result.id ? { ...h, ...updates } : h));
+        }
+      }
+      setHunterProgress({ done: Math.min(i + 3, hotelsToSearch.length), total: hotelsToSearch.length, found });
+    }
+
+    setHunterScraping(false);
+    setHunterProgress({ done: 0, total: 0, found: 0 });
+    alert(`Found ${found} direct contact${found !== 1 ? "s" : ""} out of ${hotelsToSearch.length} hotels.`);
   };
 
   const openList = async (list) => {
@@ -501,6 +559,35 @@ export default function ListsPage() {
                       Find Emails
                     </button>
                   )}
+                  {hunterScraping ? (
+                    <div style={s.hunterProgress}>
+                      <div style={s.hunterSpinner} />
+                      <span>Finding contacts... {hunterProgress.done}/{hunterProgress.total} — {hunterProgress.found} found</span>
+                    </div>
+                  ) : ["pro","agency","founding"].includes(userPlan) ? (
+                    <button
+                      style={{ ...s.hunterBtn, ...((igScraping || emailScraping) ? s.igScrapeBtnDisabled : {}) }}
+                      onClick={findHunterEmails}
+                      disabled={igScraping || emailScraping}
+                      title="Find direct contacts using Hunter.io"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+                      </svg>
+                      Find Specific Emails
+                    </button>
+                  ) : (
+                    <div style={{ position:"relative" }} title="Upgrade to Agency plan to find direct contacts">
+                      <button style={{ ...s.hunterBtn, opacity:0.4, cursor:"not-allowed" }} disabled>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                          <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+                        </svg>
+                        Find Specific Emails
+                      </button>
+                    </div>
+                  )}
                   <button style={s.mapBtn} onClick={() => { setShowMap(true); setMapEmpty(false); }} title="View hotels on a map">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
@@ -556,9 +643,25 @@ export default function ListsPage() {
                       </div>
                       {/* Email */}
                       <div style={{ minWidth:0 }}>
+                        {hotel.contact_email ? (
+                          <div style={{ marginBottom: hotel.email ? 6 : 0 }}>
+                            {(hotel.contact_name || hotel.contact_title) && (
+                              <p style={{ fontSize:11, color:"#6B7280", marginBottom:2 }}>
+                                {[hotel.contact_name, hotel.contact_title].filter(Boolean).join(" — ")}
+                              </p>
+                            )}
+                            <div style={{ display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
+                              <p style={{ ...s.emailText, wordBreak:"break-all", margin:0 }}>✉ {hotel.contact_email}</p>
+                              <span style={{ fontSize:10, fontWeight:700, background:"#EEF2FF", color:"#4338ca", padding:"2px 7px", borderRadius:20, flexShrink:0 }}>Direct</span>
+                            </div>
+                            {hotel.hunter_confidence && (
+                              <p style={{ fontSize:10, color:"#9FB3C8", marginTop:2 }}>{hotel.hunter_confidence}% confidence</p>
+                            )}
+                          </div>
+                        ) : null}
                         {hotel.email
-                          ? <p style={{ ...s.emailText, wordBreak:"break-all" }}>✉ {hotel.email}</p>
-                          : <p style={s.noEmailText}>No email</p>}
+                          ? <p style={{ ...s.emailText, wordBreak:"break-all", ...(hotel.contact_email ? { fontSize:11, color:"#9FB3C8" } : {}) }}>✉ {hotel.email}</p>
+                          : !hotel.contact_email ? <p style={s.noEmailText}>No email</p> : null}
                         {hotel.phone && <p style={s.phoneText}>{hotel.phone}</p>}
                         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
                       </div>
@@ -885,6 +988,9 @@ const s = {
   igScrapeBtnDisabled: { opacity:0.45, cursor:"not-allowed" },
   igScrapeProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, color:"#C13584", fontWeight:500 },
   igScrapeSpinner: { width:12, height:12, border:"2px solid #e8b4d8", borderTopColor:"#C13584", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
+  hunterBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#0F2544", border:"none", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#fff", fontFamily:"inherit" },
+  hunterProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"#EEF2FF", border:"1px solid #c7d2fe", borderRadius:9, fontSize:12, color:"#4338ca", fontWeight:500 },
+  hunterSpinner: { width:12, height:12, border:"2px solid #c7d2fe", borderTopColor:"#4338ca", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
   igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   igSentBadge: { fontSize:10, fontWeight:700, background:"#FDF0F8", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid #e8b4d8" },
   igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid #e8b4d8", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },

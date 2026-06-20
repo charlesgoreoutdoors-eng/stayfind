@@ -336,6 +336,62 @@ export default function AdminPage() {
         </div>
       </section>
 
+      {/* ── HUNTER.IO USAGE ── */}
+      <section style={s.section}>
+        <div style={s.sectionHead}>
+          <h2 style={s.h2}>Hunter.io Usage</h2>
+        </div>
+        <div style={s.cacheStatsGrid}>
+          {[
+            { label: "Total Searches",          value: data?.hunter?.totalSearches },
+            { label: "API Calls This Month",     value: data?.hunter?.apiCallsThisMonth },
+            { label: "Cache Hits This Month",    value: data?.hunter?.searchesThisMonth != null && data?.hunter?.apiCallsThisMonth != null ? (data.hunter.searchesThisMonth - data.hunter.apiCallsThisMonth) : null },
+            { label: "Cache Hit Rate",           value: data?.hunter?.cacheHitRate != null ? `${data.hunter.cacheHitRate}%` : null, isStr: true },
+            { label: "Total Contacts Found",     value: data?.hunter?.contactsFound },
+            { label: "Credits Saved by Cache",   value: data?.hunter?.creditsSavedByCache, note: "at $0.01/credit" },
+          ].map((c, i) => (
+            <div key={i} style={s.statCard}>
+              <p style={{ ...s.statValue, fontSize: c.isStr ? 22 : 28 }}>
+                {loading || data == null ? "—" : (c.value ?? 0).toLocaleString?.() ?? c.value ?? 0}
+              </p>
+              <p style={s.statLabel}>{c.label}</p>
+              {c.note && <p style={{ fontSize:10, color:"#C4C4C4", marginTop:2 }}>{c.note}</p>}
+            </div>
+          ))}
+        </div>
+
+        {/* Recent searches table */}
+        {data?.hunter?.recentSearches?.length > 0 && (
+          <div style={{ ...s.tableWrap, marginTop: 20 }}>
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  {["Domain", "Type", "Contacts Found", "User", "Date"].map(h => (
+                    <th key={h} style={s.th}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.hunter.recentSearches.map((row, i) => (
+                  <tr key={i} style={s.tr}>
+                    <td style={s.td}>{row.domain}</td>
+                    <td style={s.td}>
+                      {row.cache_hit
+                        ? <span style={{ fontSize:11, fontWeight:700, background:"#dcfce7", color:"#166534", padding:"2px 9px", borderRadius:20 }}>Cached</span>
+                        : <span style={{ fontSize:11, fontWeight:700, background:"#dbeafe", color:"#1d4ed8", padding:"2px 9px", borderRadius:20 }}>API Call</span>
+                      }
+                    </td>
+                    <td style={s.td}>{row.contacts_found ?? 0}</td>
+                    <td style={{ ...s.td, fontSize:12, color:"#9FB3C8" }}>{row.user_email}</td>
+                    <td style={{ ...s.td, fontSize:12, color:"#9FB3C8" }}>{row.searched_at ? new Date(row.searched_at).toLocaleString() : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* ── CLEAR CONFIRM MODAL ── */}
       {showClear && (
         <div style={s.overlay} onClick={() => !clearing && setShowClear(false)}>
