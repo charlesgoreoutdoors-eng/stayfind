@@ -498,11 +498,18 @@ export default function Home() {
         return data.hotels || [];
       }));
 
-      // Flatten and deduplicate by placeId, then by normalised name
+      // Collect placeIds already shown in other tabs so we can exclude them
+      const otherTabIds = new Set(
+        PROPERTY_TABS.filter(t => t.id !== tabId)
+          .flatMap(t => (tabState[t.id]?.hotels || []).map(h => h.placeId).filter(Boolean))
+      );
+
+      // Flatten and deduplicate by placeId + normalised name, excluding cross-tab dupes
       const seenIds = new Set();
       const seenNames = new Set();
       const hotelList = allResults.flat()
         .filter(h => {
+          if (otherTabIds.has(h.placeId)) return false;
           if (seenIds.has(h.placeId)) return false;
           const normName = (h.name || "").toLowerCase().trim();
           if (seenNames.has(normName)) return false;
