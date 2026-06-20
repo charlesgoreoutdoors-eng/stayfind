@@ -75,7 +75,7 @@ function ComposeInner() {
       const res = await fetch("/api/launch-sequence", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sequenceId: selectedSequenceId, hotels: toSend, gmailToken, userId: user.id }),
+        body: JSON.stringify({ sequenceId: selectedSequenceId, hotels: toSend, userId: user.id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Launch failed");
@@ -238,7 +238,7 @@ function ComposeInner() {
                   {launched && (
                     <div style={s.launchSuccess}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      Sequence launched! Emails will send automatically.
+                      Sequence queued! Emails will be spaced out and sent throughout the day.
                     </div>
                   )}
                   <button
