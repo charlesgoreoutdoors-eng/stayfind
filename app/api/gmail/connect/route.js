@@ -12,7 +12,8 @@ export async function POST(request) {
 
     const tokens = await exchangeCodeForTokens(code, redirectUri);
     if (!tokens?.access_token) {
-      return Response.json({ error: "Token exchange failed" }, { status: 400 });
+      console.error("Token exchange failed:", JSON.stringify(tokens));
+      return Response.json({ error: "Token exchange failed", detail: tokens?.error_description || tokens?.error || "no access_token" }, { status: 400 });
     }
 
     // Fetch the connected Gmail address
