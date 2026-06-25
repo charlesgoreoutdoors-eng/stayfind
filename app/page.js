@@ -17,6 +17,22 @@ const PROPERTY_TABS = [
   { id: "apartments",label: "Apartments",       icon: "🏢", keywords: ["serviced apartment", "aparthotel", "extended stay", "furnished apartment"] },
 ];
 
+const PRICE_LEVELS = [
+  { label: "$",    value: "budget",   keyword: "budget affordable" },
+  { label: "$$",   value: "midrange", keyword: "" },
+  { label: "$$$",  value: "upscale",  keyword: "upscale boutique" },
+  { label: "$$$$", value: "luxury",   keyword: "luxury 5 star" },
+];
+
+const AMENITIES = [
+  { label: "Pool",         value: "pool" },
+  { label: "Spa",          value: "spa" },
+  { label: "Beachfront",   value: "beachfront" },
+  { label: "Eco Friendly", value: "eco" },
+  { label: "Restaurant",   value: "restaurant" },
+  { label: "Pet",          value: "pet" },
+];
+
 const GMAIL_CLIENT_ID = process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || "";
 const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email";
 
@@ -380,7 +396,9 @@ export default function Home() {
   const _ss = (() => { try { const r = sessionStorage.getItem("sf_search"); return r ? JSON.parse(r) : {}; } catch { return {}; } })();
 
   const [location, setLocation] = useState(_ss.location || "");
-  const [price, setPrice]       = useState(_ss.price || "midrange");
+  const [price, setPrice]       = useState(_ss.price !== undefined ? _ss.price : null);
+  const [amenities, setAmenities] = useState(_ss.amenities || []);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(_ss.activeTab || "hotels");
   const [view, setView]         = useState(_ss.view || "list");
   const [error, setError]       = useState("");
@@ -400,6 +418,7 @@ export default function Home() {
   });
 
   const inputRef = useRef(null);
+  const filterRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   const { user } = useAuth();
 
@@ -409,14 +428,24 @@ export default function Home() {
 
   const setTab = (tabId, patch) => setTabState(prev => ({ ...prev, [tabId]: { ...prev[tabId], ...patch } }));
 
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    if (!filterOpen) return;
+    const handler = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [filterOpen]);
+
   // Persist search state
   useEffect(() => {
     try {
       const saveable = {};
       PROPERTY_TABS.forEach(t => { saveable[t.id] = { hotels: tabState[t.id].hotels, searched: tabState[t.id].searched }; });
-      sessionStorage.setItem("sf_search", JSON.stringify({ location, price, activeTab, view, tabState: saveable }));
+      sessionStorage.setItem("sf_search", JSON.stringify({ location, price, amenities, activeTab, view, tabState: saveable }));
     } catch {}
-  }, [location, price, activeTab, view, tabState]);
+  }, [location, price, amenities, activeTab, view, tabState]);
 
   useEffect(() => { if (user) fetchLists(); }, [user]);
 
@@ -482,14 +511,15 @@ export default function Home() {
   const searchTab = async (tabId) => {
     if (!location.trim()) return;
     const tab = PROPERTY_TABS.find(t => t.id === tabId);
-    const priceObj = PRICE_RANGES.find(p => p.value === price);
     setError("");
     setTab(tabId, { loading: true, hotels: [], searched: true });
 
     try {
-      // Build keyword list: combine price modifier with each property keyword
-      const pricePrefix = priceObj.keyword ? priceObj.keyword + " " : "";
-      const keywords = tab.keywords.map(k => pricePrefix + k);
+      // Build keyword list: combine price modifier and amenities with each property keyword
+      const priceLevel = PRICE_LEVELS.find(p => p.value === price);
+      const pricePrefix = priceLevel?.keyword ? priceLevel.keyword + " " : "";
+      const amenityStr = amenities.length > 0 ? " " + amenities.join(" ") : "";
+      const keywords = tab.keywords.map(k => pricePrefix + k + amenityStr);
 
       // Run all keyword searches in parallel
       const allResults = await Promise.all(keywords.map(async kw => {
@@ -530,9 +560,10 @@ export default function Home() {
   const search = () => searchTab(activeTab);
 
   const handleSearchArea = useCallback(async ({ lat_ne, lng_ne, lat_sw, lng_sw, keywords }) => {
-    const priceObj = PRICE_RANGES.find(p => p.value === price);
-    const pricePrefix = priceObj.keyword ? priceObj.keyword + " " : "";
-    const kws = (keywords || ["hotel"]).map(k => pricePrefix + k);
+    const priceLevel = PRICE_LEVELS.find(p => p.value === price);
+    const pricePrefix = priceLevel?.keyword ? priceLevel.keyword + " " : "";
+    const amenityStr = amenities.length > 0 ? " " + amenities.join(" ") : "";
+    const kws = (keywords || ["hotel"]).map(k => pricePrefix + k + amenityStr);
     setError("");
     try {
       const allResults = await Promise.all(kws.map(async kw => {
@@ -556,7 +587,7 @@ export default function Home() {
     } catch {
       setError("Could not search this area. Please try again.");
     }
-  }, [activeTab, price]);
+  }, [activeTab, price, amenities]);
 
   // When switching tabs, auto-fetch if location set but tab not yet searched
   const handleTabSwitch = (tabId) => {
@@ -620,15 +651,53 @@ export default function Home() {
           <div style={s.searchBar}>
             <div style={s.searchInputWrap}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input ref={inputRef} style={s.searchInput} placeholder="City, region or destination"
+              <input ref={inputRef} style={s.searchInput} placeholder="Search hotels by city or location..."
                 value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
             </div>
             <div style={s.searchDivider} />
-            <select style={s.priceSelect} value={price} onChange={e => setPrice(e.target.value)}>
-              {PRICE_RANGES.map(p => (
-                <option key={p.value} value={p.value}>{p.label} · {p.sub}</option>
-              ))}
-            </select>
+            <div style={{ position:"relative", flexShrink:0 }} ref={filterRef}>
+              <button style={s.filterBtn} onClick={() => setFilterOpen(v => !v)}>
+                <span>Filters</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink:0, transition:"transform 0.2s", transform: filterOpen ? "rotate(180deg)" : "rotate(0deg)" }}><path d="M6 9l6 6 6-6"/></svg>
+                {(price !== null || amenities.length > 0) && <span style={s.filterDot} />}
+              </button>
+              {filterOpen && (
+                <div style={s.filterDropdown}>
+                  <div style={s.filterSection}>
+                    <p style={s.filterSectionLabel}>PRICE</p>
+                    <div style={s.priceLevelRow}>
+                      {PRICE_LEVELS.map(pl => (
+                        <button
+                          key={pl.value}
+                          style={{ ...s.priceLevelBtn, ...(price === pl.value ? s.priceLevelBtnActive : {}) }}
+                          onClick={() => setPrice(prev => prev === pl.value ? null : pl.value)}
+                        >
+                          {pl.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p style={s.filterSectionLabel}>AMENITIES</p>
+                    <div style={s.amenitiesGrid}>
+                      {AMENITIES.map(am => (
+                        <label key={am.value} style={s.amenityLabel}>
+                          <input
+                            type="checkbox"
+                            checked={amenities.includes(am.value)}
+                            onChange={() => setAmenities(prev =>
+                              prev.includes(am.value) ? prev.filter(v => v !== am.value) : [...prev, am.value]
+                            )}
+                            style={{ accentColor:"#E85D3D", width:14, height:14, cursor:"pointer", flexShrink:0 }}
+                          />
+                          <span style={{ userSelect:"none" }}>{am.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <button style={{ ...s.searchBtn, opacity: location.trim() && !activeLoading ? 1 : 0.6 }} onClick={search} disabled={!location.trim() || activeLoading}>
               {activeLoading ? <><span style={s.spinner} />Searching</> : "Search"}
             </button>
@@ -681,7 +750,7 @@ export default function Home() {
             <div style={s.resultsBar}>
               <div>
                 <h2 style={s.resultsTitle}>{activeHotels.length} {PROPERTY_TABS.find(t => t.id === activeTab)?.label} Found</h2>
-                <p style={s.resultsSub}>{PRICE_RANGES.find(p => p.value === price)?.label} · {location}</p>
+                <p style={s.resultsSub}>{[price ? PRICE_LEVELS.find(p => p.value === price)?.label : null, amenities.length > 0 ? amenities.join(", ") : null, location].filter(Boolean).join(" · ")}</p>
               </div>
               <div style={s.viewToggle}>
                 <button style={{ ...s.toggleBtn, ...(view==="list" ? s.toggleActive : {}) }} onClick={() => setView("list")}>
@@ -726,7 +795,7 @@ const s = {
   header: { background:"#0F2544", padding:"20px 24px 20px" },
   headerInner: { display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:16, flexWrap:"wrap" },
   headline: { fontSize:18, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px", flexShrink:0 },
-  searchBar: { display:"flex", alignItems:"center", gap:0, background:"#fff", borderRadius:12, overflow:"hidden", border:"1px solid rgba(15,37,68,0.06)", flex:1, maxWidth:600, boxShadow:"0 2px 12px rgba(15,37,68,0.15)" },
+  searchBar: { display:"flex", alignItems:"center", gap:0, background:"#fff", borderRadius:12, border:"1px solid rgba(15,37,68,0.06)", flex:1, boxShadow:"0 2px 12px rgba(15,37,68,0.15)" },
   searchInputWrap: { display:"flex", alignItems:"center", gap:8, flex:1, padding:"0 14px", minWidth:0 },
   searchInput: { flex:1, border:"none", outline:"none", fontSize:14, color:"#1E3A5F", background:"transparent", padding:"12px 0", minWidth:0 },
   searchDivider: { width:1, height:24, background:"#DDD5CC", flexShrink:0 },
@@ -736,7 +805,17 @@ const s = {
   gmailDot: { width:8, height:8, borderRadius:"50%", background:"#2A9D8F", flexShrink:0 },
   gmailText: { fontSize:12, color:"#A8E6E0", fontWeight:500 },
   gmailDisconnect: { fontSize:11, color:"#A8E6E0", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
-  searchBtn: { padding:"12px 20px", background:"#E85D3D", color:"#fff", border:"none", fontSize:14, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s", display:"flex", alignItems:"center", gap:8, flexShrink:0, fontFamily:"inherit" },
+  filterBtn: { display:"flex", alignItems:"center", gap:6, position:"relative", padding:"12px 16px", background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:600, color:"#4A6A8A", fontFamily:"inherit", flexShrink:0, whiteSpace:"nowrap" },
+  filterDot: { position:"absolute", top:8, right:8, width:7, height:7, borderRadius:"50%", background:"#E85D3D", flexShrink:0 },
+  filterDropdown: { position:"absolute", top:"calc(100% + 8px)", right:0, background:"#fff", borderRadius:14, boxShadow:"0 4px 24px rgba(15,37,68,0.14)", border:"1px solid rgba(15,37,68,0.07)", padding:20, zIndex:100, minWidth:280 },
+  filterSection: { marginBottom:18 },
+  filterSectionLabel: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.07em", marginBottom:10 },
+  priceLevelRow: { display:"flex", gap:8 },
+  priceLevelBtn: { flex:1, padding:"9px 0", border:"1.5px solid #DDD5CC", borderRadius:8, background:"none", cursor:"pointer", fontSize:14, fontWeight:700, color:"#4A6A8A", fontFamily:"inherit", transition:"all 0.15s" },
+  priceLevelBtnActive: { background:"#E85D3D", color:"#fff", borderColor:"#E85D3D" },
+  amenitiesGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 20px" },
+  amenityLabel: { display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:13, color:"#1E3A5F", fontWeight:500 },
+  searchBtn: { padding:"12px 20px", background:"#E85D3D", color:"#fff", border:"none", fontSize:14, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s", display:"flex", alignItems:"center", gap:8, flexShrink:0, fontFamily:"inherit", borderRadius:"0 12px 12px 0" },
   spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
   errorBox: { marginTop:10, padding:"10px 16px", background:"#FEF0EC", border:"1px solid #B83A22", borderRadius:8, color:"#B83A22", fontSize:13, maxWidth:980, margin:"10px auto 0" },
   tabsWrap: { maxWidth:980, margin:"16px auto 0", padding:"0 16px" },
