@@ -131,7 +131,16 @@ export async function POST(request) {
           const { data: gmailRow } = await supabase
             .from("gmail_accounts").select("label_id").eq("user_id", job.user_id).maybeSingle();
           labelCache[job.user_id] = gmailRow?.label_id || null;
+          // Detect and mark bounces before sending anything this run
+          if (tokenCache[job.user_id]) {
+            await checkForBounces(job.user_id, tokenCache[job.user_id], labelCache[job.user_id], supabase);
+          }
         }
+
+        // Skip if this job was just marked bounced by checkForBounces above
+        const { data: freshJob } = await supabase
+          .from("sequence_jobs").select("status").eq("id", job.id).single();
+        if (freshJob?.status === "bounced") continue;
         const accessToken = tokenCache[job.user_id];
         if (!accessToken) {
           // User has no connected Gmail / refresh token is dead — skip; they can reconnect.
@@ -260,6 +269,97 @@ async function applyLabel(accessToken, messageId, labelId) {
     id: messageId,
     requestBody: { addLabelIds: [labelId] },
   });
+}
+
+async function checkForBounces(userId, accessToken, labelId, supabase) {
+  try {
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: accessToken });
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+    const res = await gmail.users.messages.list({
+      userId: "me",
+      q: "from:(mailer-daemon OR postmaster) in:inbox",
+      maxResults: 20,
+    });
+    const messages = res.data.messages || [];
+    if (messages.length === 0) return;
+
+    for (const msg of messages) {
+      try {
+        const detail = await gmail.users.messages.get({
+          userId: "me",
+          id: msg.id,
+          format: "full",
+        });
+
+        const bodyText = extractMessageBody(detail.data);
+        if (!bodyText) continue;
+
+        const bouncedEmail = extractBouncedEmail(bodyText);
+        if (!bouncedEmail) continue;
+
+        // Mark all active sequence jobs for this address as bounced
+        await supabase.from("sequence_jobs")
+          .update({ status: "bounced", completed_at: new Date().toISOString() })
+          .eq("user_id", userId)
+          .eq("hotel_email", bouncedEmail)
+          .eq("status", "active");
+
+        // Mark primary hotel email as invalid
+        await supabase.from("list_hotels")
+          .update({ email_bounced: true })
+          .ilike("email", bouncedEmail);
+
+        // Label the bounce notification with the StayFind label
+        if (labelId) {
+          await applyLabel(accessToken, msg.id, labelId).catch(() => {});
+        }
+      } catch (e) {
+        console.error(`[checkForBounces] message ${msg.id}:`, e.message);
+      }
+    }
+  } catch (e) {
+    console.error("[checkForBounces]", e.message);
+  }
+}
+
+function extractMessageBody(message) {
+  if (message.payload?.body?.data) {
+    return Buffer.from(message.payload.body.data, "base64").toString("utf8");
+  }
+  const parts = message.payload?.parts || [];
+  for (const part of parts) {
+    if (part.mimeType === "text/plain" && part.body?.data) {
+      return Buffer.from(part.body.data, "base64").toString("utf8");
+    }
+    // Nested parts (multipart/report bounce messages)
+    for (const sub of (part.parts || [])) {
+      if (sub.mimeType === "text/plain" && sub.body?.data) {
+        return Buffer.from(sub.body.data, "base64").toString("utf8");
+      }
+    }
+  }
+  return null;
+}
+
+function extractBouncedEmail(bodyText) {
+  // RFC 3464 delivery status fields (most reliable)
+  const finalRecipient = bodyText.match(/Final-Recipient:\s*rfc822;\s*([^\s\r\n<>]+)/i);
+  if (finalRecipient) return finalRecipient[1].toLowerCase().replace(/[<>]/g, "");
+
+  const origRecipient = bodyText.match(/Original-Recipient:\s*rfc822;\s*([^\s\r\n<>]+)/i);
+  if (origRecipient) return origRecipient[1].toLowerCase().replace(/[<>]/g, "");
+
+  // X-Failed-Recipients header (Exim, Postfix)
+  const xFailed = bodyText.match(/X-Failed-Recipients:\s*([^\r\n]+)/i);
+  if (xFailed) return xFailed[1].trim().toLowerCase();
+
+  // "does not exist" style (Gmail bounce format) — grab email in angle brackets before it
+  const angleEmail = bodyText.match(/<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>/);
+  if (angleEmail) return angleEmail[1].toLowerCase();
+
+  return null;
 }
 
 async function sendEmail(accessToken, to, subject, body) {
