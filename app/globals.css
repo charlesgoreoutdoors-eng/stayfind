@@ -49,3 +49,29 @@ main { overflow-x: hidden; }
 @media (max-width: 768px) {
   body, .sf-main { overflow-x: hidden; }
 }
+
+/* Rich-text contenteditable editors */
+.rich-editor {
+  min-height: 220px;
+  outline: none;
+  line-height: 1.75;
+  word-break: break-word;
+}
+.rich-editor:empty::before, .sig-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #9FB3C8;
+  pointer-events: none;
+}
+.rich-editor ul, .rich-editor ol, .sig-editor ul, .sig-editor ol {
+  padding-left: 1.6em;
+  margin: 4px 0;
+}
+.rich-editor li, .sig-editor li { margin-bottom: 3px; }
+.rich-editor b, .rich-editor strong, .sig-editor b, .sig-editor strong { font-weight: 700; }
+.rich-editor i, .rich-editor em, .sig-editor i, .sig-editor em { font-style: italic; }
+.sig-editor {
+  min-height: 72px;
+  outline: none;
+  line-height: 1.75;
+  word-break: break-word;
+}

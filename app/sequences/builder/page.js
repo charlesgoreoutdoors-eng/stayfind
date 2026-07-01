@@ -1,6 +1,6 @@
 "use client";
 // v2
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { useIsMobile } from "../../../lib/useIsMobile";
@@ -16,8 +16,31 @@ const DELAY_OPTIONS = [
   { value: 14, label: "14 days later" },
 ];
 
+function RichEditor({ initialHtml, onChange, placeholder }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current) ref.current.innerHTML = initialHtml || "";
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      className="rich-editor"
+      data-placeholder={placeholder}
+      style={{ minHeight: 180, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "inherit", color: "#1E3A5F" }}
+      onInput={() => onChange && onChange(ref.current?.innerHTML || "")}
+    />
+  );
+}
+
 function StepCard({ step, number, templates, onChange, onRemove, canRemove }) {
-  const selectedTemplate = templates.find(t => t.id === step.templateId);
+  const fmt = (cmd) => { document.execCommand(cmd, false, undefined); };
+  const ToolBtn = ({ cmd, title, children }) => (
+    <button style={s.toolBtn} title={title} onMouseDown={e => { e.preventDefault(); fmt(cmd); }}>
+      {children}
+    </button>
+  );
   return (
     <div style={s.stepCard}>
       <div style={s.stepHeader}>
@@ -57,10 +80,22 @@ function StepCard({ step, number, templates, onChange, onRemove, canRemove }) {
       <div style={s.field}>
         <label style={s.label}>Message</label>
         <p style={s.hint}>Use <code style={s.code}>{"{hotel_name}"}</code> to auto-fill the hotel name</p>
-        <textarea style={s.textarea} rows={8}
-          placeholder={"Hi {hotel_name} team,\n\nWrite your message here..."}
-          value={step.body} onChange={e => onChange({ ...step, body: e.target.value })} />
-        <p style={s.charCount}>{step.body.length} characters</p>
+        <div style={{ display: "flex", gap: 4, marginBottom: 6, flexWrap: "wrap" }}>
+          <ToolBtn cmd="bold" title="Bold"><strong>B</strong></ToolBtn>
+          <ToolBtn cmd="italic" title="Italic"><em>I</em></ToolBtn>
+          <ToolBtn cmd="underline" title="Underline"><u>U</u></ToolBtn>
+          <div style={{ width: 1, height: 20, background: "#DDD5CC", margin: "0 2px", alignSelf: "center" }} />
+          <ToolBtn cmd="insertUnorderedList" title="Bullets">• List</ToolBtn>
+          <ToolBtn cmd="insertOrderedList" title="Numbered">1. List</ToolBtn>
+        </div>
+        <div style={{ border: "1.5px solid #DDD5CC", borderRadius: 10, padding: "11px 14px" }}>
+          <RichEditor
+            key={`step-${number}-${step.templateId || "custom"}`}
+            initialHtml={step.body}
+            onChange={html => onChange({ ...step, body: html })}
+            placeholder="Hi {hotel_name} team,&#10;&#10;Write your message here..."
+          />
+        </div>
       </div>
     </div>
   );

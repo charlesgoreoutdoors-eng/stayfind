@@ -44,9 +44,9 @@ export async function POST(request) {
       }
 
       for (const [userId, jobs] of Object.entries(byUser)) {
-        // Get this user's daily limit from profiles
+        // Get this user's daily limit and signature from profiles
         const { data: profileData } = await supabase
-          .from("profiles").select("daily_email_limit").eq("id", userId).single();
+          .from("profiles").select("daily_email_limit, email_signature").eq("id", userId).single();
         const MAX_PER_DAY = profileData?.daily_email_limit ?? 30;
 
         // How many emails already sent today via email_send_log?
@@ -119,8 +119,9 @@ export async function POST(request) {
     }
 
     let sent = 0;
-    const tokenCache = {}; // user_id -> access token (minted from refresh token)
-    const labelCache = {}; // user_id -> StayFind label_id
+    const tokenCache = {};     // user_id -> access token
+    const labelCache = {};     // user_id -> StayFind label_id
+    const signatureCache = {}; // user_id -> email_signature html
 
     for (const job of dueJobs) {
       try {
@@ -135,6 +136,8 @@ export async function POST(request) {
           if (tokenCache[job.user_id]) {
             await checkForBounces(job.user_id, tokenCache[job.user_id], labelCache[job.user_id], supabase);
           }
+          // Cache signature so we don't fetch it per-email
+          signatureCache[job.user_id] = profileData?.email_signature || "";
         }
 
         // Skip if this job was just marked bounced by checkForBounces above
@@ -171,9 +174,11 @@ export async function POST(request) {
         if (!step) continue;
 
         // 3. Send the email
-        const body    = (step.body    || "").replace(/\{hotel_name\}/g, job.hotel_name);
+        const sig = signatureCache[job.user_id] || "";
+        const rawBody = (step.body || "").replace(/\{hotel_name\}/g, job.hotel_name);
+        const htmlBody = toHtml(rawBody) + (sig ? `<br><br>${sig}` : "");
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
-        const sentMessageId = await sendEmail(accessToken, job.hotel_email, subject, body);
+        const sentMessageId = await sendEmail(accessToken, job.hotel_email, subject, htmlBody);
 
         // 3a. Log to email_send_log
         await supabase.from("email_send_log").insert({
@@ -362,7 +367,19 @@ function extractBouncedEmail(bodyText) {
   return null;
 }
 
-async function sendEmail(accessToken, to, subject, body) {
+function toHtml(text) {
+  if (!text) return "";
+  // Already HTML (contains tags) — return as-is
+  if (/<[a-z][\s\S]*>/i.test(text)) return text;
+  // Plain text: escape and convert newlines
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
+async function sendEmail(accessToken, to, subject, htmlBody) {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
@@ -370,10 +387,11 @@ async function sendEmail(accessToken, to, subject, body) {
   const raw = Buffer.from([
     `To: ${to}`,
     `Subject: ${subject}`,
-    `Content-Type: text/plain; charset=utf-8`,
+    `MIME-Version: 1.0`,
+    `Content-Type: text/html; charset=utf-8`,
     ``,
-    body,
-  ].join("\n"))
+    htmlBody,
+  ].join("\r\n"))
     .toString("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
@@ -381,5 +399,5 @@ async function sendEmail(accessToken, to, subject, body) {
     userId: "me",
     requestBody: { raw },
   });
-  return res.data.id; // return message id so caller can apply label
+  return res.data.id;
 }
