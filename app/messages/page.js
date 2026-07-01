@@ -35,6 +35,16 @@ function extractName(str) {
   return match ? match[1].replace(/"/g, "").trim() : extractEmailAddress(str);
 }
 
+const GENERIC_DOMAINS = new Set([
+  "gmail.com","googlemail.com","yahoo.com","yahoo.co.uk","hotmail.com",
+  "hotmail.co.uk","outlook.com","live.com","icloud.com","me.com",
+  "mac.com","aol.com","msn.com","protonmail.com","proton.me",
+]);
+
+function emailDomain(email) {
+  return email ? email.split("@")[1]?.toLowerCase() : null;
+}
+
 export default function MessagesPage() {
   const [lists, setLists]                 = useState([]);
   const [allHotels, setAllHotels]         = useState([]);
@@ -84,7 +94,16 @@ export default function MessagesPage() {
 
       // Enrich threads with hotel info from our lists
       const enriched = (data.threads || []).map(thread => {
-        const hotel = allHotels.find(h => h.email && thread.hotelEmail && h.email.toLowerCase() === thread.hotelEmail.toLowerCase());
+        // Exact email match first
+        let hotel = allHotels.find(h => h.email && thread.hotelEmail &&
+          h.email.toLowerCase() === thread.hotelEmail.toLowerCase());
+        // Domain fallback: same @domain, skipping generic providers
+        if (!hotel && thread.hotelEmail) {
+          const domain = emailDomain(thread.hotelEmail);
+          if (domain && !GENERIC_DOMAINS.has(domain)) {
+            hotel = allHotels.find(h => h.email && emailDomain(h.email) === domain);
+          }
+        }
         const list = hotel ? lists.find(l => l.id === hotel.list_id) : null;
         return { ...thread, hotel, list };
       }).filter(t => t.hotel);

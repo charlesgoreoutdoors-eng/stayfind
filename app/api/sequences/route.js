@@ -217,17 +217,39 @@ export async function POST(request) {
   }
 }
 
+const GENERIC_DOMAINS = new Set([
+  "gmail.com","googlemail.com","yahoo.com","yahoo.co.uk","hotmail.com",
+  "hotmail.co.uk","outlook.com","live.com","icloud.com","me.com",
+  "mac.com","aol.com","msn.com","protonmail.com","proton.me",
+]);
+
 async function checkForReply(hotelEmail, accessToken, labelId) {
   try {
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({ access_token: accessToken });
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+    // Exact email match
     const res = await gmail.users.messages.list({
       userId: "me",
       q: `from:${hotelEmail} in:inbox`,
       maxResults: 5,
     });
-    const messages = res.data.messages || [];
+    let messages = res.data.messages || [];
+
+    // Domain fallback: catches replies from a different address at the same hotel
+    if (messages.length === 0) {
+      const domain = hotelEmail.split("@")[1]?.toLowerCase();
+      if (domain && !GENERIC_DOMAINS.has(domain)) {
+        const domainRes = await gmail.users.messages.list({
+          userId: "me",
+          q: `from:@${domain} in:inbox`,
+          maxResults: 5,
+        });
+        messages = domainRes.data.messages || [];
+      }
+    }
+
     // Auto-label incoming replies with StayFind label
     if (messages.length > 0 && labelId) {
       await Promise.allSettled(messages.map(m => applyLabel(accessToken, m.id, labelId)));
