@@ -116,9 +116,9 @@ export async function POST(request) {
             };
           });
 
-          // Auto-label any messages in this thread missing the StayFind label
+          // Auto-label incoming (non-sent) messages in this thread missing the StayFind label
           if (labelId) {
-            const unlabeled = messages.filter(m => !m.labelIds.includes(labelId));
+            const unlabeled = messages.filter(m => !m.labelIds.includes(labelId) && !m.labelIds.includes("SENT"));
             if (unlabeled.length > 0) {
               await Promise.allSettled(unlabeled.map(m =>
                 gmail.users.messages.modify({

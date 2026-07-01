@@ -166,16 +166,7 @@ export async function POST(request) {
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
         const sentMessageId = await sendEmail(accessToken, job.hotel_email, subject, body);
 
-        // 3a. Apply StayFind label to the sent message
-        if (sentMessageId && labelId) {
-          try {
-            await applyLabel(accessToken, sentMessageId, labelId);
-          } catch (e) {
-            console.error("[gmail label] apply failed:", e.message);
-          }
-        }
-
-        // 3b. Log to email_send_log
+        // 3a. Log to email_send_log
         await supabase.from("email_send_log").insert({
           user_id: job.user_id,
           sequence_job_id: job.id,
