@@ -68,7 +68,7 @@ function ComposeInner() {
   const launchSequence = async () => {
     if (!gmailToken) { alert("Connect your Gmail account on the Messages page first."); return; }
     if (!selectedSequenceId) { alert("Select a sequence first."); return; }
-    const toSend = hotels.filter(h => h.email);
+    const toSend = hotels.filter(h => h.email || (h.hunter_contacts || []).some(c => c.selected));
     if (toSend.length === 0) { alert("No hotels with email addresses in this list."); return; }
     setLaunching(true);
     try {

@@ -24,25 +24,35 @@ export async function POST(request) {
     if (!step1) return Response.json({ error: "No step 1 found for this sequence" }, { status: 400 });
 
     // Insert all hotels as step-1 jobs due now.
+    // If a hotel has selected Hunter contacts, create one job per selected contact.
+    // Otherwise fall back to the hotel's primary email.
     // The cron will pick these up and space them out randomly (30–90 min gaps,
     // 8am–6pm window, daily limit enforced) before sending.
     const now = new Date().toISOString();
-    const jobs = hotels.map(hotel => ({
-      user_id: userId,
-      sequence_id: sequenceId,
-      hotel_id: hotel.id || null,
-      hotel_email: hotel.email,
-      hotel_name: hotel.name,
-      current_step: 1,
-      status: "active",
-      next_send_at: now,
-      started_at: now,
-    }));
+    const jobs = hotels.flatMap(hotel => {
+      const selectedContacts = (hotel.hunter_contacts || []).filter(c => c.selected);
+      const targets = selectedContacts.length > 0
+        ? selectedContacts.map(c => ({ email: c.value, name: hotel.name }))
+        : hotel.email ? [{ email: hotel.email, name: hotel.name }] : [];
+      return targets.map(t => ({
+        user_id: userId,
+        sequence_id: sequenceId,
+        hotel_id: hotel.id || null,
+        hotel_email: t.email,
+        hotel_name: t.name,
+        current_step: 1,
+        status: "active",
+        next_send_at: now,
+        started_at: now,
+      }));
+    });
+
+    if (jobs.length === 0) return Response.json({ error: "No valid email targets found" }, { status: 400 });
 
     const { error } = await supabase.from("sequence_jobs").insert(jobs);
     if (error) throw error;
 
-    return Response.json({ queued: hotels.length });
+    return Response.json({ queued: jobs.length });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }
