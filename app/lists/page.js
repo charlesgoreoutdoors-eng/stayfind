@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import { useAuth } from "../../lib/auth";
-import { useIsMobile } from "../../lib/useIsMobile";
 
 let mapsPromise = null;
 function loadMaps(apiKey) {
@@ -56,10 +55,19 @@ export default function ListsPage() {
   const [hunterProgress, setHunterProgress] = useState({ done: 0, total: 0, found: 0 });
   const [contactsModal, setContactsModal] = useState(null);
   const [userPlan, setUserPlan] = useState("free");
+  const [showListDropdown, setShowListDropdown] = useState(false);
+  const dropdownRef = useRef(null);
   const { user } = useAuth();
-  const isMobile = useIsMobile();
 
   useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
+
+  // Close list dropdown on outside click
+  useEffect(() => {
+    if (!showListDropdown) return;
+    const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowListDropdown(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showListDropdown]);
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("plan").eq("id", user.id).single()
@@ -431,9 +439,55 @@ export default function ListsPage() {
     <div style={s.root}>
       {/* Header */}
       <div style={s.header}>
-        <div>
+        <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", flex:1, minWidth:0 }}>
           <h1 style={s.title}>My Lists</h1>
-          <p style={s.subtitle}>Organise hotels into lists for each trip or campaign</p>
+          {!loading && lists.length > 0 && (
+            <div style={{ position:"relative" }} ref={dropdownRef}>
+              <button style={s.listSelector} onClick={() => setShowListDropdown(v => !v)}>
+                <span style={{ fontWeight:600, color: activeList ? "#0F2544" : "#9FB3C8", fontSize:14, flex:1, textAlign:"left", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {activeList ? activeList.name : "Select a list..."}
+                </span>
+                {activeList && (
+                  <span style={{ fontSize:11, color:"#F5A882", fontWeight:500, flexShrink:0, marginLeft:6 }}>
+                    {hotelCounts[activeList.id] || 0} hotels
+                  </span>
+                )}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2.5" style={{ flexShrink:0, marginLeft:6, transform: showListDropdown ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              {showListDropdown && (
+                <div style={s.listDropdown}>
+                  {lists.map(list => (
+                    <div key={list.id}
+                      style={{ ...s.listDropdownItem, ...(activeList?.id === list.id ? s.listDropdownItemActive : {}) }}
+                      onClick={() => { openList(list); setShowListDropdown(false); }}
+                    >
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontSize:13, fontWeight:600, color: activeList?.id === list.id ? "#E85D3D" : "#0F2544", marginBottom:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{list.name}</p>
+                        <p style={{ fontSize:11, color:"#9FB3C8" }}>{hotelCounts[list.id] || 0} hotels</p>
+                      </div>
+                      <div style={{ display:"flex", gap:5, flexShrink:0 }} onClick={e => e.stopPropagation()}>
+                        <Link href={`/compose?list=${list.id}`}>
+                          <button style={s.iconBtn} title="Compose outreach">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2.5">
+                              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                          </button>
+                        </Link>
+                        <button style={{ ...s.iconBtn, borderColor:"#fee2e2" }} onClick={() => { setDeleteConfirm(list.id); setShowListDropdown(false); }} title="Delete list">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {loading && <div style={s.loadingSpinner} />}
         </div>
         <button style={s.newBtn} onClick={() => setShowNew(v => !v)}>
           {showNew ? "Cancel" : "+ New List"}
@@ -471,58 +525,14 @@ export default function ListsPage() {
         </div>
       )}
 
-      <div style={{ ...s.body, ...(isMobile ? s.bodyMobile : {}) }}>
-        {/* Lists panel */}
-        <div style={s.listsPanel}>
-          {loading ? (
-            <div style={s.empty}>
-              <div style={s.loadingSpinner} />
-              <p>Loading your lists...</p>
-            </div>
-          ) : lists.length === 0 ? (
-            <div style={s.empty}>
-              <span style={{ fontSize:40 }}>📋</span>
-              <p style={{ fontWeight:600, color:"#1E3A5F" }}>No lists yet</p>
-              <p style={{ fontSize:13 }}>Create a list to start organising hotels from your searches.</p>
-              <button style={s.saveBtn} onClick={() => setShowNew(true)}>+ Create your first list</button>
-            </div>
-          ) : (
-            lists.map(list => (
-              <div
-                key={list.id}
-                style={{ ...s.listItem, background: activeList?.id === list.id ? "#FEF0EC" : "#fff", borderColor: activeList?.id === list.id ? "#E85D3D" : "#DDD5CC" }}
-                onClick={() => openList(list)}
-              >
-                <div style={{ flex:1, minWidth:0 }}>
-                  <p style={s.listName}>{list.name}</p>
-                  {list.description && <p style={s.listDesc}>{list.description}</p>}
-                  <p style={s.listMeta}>{hotelCounts[list.id] || 0} hotels</p>
-                </div>
-                <div style={{ display:"flex", gap:6, flexShrink:0 }} onClick={e => e.stopPropagation()}>
-                  <Link href={`/compose?list=${list.id}`}>
-                    <button style={s.iconBtn} title="Compose outreach for this list">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2.5">
-                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                      </svg>
-                    </button>
-                  </Link>
-                  <button style={{ ...s.iconBtn, borderColor:"#fee2e2" }} onClick={() => setDeleteConfirm(list.id)} title="Delete list">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Hotels detail panel */}
-        <div style={s.detailPanel}>
+      {/* Hotels detail panel */}
+      <div style={s.detailPanel}>
           {!activeList ? (
             <div style={s.empty}>
-              <span style={{ fontSize:36 }}>👈</span>
-              <p>Select a list to see its hotels</p>
+              <span style={{ fontSize:36 }}>📋</span>
+              <p style={{ fontWeight:600, color:"#1E3A5F" }}>{lists.length === 0 ? "No lists yet" : "Select a list above"}</p>
+              <p style={{ fontSize:13 }}>{lists.length === 0 ? "Create a list to start organising hotels from your searches." : "Use the dropdown in the header to pick a list."}</p>
+              {lists.length === 0 && <button style={s.saveBtn} onClick={() => setShowNew(true)}>+ Create your first list</button>}
             </div>
           ) : (
             <>
@@ -791,7 +801,6 @@ export default function ListsPage() {
               )}
             </>
           )}
-        </div>
       </div>
 
       {/* Notes Modal */}
@@ -963,11 +972,6 @@ export default function ListsPage() {
         </div>
       )}
 
-      <style>{`
-        @media (max-width: 700px) {
-          .lists-body { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -978,27 +982,24 @@ const s = {
   title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:4 },
   subtitle: { fontSize:14, color:"#9FB3C8" },
   newBtn: { background:"#0F2544", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", flexShrink:0 },
+  listSelector: { display:"flex", alignItems:"center", gap:4, padding:"9px 14px", background:"#fff", border:"1.5px solid #DDD5CC", borderRadius:10, cursor:"pointer", fontFamily:"inherit", minWidth:200, maxWidth:340 },
+  listDropdown: { position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:200, background:"#fff", border:"1.5px solid #DDD5CC", borderRadius:12, boxShadow:"0 8px 24px rgba(15,37,68,0.12)", minWidth:280, maxHeight:320, overflowY:"auto" },
+  listDropdownItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", cursor:"pointer", borderBottom:"1px solid #F8F6F4", transition:"background 0.12s" },
+  listDropdownItemActive: { background:"#FEF0EC" },
   errorBox: { background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"12px 16px", color:"#dc2626", fontSize:13, marginBottom:16 },
   newForm: { background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:14, padding:"20px", marginBottom:20, display:"flex", flexDirection:"column", gap:10, maxWidth:500 },
   newFormTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:16, fontWeight:700, color:"#0F2544" },
   input: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none" },
   saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
   cancelBtn: { background:"#fff", color:"#4A6A8A", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  body: { display:"grid", gridTemplateColumns:"260px 1fr", gap:16, alignItems:"start" },
-  bodyMobile: { display:"grid", gridTemplateColumns:"1fr", gap:16 },
-  listsPanel: { display:"flex", flexDirection:"column", gap:8 },
-  listItem: { padding:"14px", borderRadius:12, border:"1.5px solid #e2e8f0", cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:10, background:"#fff" },
-  listName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
-  listDesc: { fontSize:12, color:"#9FB3C8", marginBottom:3 },
-  listMeta: { fontSize:11, color:"#F5A882", fontWeight:500 },
-  iconBtn: { width:30, height:30, borderRadius:7, border:"1.5px solid #e2e8f0", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
+  iconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid #e2e8f0", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
   detailPanel: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", overflow:"hidden", minHeight:300 },
   detailHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid #f1f5f9", gap:12, flexWrap:"wrap" },
   detailTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
   detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  tableWrap: { overflowX:"visible" },
-  tableGrid: { display:"grid", gridTemplateColumns:"2fr 1.3fr 1.2fr 100px 1.4fr 36px", alignItems:"center", gap:"0 10px" },
+  tableWrap: { overflowX:"auto" },
+  tableGrid: { display:"grid", gridTemplateColumns:"2.5fr 1.5fr 1.4fr 120px 1.6fr 40px", alignItems:"center", gap:"0 16px" },
   tableHead: { padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
   tableRow: { padding:"14px 20px", borderBottom:"1px solid #f8fafc" },
   colHd: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
