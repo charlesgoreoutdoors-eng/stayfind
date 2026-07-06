@@ -45,15 +45,15 @@ export async function POST(request) {
       .maybeSingle();
 
     if (cached) {
-      const contact = bestContact(cached.contacts);
+      const contacts = (cached.contacts || []).filter(c => c.value);
       await supabase.from("hunter_usage_log").insert({
         user_id: userId,
         hotel_id: hotelId || null,
         domain,
         cache_hit: true,
-        contacts_found: (cached.contacts || []).length,
+        contacts_found: contacts.length,
       });
-      return Response.json({ contact, cached: true });
+      return Response.json({ contacts, cached: true });
     }
 
     // Call Hunter.io Domain Search API
@@ -85,8 +85,8 @@ export async function POST(request) {
       contacts_found: contacts.length,
     });
 
-    const contact = bestContact(contacts);
-    return Response.json({ contact, cached: false });
+    const withEmails = contacts.filter(c => c.value);
+    return Response.json({ contacts: withEmails, cached: false });
   } catch (err) {
     console.error("[hunter]", err);
     return Response.json({ error: err.message }, { status: 500 });

@@ -54,6 +54,7 @@ export default function ListsPage() {
   const [emailScrapeProgress, setEmailScrapeProgress] = useState({ done: 0, total: 0, found: 0 });
   const [hunterScraping, setHunterScraping] = useState(false);
   const [hunterProgress, setHunterProgress] = useState({ done: 0, total: 0, found: 0 });
+  const [contactsModal, setContactsModal] = useState(null);
   const [userPlan, setUserPlan] = useState("free");
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -251,9 +252,9 @@ export default function ListsPage() {
   };
 
   const findHunterEmails = async () => {
-    const hotelsToSearch = listHotels.filter(h => h.website && !h.contact_email);
+    const hotelsToSearch = listHotels.filter(h => h.website && !h.hunter_contacts);
     if (hotelsToSearch.length === 0) {
-      alert("All hotels in this list already have direct contacts, or none have websites.");
+      alert("All hotels in this list already have contacts searched, or none have websites.");
       return;
     }
     setHunterScraping(true);
@@ -264,7 +265,6 @@ export default function ListsPage() {
       const batch = hotelsToSearch.slice(i, i + 3);
       const results = await Promise.all(batch.map(async hotel => {
         try {
-          // Extract root domain from website URL
           const url = hotel.website.startsWith("http") ? hotel.website : "https://" + hotel.website;
           const domain = new URL(url).hostname.replace(/^www\./, "");
           const res = await fetch("/api/hunter", {
@@ -273,31 +273,33 @@ export default function ListsPage() {
             body: JSON.stringify({ domain, hotelId: hotel.id, userId: user.id }),
           });
           const data = await res.json();
-          return { id: hotel.id, contact: data.contact || null };
+          return { id: hotel.id, contacts: data.contacts || [] };
         } catch {
-          return { id: hotel.id, contact: null };
+          return { id: hotel.id, contacts: [] };
         }
       }));
 
       for (const result of results) {
-        if (result.contact?.value) {
-          found++;
-          const updates = {
-            contact_email: result.contact.value,
-            contact_name: result.contact.name || null,
-            contact_title: result.contact.position || null,
-            hunter_confidence: result.contact.confidence || null,
-          };
-          await supabase.from("list_hotels").update(updates).eq("id", result.id);
-          setListHotels(prev => prev.map(h => h.id === result.id ? { ...h, ...updates } : h));
-        }
+        const hunter_contacts = result.contacts.map(c => ({ ...c, selected: false }));
+        if (hunter_contacts.length > 0) found++;
+        await supabase.from("list_hotels").update({ hunter_contacts }).eq("id", result.id);
+        setListHotels(prev => prev.map(h => h.id === result.id ? { ...h, hunter_contacts } : h));
       }
       setHunterProgress({ done: Math.min(i + 3, hotelsToSearch.length), total: hotelsToSearch.length, found });
     }
 
     setHunterScraping(false);
     setHunterProgress({ done: 0, total: 0, found: 0 });
-    alert(`Found ${found} direct contact${found !== 1 ? "s" : ""} out of ${hotelsToSearch.length} hotels.`);
+    alert(`Found contacts for ${found} out of ${hotelsToSearch.length} hotels.`);
+  };
+
+  const toggleContactSelection = async (hotel, idx) => {
+    const updated = (hotel.hunter_contacts || []).map((c, i) =>
+      i === idx ? { ...c, selected: !c.selected } : c
+    );
+    await supabase.from("list_hotels").update({ hunter_contacts: updated }).eq("id", hotel.id);
+    setListHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, hunter_contacts: updated } : h));
+    setContactsModal(prev => prev?.id === hotel.id ? { ...prev, hunter_contacts: updated } : prev);
   };
 
   const openList = async (list) => {
@@ -643,7 +645,15 @@ export default function ListsPage() {
                       </div>
                       {/* Email */}
                       <div style={{ minWidth:0 }}>
-                        {hotel.contact_email ? (
+                        {hotel.hunter_contacts?.length > 0 ? (
+                          <button style={s.contactCountBadge} onClick={() => setContactsModal(hotel)}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            {hotel.hunter_contacts.length} contact{hotel.hunter_contacts.length !== 1 ? "s" : ""} found
+                            {hotel.hunter_contacts.some(c => c.selected) && (
+                              <span style={s.selectedCount}>{hotel.hunter_contacts.filter(c => c.selected).length} selected</span>
+                            )}
+                          </button>
+                        ) : hotel.contact_email ? (
                           <div style={{ marginBottom: hotel.email ? 6 : 0 }}>
                             {(hotel.contact_name || hotel.contact_title) && (
                               <p style={{ fontSize:11, color:"#6B7280", marginBottom:2 }}>
@@ -654,14 +664,11 @@ export default function ListsPage() {
                               <p style={{ ...s.emailText, wordBreak:"break-all", margin:0 }}>✉ {hotel.contact_email}</p>
                               <span style={{ fontSize:10, fontWeight:700, background:"#EEF2FF", color:"#4338ca", padding:"2px 7px", borderRadius:20, flexShrink:0 }}>Direct</span>
                             </div>
-                            {hotel.hunter_confidence && (
-                              <p style={{ fontSize:10, color:"#9FB3C8", marginTop:2 }}>{hotel.hunter_confidence}% confidence</p>
-                            )}
                           </div>
                         ) : null}
                         {hotel.email
-                          ? <p style={{ ...s.emailText, wordBreak:"break-all", ...(hotel.contact_email ? { fontSize:11, color:"#9FB3C8" } : {}) }}>✉ {hotel.email}</p>
-                          : !hotel.contact_email ? <p style={s.noEmailText}>No email</p> : null}
+                          ? <p style={{ ...s.emailText, wordBreak:"break-all", ...((hotel.hunter_contacts?.length > 0 || hotel.contact_email) ? { fontSize:11, color:"#9FB3C8" } : {}) }}>✉ {hotel.email}</p>
+                          : !hotel.hunter_contacts?.length && !hotel.contact_email ? <p style={s.noEmailText}>No email</p> : null}
                         {hotel.phone && <p style={s.phoneText}>{hotel.phone}</p>}
                         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
                       </div>
@@ -918,6 +925,44 @@ export default function ListsPage() {
         </div>
       )}
 
+      {/* Hunter contacts modal */}
+      {contactsModal && (
+        <div style={s.overlay} onClick={() => setContactsModal(null)}>
+          <div style={{ ...s.modal, maxWidth:480, width:"90%" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+              <div>
+                <h3 style={{ fontSize:16, fontWeight:700, color:"#0F2544", marginBottom:2 }}>{contactsModal.name}</h3>
+                <p style={{ fontSize:12, color:"#9FB3C8" }}>Select contacts to include in sequences</p>
+              </div>
+              <button onClick={() => setContactsModal(null)} style={{ background:"#F0EBE5", border:"none", borderRadius:"50%", width:30, height:30, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"#4A6A8A", flexShrink:0 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {(contactsModal.hunter_contacts || []).map((contact, idx) => (
+                <label key={idx} style={{ ...s.contactRow, ...(contact.selected ? s.contactRowSelected : {}) }}>
+                  <input
+                    type="checkbox"
+                    checked={contact.selected || false}
+                    onChange={() => toggleContactSelection(contactsModal, idx)}
+                    style={{ accentColor:"#E85D3D", width:16, height:16, flexShrink:0, cursor:"pointer" }}
+                  />
+                  <div style={{ minWidth:0 }}>
+                    {contact.name && <p style={{ fontSize:13, fontWeight:600, color:"#0F2544", marginBottom:1 }}>{contact.name}</p>}
+                    {contact.position && <p style={{ fontSize:11, color:"#4A6A8A", marginBottom:3 }}>{contact.position}</p>}
+                    <p style={{ fontSize:12, color:"#E85D3D", wordBreak:"break-all" }}>✉ {contact.value}</p>
+                    {contact.confidence && <p style={{ fontSize:10, color:"#9FB3C8", marginTop:2 }}>{contact.confidence}% confidence</p>}
+                  </div>
+                </label>
+              ))}
+            </div>
+            <button style={{ ...s.newBtn, width:"100%", marginTop:16, textAlign:"center", justifyContent:"center", display:"flex" }} onClick={() => setContactsModal(null)}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @media (max-width: 700px) {
           .lists-body { grid-template-columns: 1fr !important; }
@@ -964,6 +1009,10 @@ const s = {
   hotelRating: { fontSize:11, color:"#f59e0b", marginTop:2 },
   emailText: { fontSize:12, color:"#E85D3D", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
   noEmailText: { fontSize:12, color:"#cbd5e1", marginBottom:2 },
+  contactCountBadge: { display:"inline-flex", alignItems:"center", gap:6, padding:"5px 10px", background:"#EEF2FF", border:"1.5px solid #C7D2FE", borderRadius:20, fontSize:11, fontWeight:700, color:"#4338CA", cursor:"pointer", marginBottom:4, fontFamily:"inherit" },
+  selectedCount: { background:"#E85D3D", color:"#fff", fontSize:10, fontWeight:700, padding:"1px 7px", borderRadius:10 },
+  contactRow: { display:"flex", alignItems:"flex-start", gap:12, padding:"12px", borderRadius:10, border:"1.5px solid #F0EBE5", cursor:"pointer", transition:"all 0.15s" },
+  contactRowSelected: { border:"1.5px solid #E85D3D", background:"#FEF0EC" },
   phoneText: { fontSize:11, color:"#4A6A8A", marginBottom:2 },
   websiteLink: { fontSize:11, color:"#E85D3D", textDecoration:"none" },
   statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },

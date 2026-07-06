@@ -44,9 +44,9 @@ export async function POST(request) {
       }
 
       for (const [userId, jobs] of Object.entries(byUser)) {
-        // Get this user's daily limit from profiles
+        // Get this user's daily limit and signature from profiles
         const { data: profileData } = await supabase
-          .from("profiles").select("daily_email_limit").eq("id", userId).single();
+          .from("profiles").select("daily_email_limit, email_signature").eq("id", userId).single();
         const MAX_PER_DAY = profileData?.daily_email_limit ?? 30;
 
         // How many emails already sent today via email_send_log?
@@ -119,8 +119,9 @@ export async function POST(request) {
     }
 
     let sent = 0;
-    const tokenCache = {}; // user_id -> access token (minted from refresh token)
-    const labelCache = {}; // user_id -> StayFind label_id
+    const tokenCache = {};     // user_id -> access token
+    const labelCache = {};     // user_id -> StayFind label_id
+    const signatureCache = {}; // user_id -> email_signature html
 
     for (const job of dueJobs) {
       try {
@@ -131,7 +132,18 @@ export async function POST(request) {
           const { data: gmailRow } = await supabase
             .from("gmail_accounts").select("label_id").eq("user_id", job.user_id).maybeSingle();
           labelCache[job.user_id] = gmailRow?.label_id || null;
+          // Detect and mark bounces before sending anything this run
+          if (tokenCache[job.user_id]) {
+            await checkForBounces(job.user_id, tokenCache[job.user_id], labelCache[job.user_id], supabase);
+          }
+          // Cache signature so we don't fetch it per-email
+          signatureCache[job.user_id] = profileData?.email_signature || "";
         }
+
+        // Skip if this job was just marked bounced by checkForBounces above
+        const { data: freshJob } = await supabase
+          .from("sequence_jobs").select("status").eq("id", job.id).single();
+        if (freshJob?.status === "bounced") continue;
         const accessToken = tokenCache[job.user_id];
         if (!accessToken) {
           // User has no connected Gmail / refresh token is dead — skip; they can reconnect.
@@ -162,20 +174,13 @@ export async function POST(request) {
         if (!step) continue;
 
         // 3. Send the email
-        const body    = (step.body    || "").replace(/\{hotel_name\}/g, job.hotel_name);
+        const sig = signatureCache[job.user_id] || "";
+        const rawBody = (step.body || "").replace(/\{hotel_name\}/g, job.hotel_name);
+        const htmlBody = toHtml(rawBody) + (sig ? `<br><br>${sig}` : "");
         const subject = (step.subject || "Collaboration Opportunity").replace(/\{hotel_name\}/g, job.hotel_name);
-        const sentMessageId = await sendEmail(accessToken, job.hotel_email, subject, body);
+        const sentMessageId = await sendEmail(accessToken, job.hotel_email, subject, htmlBody);
 
-        // 3a. Apply StayFind label to the sent message
-        if (sentMessageId && labelId) {
-          try {
-            await applyLabel(accessToken, sentMessageId, labelId);
-          } catch (e) {
-            console.error("[gmail label] apply failed:", e.message);
-          }
-        }
-
-        // 3b. Log to email_send_log
+        // 3a. Log to email_send_log
         await supabase.from("email_send_log").insert({
           user_id: job.user_id,
           sequence_job_id: job.id,
@@ -271,7 +276,110 @@ async function applyLabel(accessToken, messageId, labelId) {
   });
 }
 
-async function sendEmail(accessToken, to, subject, body) {
+async function checkForBounces(userId, accessToken, labelId, supabase) {
+  try {
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: accessToken });
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+    const res = await gmail.users.messages.list({
+      userId: "me",
+      q: "from:(mailer-daemon OR postmaster) in:inbox",
+      maxResults: 20,
+    });
+    const messages = res.data.messages || [];
+    if (messages.length === 0) return;
+
+    for (const msg of messages) {
+      try {
+        const detail = await gmail.users.messages.get({
+          userId: "me",
+          id: msg.id,
+          format: "full",
+        });
+
+        const bodyText = extractMessageBody(detail.data);
+        if (!bodyText) continue;
+
+        const bouncedEmail = extractBouncedEmail(bodyText);
+        if (!bouncedEmail) continue;
+
+        // Mark all active sequence jobs for this address as bounced
+        await supabase.from("sequence_jobs")
+          .update({ status: "bounced", completed_at: new Date().toISOString() })
+          .eq("user_id", userId)
+          .eq("hotel_email", bouncedEmail)
+          .eq("status", "active");
+
+        // Mark primary hotel email as invalid
+        await supabase.from("list_hotels")
+          .update({ email_bounced: true })
+          .ilike("email", bouncedEmail);
+
+        // Label the bounce notification with the StayFind label
+        if (labelId) {
+          await applyLabel(accessToken, msg.id, labelId).catch(() => {});
+        }
+      } catch (e) {
+        console.error(`[checkForBounces] message ${msg.id}:`, e.message);
+      }
+    }
+  } catch (e) {
+    console.error("[checkForBounces]", e.message);
+  }
+}
+
+function extractMessageBody(message) {
+  if (message.payload?.body?.data) {
+    return Buffer.from(message.payload.body.data, "base64").toString("utf8");
+  }
+  const parts = message.payload?.parts || [];
+  for (const part of parts) {
+    if (part.mimeType === "text/plain" && part.body?.data) {
+      return Buffer.from(part.body.data, "base64").toString("utf8");
+    }
+    // Nested parts (multipart/report bounce messages)
+    for (const sub of (part.parts || [])) {
+      if (sub.mimeType === "text/plain" && sub.body?.data) {
+        return Buffer.from(sub.body.data, "base64").toString("utf8");
+      }
+    }
+  }
+  return null;
+}
+
+function extractBouncedEmail(bodyText) {
+  // RFC 3464 delivery status fields (most reliable)
+  const finalRecipient = bodyText.match(/Final-Recipient:\s*rfc822;\s*([^\s\r\n<>]+)/i);
+  if (finalRecipient) return finalRecipient[1].toLowerCase().replace(/[<>]/g, "");
+
+  const origRecipient = bodyText.match(/Original-Recipient:\s*rfc822;\s*([^\s\r\n<>]+)/i);
+  if (origRecipient) return origRecipient[1].toLowerCase().replace(/[<>]/g, "");
+
+  // X-Failed-Recipients header (Exim, Postfix)
+  const xFailed = bodyText.match(/X-Failed-Recipients:\s*([^\r\n]+)/i);
+  if (xFailed) return xFailed[1].trim().toLowerCase();
+
+  // "does not exist" style (Gmail bounce format) — grab email in angle brackets before it
+  const angleEmail = bodyText.match(/<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>/);
+  if (angleEmail) return angleEmail[1].toLowerCase();
+
+  return null;
+}
+
+function toHtml(text) {
+  if (!text) return "";
+  // Already HTML (contains tags) — return as-is
+  if (/<[a-z][\s\S]*>/i.test(text)) return text;
+  // Plain text: escape and convert newlines
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
+async function sendEmail(accessToken, to, subject, htmlBody) {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
@@ -279,10 +387,11 @@ async function sendEmail(accessToken, to, subject, body) {
   const raw = Buffer.from([
     `To: ${to}`,
     `Subject: ${subject}`,
-    `Content-Type: text/plain; charset=utf-8`,
+    `MIME-Version: 1.0`,
+    `Content-Type: text/html; charset=utf-8`,
     ``,
-    body,
-  ].join("\n"))
+    htmlBody,
+  ].join("\r\n"))
     .toString("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
@@ -290,5 +399,5 @@ async function sendEmail(accessToken, to, subject, body) {
     userId: "me",
     requestBody: { raw },
   });
-  return res.data.id; // return message id so caller can apply label
+  return res.data.id;
 }

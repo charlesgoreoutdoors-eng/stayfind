@@ -106,7 +106,7 @@ export default function MessagesPage() {
         }
         const list = hotel ? lists.find(l => l.id === hotel.list_id) : null;
         return { ...thread, hotel, list };
-      }).filter(t => t.hotel);
+      });
 
       setThreads(enriched);
 
@@ -257,6 +257,7 @@ export default function MessagesPage() {
                       <span style={s.threadTime}>{timeAgo(thread.lastTimestamp)}</span>
                     </div>
                     {thread.list && <span style={s.threadList}>{thread.list.name}</span>}
+                    {!thread.hotel && <span style={s.threadUnlinked}>Unlinked</span>}
                     <p style={s.threadSnippet}>{thread.lastReply?.snippet?.substring(0, 70) || "..."}</p>
                   </div>
                   {unread[thread.id] && <div style={s.unreadDot} />}
@@ -398,6 +399,7 @@ const s = {
   threadHotelName: { fontSize:13, fontWeight:700, color:"#0F2544", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
   threadTime: { fontSize:11, color:"#9FB3C8", flexShrink:0, marginLeft:8 },
   threadList: { fontSize:10, color:"#E85D3D", fontWeight:600, background:"#FEF0EC", padding:"1px 7px", borderRadius:10, display:"inline-block", marginBottom:3 },
+  threadUnlinked: { fontSize:10, color:"#9FB3C8", fontWeight:600, background:"#F0EBE5", padding:"1px 7px", borderRadius:10, display:"inline-block", marginBottom:3 },
   threadSnippet: { fontSize:12, color:"#9FB3C8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", lineHeight:1.4 },
   unreadDot: { position:"absolute", top:18, right:12, width:8, height:8, borderRadius:"50%", background:"#E85D3D", flexShrink:0 },
   conversationPanel: { background:"#FAF7F4", display:"flex", flexDirection:"column", minHeight:0 },
