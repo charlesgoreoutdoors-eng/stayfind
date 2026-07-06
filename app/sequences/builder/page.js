@@ -35,9 +35,9 @@ function RichEditor({ initialHtml, onChange, placeholder }) {
 }
 
 function StepCard({ step, number, templates, onChange, onRemove, canRemove }) {
-  const fmt = (cmd) => { document.execCommand(cmd, false, undefined); };
+  const execCmd = (cmd) => document.execCommand(cmd, false, undefined);
   const ToolBtn = ({ cmd, title, children }) => (
-    <button style={s.toolBtn} title={title} onMouseDown={e => { e.preventDefault(); fmt(cmd); }}>
+    <button style={s.toolBtn} title={title} onMouseDown={e => { e.preventDefault(); execCmd(cmd); }}>
       {children}
     </button>
   );
@@ -80,15 +80,27 @@ function StepCard({ step, number, templates, onChange, onRemove, canRemove }) {
       <div style={s.field}>
         <label style={s.label}>Message</label>
         <p style={s.hint}>Use <code style={s.code}>{"{hotel_name}"}</code> to auto-fill the hotel name</p>
-        <div style={{ display: "flex", gap: 4, marginBottom: 6, flexWrap: "wrap" }}>
-          <ToolBtn cmd="bold" title="Bold"><strong>B</strong></ToolBtn>
-          <ToolBtn cmd="italic" title="Italic"><em>I</em></ToolBtn>
-          <ToolBtn cmd="underline" title="Underline"><u>U</u></ToolBtn>
-          <div style={{ width: 1, height: 20, background: "#DDD5CC", margin: "0 2px", alignSelf: "center" }} />
-          <ToolBtn cmd="insertUnorderedList" title="Bullets">• List</ToolBtn>
-          <ToolBtn cmd="insertOrderedList" title="Numbered">1. List</ToolBtn>
-        </div>
-        <div style={{ border: "1.5px solid #DDD5CC", borderRadius: 10, padding: "11px 14px" }}>
+        {/* Toolbar + editor in one bordered box */}
+        <div style={s.richEditorBox}>
+          <div style={s.toolbar}>
+            <ToolBtn cmd="bold" title="Bold"><strong>B</strong></ToolBtn>
+            <ToolBtn cmd="italic" title="Italic"><em>I</em></ToolBtn>
+            <ToolBtn cmd="underline" title="Underline"><u>U</u></ToolBtn>
+            <div style={s.toolSep} />
+            <ToolBtn cmd="insertUnorderedList" title="Bullet list">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+                <circle cx="4" cy="6" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><circle cx="4" cy="18" r="1.5" fill="currentColor"/>
+              </svg>
+            </ToolBtn>
+            <ToolBtn cmd="insertOrderedList" title="Numbered list">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
+                <path d="M4 6h1v4" strokeLinecap="round"/><path d="M4 10h2" strokeLinecap="round"/>
+              </svg>
+            </ToolBtn>
+          </div>
+          <div style={{ height: 1, background: "#f1f5f9" }} />
           <RichEditor
             key={`step-${number}-${step.templateId || "custom"}`}
             initialHtml={step.body}
@@ -462,6 +474,10 @@ const s = {
   editor: { background:"#fff", borderRadius:16, border:"1.5px solid #DDD5CC", padding:"24px" },
   editorHeader: { marginBottom:24 },
   nameInput: { width:"100%", border:"none", outline:"none", fontSize:20, fontWeight:700, color:"#0F2544", fontFamily:"inherit", borderBottom:"2px solid #F0EBE5", paddingBottom:8 },
+  richEditorBox: { border:"1.5px solid #DDD5CC", borderRadius:10, overflow:"hidden", background:"#fff" },
+  toolbar: { display:"flex", gap:2, padding:"7px 8px", alignItems:"center", background:"#f8fafc", flexWrap:"wrap" },
+  toolBtn: { display:"flex", alignItems:"center", justifyContent:"center", padding:"5px 10px", border:"none", borderRadius:6, background:"transparent", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:"#1E3A5F", lineHeight:1, minWidth:30 },
+  toolSep: { width:1, height:18, background:"#DDD5CC", margin:"0 3px" },
   stepCard: { background:"#FAF7F4", borderRadius:14, border:"1px solid #F0EBE5", padding:"20px", marginBottom:16 },
   stepHeader: { display:"flex", alignItems:"center", gap:12, marginBottom:18, flexWrap:"wrap" },
   stepBadge: { fontSize:12, fontWeight:700, color:"#E85D3D", background:"#FEF0EC", padding:"4px 12px", borderRadius:20 },
