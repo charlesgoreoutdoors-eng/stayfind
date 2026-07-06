@@ -24,11 +24,11 @@ const NAV = [
   },
   {
     href: "/sequences",
-    label: "Sequences",
+    label: "Outreach",
     icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9",
     children: [
       { href: "/sequences/templates", label: "Templates" },
-      { href: "/sequences/builder",   label: "Sequences" },
+      { href: "/sequences/builder",   label: "Flows" },
       { href: "/sequences/compose",   label: "Compose" },
       { href: "/sequences/tracking",  label: "Tracking" },
     ],

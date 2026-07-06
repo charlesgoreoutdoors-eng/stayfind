@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/sequences/templates", label: "Templates" },
-  { href: "/sequences/builder",   label: "Sequences" },
+  { href: "/sequences/builder",   label: "Flows" },
   { href: "/sequences/compose",   label: "Compose" },
   { href: "/sequences/tracking",  label: "Email Tracking" },
 ];
@@ -48,7 +48,7 @@ export default function SequencesLayout({ children }) {
       )}
       <div style={{ marginBottom:28 }}>
         <h1 style={{ fontSize:26, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px", marginBottom:16 }}>
-          Sequences
+          Outreach
         </h1>
         <div style={{ display:"flex", gap:4, borderBottom:"2px solid #F0EBE5" }}>
           {TABS.map(tab => {
