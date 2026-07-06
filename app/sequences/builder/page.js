@@ -1,6 +1,6 @@
 "use client";
 // v2
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { useIsMobile } from "../../../lib/useIsMobile";
@@ -16,31 +16,47 @@ const DELAY_OPTIONS = [
   { value: 14, label: "14 days later" },
 ];
 
-function RichEditor({ initialHtml, onChange, placeholder }) {
-  const ref = useRef(null);
+const RichEditor = forwardRef(function RichEditor({ initialHtml, onChange, placeholder }, ref) {
+  const innerRef = useRef(null);
   useEffect(() => {
-    if (ref.current) ref.current.innerHTML = initialHtml || "";
+    if (innerRef.current) innerRef.current.innerHTML = initialHtml || "";
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useImperativeHandle(ref, () => innerRef.current, []);
   return (
     <div
-      ref={ref}
+      ref={innerRef}
       contentEditable
       suppressContentEditableWarning
       className="rich-editor"
       data-placeholder={placeholder}
-      style={{ minHeight: 180, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "inherit", color: "#1E3A5F" }}
-      onInput={() => onChange && onChange(ref.current?.innerHTML || "")}
+      style={{ minHeight: 180, outline: "none", lineHeight: 1.8, fontSize: 13, fontFamily: "inherit", color: "#1E3A5F", padding: "12px 14px" }}
+      onInput={() => onChange && onChange(innerRef.current?.innerHTML || "")}
     />
   );
-}
+});
 
-function StepCard({ step, number, templates, onChange, onRemove, canRemove }) {
+function StepCard({ step, number, templates, onChange, onRemove, canRemove, signature }) {
+  const editorRef = useRef(null);
   const execCmd = (cmd) => document.execCommand(cmd, false, undefined);
   const ToolBtn = ({ cmd, title, children }) => (
     <button style={s.toolBtn} title={title} onMouseDown={e => { e.preventDefault(); execCmd(cmd); }}>
       {children}
     </button>
   );
+
+  const insertSignature = () => {
+    const editor = editorRef.current;
+    if (!editor || !signature?.trim()) return;
+    editor.focus();
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand("insertHTML", false, `<br><br>${signature}`);
+    onChange({ ...step, body: editor.innerHTML });
+  };
   return (
     <div style={s.stepCard}>
       <div style={s.stepHeader}>
@@ -99,9 +115,20 @@ function StepCard({ step, number, templates, onChange, onRemove, canRemove }) {
                 <path d="M4 6h1v4" strokeLinecap="round"/><path d="M4 10h2" strokeLinecap="round"/>
               </svg>
             </ToolBtn>
+            {signature && (
+              <>
+                <div style={s.toolSep} />
+                <button style={{ ...s.toolBtn, fontSize: 12, color: "#E85D3D", whiteSpace: "nowrap" }}
+                  title="Insert your signature at the end of this message"
+                  onMouseDown={e => { e.preventDefault(); insertSignature(); }}>
+                  + Signature
+                </button>
+              </>
+            )}
           </div>
           <div style={{ height: 1, background: "#f1f5f9" }} />
           <RichEditor
+            ref={editorRef}
             key={`step-${number}-${step.templateId || "custom"}`}
             initialHtml={step.body}
             onChange={html => onChange({ ...step, body: html })}
@@ -220,8 +247,28 @@ export default function SequenceBuilderPage() {
   const [error, setError]           = useState("");
   const [success, setSuccess]       = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [signature, setSignature]   = useState("");
+  const [sigSaving, setSigSaving]   = useState(false);
+  const sigRef = useRef(null);
 
-  useEffect(() => { if (user) { fetchAll(); } }, [user]);
+  useEffect(() => { if (user) { fetchAll(); fetchSignature(); } }, [user]);
+
+  const fetchSignature = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("profiles").select("email_signature").eq("id", user.id).single();
+    const sig = data?.email_signature || "";
+    setSignature(sig);
+    if (sigRef.current) sigRef.current.innerHTML = sig;
+  };
+
+  const saveSignature = async () => {
+    if (!user) return;
+    const html = sigRef.current?.innerHTML || "";
+    setSigSaving(true);
+    await supabase.from("profiles").update({ email_signature: html }).eq("id", user.id);
+    setSignature(html);
+    setSigSaving(false);
+  };
 
   const fetchAll = async () => {
     setLoading(true);
@@ -301,7 +348,7 @@ export default function SequenceBuilderPage() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Save failed");
 
-      setSuccess(isNew ? "Sequence created!" : "Sequence saved!");
+      setSuccess(isNew ? "Flow created!" : "Flow saved!");
       setTimeout(() => setSuccess(""), 2500);
       await fetchAll();
       setIsNew(false);
@@ -336,7 +383,7 @@ export default function SequenceBuilderPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Launch failed");
 
-      setSuccess(`Sequence launched! ${data.sent} email${data.sent !== 1 ? "s" : ""} sent immediately.`);
+      setSuccess(`Flow launched! ${data.sent} email${data.sent !== 1 ? "s" : ""} sent immediately.`);
       setTimeout(() => setSuccess(""), 4000);
       setLaunchModal(null);
     } catch (e) {
@@ -354,13 +401,13 @@ export default function SequenceBuilderPage() {
       <div style={{ ...s.layout, gridTemplateColumns: isMobile ? "1fr" : "260px 1fr" }}>
         {/* Left panel */}
         <div style={s.listPanel}>
-          <button style={s.newBtn} onClick={newSequence}>+ New Sequence</button>
+          <button style={s.newBtn} onClick={newSequence}>+ New Flow</button>
           {loading ? (
             <div style={s.empty}><div style={s.spinner} /></div>
           ) : sequences.length === 0 && !isNew ? (
             <div style={s.empty}>
               <span style={{ fontSize:32 }}>✉️</span>
-              <p style={{ fontSize:13, color:"#9FB3C8", textAlign:"center", marginTop:8 }}>No sequences yet. Create one to automate your outreach.</p>
+              <p style={{ fontSize:13, color:"#9FB3C8", textAlign:"center", marginTop:8 }}>No flows yet. Create one to automate your outreach.</p>
             </div>
           ) : (
             sequences.map(seq => (
@@ -394,12 +441,12 @@ export default function SequenceBuilderPage() {
           {!activeSeq && !isNew ? (
             <div style={s.empty}>
               <span style={{ fontSize:36 }}>📧</span>
-              <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12 }}>Select a sequence to edit or create a new one</p>
+              <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12 }}>Select a flow to edit or create a new one</p>
             </div>
           ) : (
             <>
               <div style={s.editorHeader}>
-                <input style={s.nameInput} placeholder="Sequence name e.g. Hotel Outreach Summer 2025"
+                <input style={s.nameInput} placeholder="Flow name e.g. Hotel Outreach Summer 2025"
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
@@ -407,7 +454,8 @@ export default function SequenceBuilderPage() {
                 <StepCard key={i} step={step} number={i + 1} templates={templates}
                   onChange={updated => updateStep(i, updated)}
                   onRemove={() => removeStep(i)}
-                  canRemove={form.steps.length > 1 && i > 0} />
+                  canRemove={form.steps.length > 1 && i > 0}
+                  signature={signature} />
               ))}
 
               {form.steps.length < 3 && (
@@ -416,10 +464,33 @@ export default function SequenceBuilderPage() {
                 </button>
               )}
 
+              {/* Signature section */}
+              <div style={{ background:"#FAF7F4", borderRadius:14, border:"1px solid #F0EBE5", padding:"18px 20px", marginBottom:16 }}>
+                <p style={{ fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 }}>Email Signature</p>
+                <p style={{ fontSize:12, color:"#9FB3C8", marginBottom:10 }}>Write your signature below, save it, then click &ldquo;Insert into Message&rdquo; on any step above.</p>
+                <div style={s.richEditorBox}>
+                  <div
+                    ref={sigRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="sig-editor"
+                    data-placeholder="e.g. Best regards,&#10;Your name&#10;UGC Creator"
+                    style={{ minHeight:72, outline:"none", lineHeight:1.75, fontSize:13, fontFamily:"inherit", color:"#1E3A5F", padding:"10px 14px" }}
+                  />
+                </div>
+                <div style={{ display:"flex", gap:8, marginTop:10 }}>
+                  <button
+                    style={{ padding:"8px 16px", background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", opacity: sigSaving ? 0.6 : 1 }}
+                    onClick={saveSignature} disabled={sigSaving}>
+                    {sigSaving ? "Saving..." : "Save Signature"}
+                  </button>
+                </div>
+              </div>
+
               <div style={s.saveRow}>
                 <button style={{ ...s.saveBtn, opacity: saving ? 0.45 : 1 }}
                   onClick={save} disabled={saving}>
-                  {saving ? "Saving..." : isNew ? "Create Sequence" : "Save Changes"}
+                  {saving ? "Saving..." : isNew ? "Create Flow" : "Save Changes"}
                 </button>
                 {activeSeq && (
                   <button style={s.launchBtn} onClick={() => setLaunchModal(activeSeq)}>
