@@ -13,9 +13,10 @@ const PRICE_RANGES = [
 ];
 
 const PROPERTY_TABS = [
-  { id: "hotels",    label: "Hotels",              icon: "🏨", keywords: ["hotel", "resort", "inn", "lodge"] },
-  { id: "boutique",  label: "Boutique Stays",      icon: "🏡", keywords: ["boutique hotel", "bed and breakfast", "guesthouse", "glamping", "luxury villa", "eco lodge"] },
-  { id: "apartments",label: "Apartments & Cabins", icon: "🏠", keywords: ["serviced apartment", "aparthotel", "extended stay", "cabin", "cottage", "chalet"] },
+  { id: "hotels",    label: "Hotels",         icon: "🏨", keywords: ["hotel", "resort", "inn", "lodge"] },
+  { id: "boutique",  label: "Boutique Stays", icon: "🏡", keywords: ["boutique hotel", "bed and breakfast", "guesthouse", "glamping", "luxury villa", "eco lodge"] },
+  { id: "apartments",label: "Apartments",     icon: "🏢", keywords: ["serviced apartment", "aparthotel", "extended stay"] },
+  { id: "cabins",    label: "Cabins",         icon: "🌲", keywords: ["cabin", "cottage", "chalet"] },
 ];
 
 const PRICE_LEVELS = [
