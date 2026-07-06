@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+
+/* ─── StayFind Design Tokens ─────────────────────────────────────────────── */
+
+:root {
+  /* Colors — Primary */
+  --color-deep-harbour:       #0F2544;
+  --color-deep-harbour-mid:   #1E3A5F;
+  --color-deep-harbour-muted: #4A6A8A;
+  --color-deep-harbour-faint: #7A9BBF;
+
+  /* Colors — Accent */
+  --color-coral-spark:        #E85D3D;
+  --color-coral-spark-light:  #F5A882;
+  --color-coral-spark-deep:   #B83A22;
+
+  /* Colors — Neutral / Canvas */
+  --color-warm-canvas:        #F7F3EF;
+  --color-warm-surface:       #F0EBE5;
+  --color-warm-divider:       #DDD5CC;
+  --color-warm-card:          #FFFFFF;
+  --color-slate-mist:         #9FB3C8;
+  --color-error-bg:           #FEF0EC;
+
+  /* Spacing */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-2xl: 28px;
+  --space-3xl: 40px;
+
+  /* Border radius */
+  --radius-xs:   5px;
+  --radius-sm:   8px;
+  --radius-md:   10px;
+  --radius-lg:   12px;
+  --radius-xl:   14px;
+  --radius-card: 20px;
+  --radius-pill: 24px;
+
+  /* Typography */
+  --font-sans: "Manrope", system-ui, sans-serif;
+
+  /* Shadows — all navy-tinted, never generic black */
+  --shadow-micro:   0 1px 4px rgba(15,37,68,0.10);
+  --shadow-low:     0 2px 12px rgba(15,37,68,0.08);
+  --shadow-ambient: 0 8px 24px rgba(15,37,68,0.10);
+  --shadow-overlay: 0 8px 28px rgba(15,37,68,0.14);
+  --shadow-lifted:  0 8px 40px rgba(15,37,68,0.12);
+  --shadow-hover:   0 12px 32px rgba(15,37,68,0.13);
+  --shadow-popup:   0 8px 32px rgba(15,37,68,0.16);
+}
+
+/* ─── Base reset ─────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--color-warm-canvas);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-deep-harbour-mid);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { text-decoration: none; color: inherit; }
+input, select, textarea, button { font-family: inherit; }
+::placeholder { color: var(--color-slate-mist); }
+
+/* ─── Typography scale ───────────────────────────────────────────────────── */
+
+.text-display  { font-size: 2.25rem;   font-weight: 700; line-height: 1.20; letter-spacing: -0.02em; }
+.text-headline { font-size: 1.75rem;   font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; }
+.text-title    { font-size: 1.375rem;  font-weight: 600; line-height: 1.30; letter-spacing: -0.01em; }
+.text-body     { font-size: 0.9375rem; font-weight: 400; line-height: 1.50; }
+.text-label    { font-size: 0.8125rem; font-weight: 500; line-height: 1.35; }
+.text-caption  { font-size: 0.6875rem; font-weight: 500; line-height: 1.30; letter-spacing: 0.06em; }
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-sans); font-weight: 600;
+  border: none; cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--color-deep-harbour);
+  color: var(--color-warm-canvas);
+  font-size: 0.875rem; padding: 14px 20px;
+  border-radius: var(--radius-lg);
+}
+.btn-primary:hover { background: #162F54; }
+
+.btn-coral {
+  background: var(--color-coral-spark);
+  color: #fff;
+  font-size: 0.875rem; padding: 9px 16px;
+  border-radius: var(--radius-lg);
+}
+.btn-coral:hover { background: var(--color-coral-spark-deep); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-deep-harbour-muted);
+  font-size: 0.8125rem; padding: 7px 14px;
+  border-radius: var(--radius-sm);
+}
+.btn-ghost:hover { background: var(--color-warm-surface); }
+
+.btn-pill {
+  background: var(--color-warm-card);
+  color: var(--color-deep-harbour);
+  font-size: 0.8125rem; padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-warm-divider);
+}
+.btn-pill.active {
+  background: var(--color-warm-card);
+  border-color: transparent;
+  box-shadow: var(--shadow-micro);
+}
+
+/* ─── Cards ──────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--color-warm-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(15,37,68,0.06);
+  box-shadow: var(--shadow-low);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.card-search {
+  background: var(--color-warm-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lifted);
+  padding: var(--space-xl);
+}
+
+/* ─── Inputs ─────────────────────────────────────────────────────────────── */
+
+.input {
+  background: var(--color-warm-card);
+  border: 1.5px solid var(--color-warm-divider);
+  border-radius: var(--radius-md);
+  color: var(--color-deep-harbour-mid);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--color-deep-harbour); }
+
+/* ─── Status chips ───────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.6875rem; font-weight: 700;
+  padding: 3px 10px; border-radius: var(--radius-pill);
+}
+.chip-active    { background: #dcfce7; color: #166534; }
+.chip-pending   { background: var(--color-warm-surface); color: var(--color-deep-harbour-muted); }
+.chip-sent      { background: #EEF2FF; color: #4338CA; }
+.chip-error     { background: var(--color-error-bg); color: var(--color-coral-spark-deep); }
+
+/* ─── Sidebar nav ────────────────────────────────────────────────────────── */
+
+.sidebar {
+  background: var(--color-deep-harbour);
+  width: 220px; padding: 0 12px 24px;
+  display: flex; flex-direction: column;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radius-md);
+  cursor: pointer; transition: background 0.15s;
+  font-size: 0.875rem; font-weight: 500;
+  color: var(--color-deep-harbour-faint);
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); }
+.nav-item.active {
+  background: rgba(232,93,61,0.18);
+  color: var(--color-coral-spark-light);
+}
