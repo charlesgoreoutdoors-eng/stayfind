@@ -1,26 +1,77 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { useIsMobile } from "../../../lib/useIsMobile";
 
-// Contenteditable rich-text editor that initialises from `initialHtml` on mount.
-// Use `key` prop to force a remount when you want to reset content.
-function RichEditor({ initialHtml, onChange, placeholder, className, style }) {
-  const ref = useRef(null);
+// Rich text editor: toolbar sits inside the same bordered container as the editor.
+// forwardRef exposes the DOM node so the parent can call insertHTML into it.
+const RichEditor = forwardRef(function RichEditor({ initialHtml, onChange, placeholder, minHeight }, ref) {
+  const innerRef = useRef(null);
+
   useEffect(() => {
-    if (ref.current) ref.current.innerHTML = initialHtml || "";
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (innerRef.current) innerRef.current.innerHTML = initialHtml || "";
+  }, []); // Set once on mount; use key prop to force reset
+
+  useImperativeHandle(ref, () => innerRef.current, []);
+
   return (
     <div
-      ref={ref}
+      ref={innerRef}
       contentEditable
       suppressContentEditableWarning
-      className={className || "rich-editor"}
-      data-placeholder={placeholder}
-      style={style}
-      onInput={() => onChange && onChange(ref.current?.innerHTML || "")}
+      className="rich-editor"
+      data-placeholder={placeholder || "Write your message here..."}
+      onInput={() => onChange && onChange(innerRef.current?.innerHTML || "")}
+      style={{
+        minHeight: minHeight || 220,
+        outline: "none",
+        lineHeight: 1.8,
+        fontSize: 14,
+        fontFamily: "inherit",
+        color: "#0F2544",
+        padding: "14px 16px",
+      }}
     />
+  );
+});
+
+function Toolbar({ onCmd, extraButtons }) {
+  const btn = (cmd, label, title) => (
+    <button
+      key={cmd}
+      style={s.toolBtn}
+      title={title || label}
+      onMouseDown={e => { e.preventDefault(); onCmd(cmd); }}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div style={s.toolbar}>
+      <button style={{ ...s.toolBtn, fontWeight: 700 }} title="Bold" onMouseDown={e => { e.preventDefault(); onCmd("bold"); }}>B</button>
+      <button style={{ ...s.toolBtn, fontStyle: "italic" }} title="Italic" onMouseDown={e => { e.preventDefault(); onCmd("italic"); }}>I</button>
+      <button style={{ ...s.toolBtn, textDecoration: "underline" }} title="Underline" onMouseDown={e => { e.preventDefault(); onCmd("underline"); }}>U</button>
+      <div style={s.toolSep} />
+      <button style={s.toolBtn} title="Bullet list" onMouseDown={e => { e.preventDefault(); onCmd("insertUnorderedList"); }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+          <circle cx="4" cy="6" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><circle cx="4" cy="18" r="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button style={s.toolBtn} title="Numbered list" onMouseDown={e => { e.preventDefault(); onCmd("insertOrderedList"); }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
+          <path d="M4 6h1v4" strokeLinecap="round"/><path d="M4 10h2" strokeLinecap="round"/>
+          <path d="M4 15h1.5a.5.5 0 0 1 0 1H4a.5.5 0 0 0 0 1h2" strokeLinecap="round"/>
+        </svg>
+      </button>
+      <div style={s.toolSep} />
+      <button style={{ ...s.toolBtn, fontSize: 11, color: "#9FB3C8" }} title="Clear formatting" onMouseDown={e => { e.preventDefault(); onCmd("removeFormat"); }}>
+        Clear
+      </button>
+      {extraButtons}
+    </div>
   );
 }
 
@@ -36,6 +87,7 @@ export default function TemplatesPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [signature, setSignature] = useState("");
   const [signatureSaving, setSignatureSaving] = useState(false);
+  const editorRef = useRef(null);
   const sigRef = useRef(null);
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -66,6 +118,24 @@ export default function TemplatesPage() {
     await supabase.from("profiles").update({ email_signature: html }).eq("id", user.id);
     setSignature(html);
     setSignatureSaving(false);
+  };
+
+  // Insert the saved signature at the end of the message editor
+  const insertSignature = () => {
+    const editor = editorRef.current;
+    const sigHtml = sigRef.current?.innerHTML || "";
+    if (!editor || !sigHtml.trim()) return;
+
+    editor.focus();
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    document.execCommand("insertHTML", false, `<br><br>${sigHtml}`);
+    setForm(f => ({ ...f, body: editor.innerHTML }));
   };
 
   const selectTemplate = (t) => {
@@ -119,30 +189,7 @@ export default function TemplatesPage() {
     setDeleteConfirm(null);
   };
 
-  // Toolbar command — uses onMouseDown+preventDefault so editor keeps focus
-  const fmt = (cmd, val) => {
-    document.execCommand(cmd, false, val || undefined);
-  };
-
-  const ToolBtn = ({ cmd, val, title, children }) => (
-    <button
-      style={s.toolBtn}
-      title={title}
-      onMouseDown={e => { e.preventDefault(); fmt(cmd, val); }}
-    >
-      {children}
-    </button>
-  );
-
-  const SigToolBtn = ({ cmd, val, title, children }) => (
-    <button
-      style={s.toolBtn}
-      title={title}
-      onMouseDown={e => { e.preventDefault(); sigRef.current?.focus(); fmt(cmd, val); }}
-    >
-      {children}
-    </button>
-  );
+  const execCmd = (cmd) => document.execCommand(cmd, false, undefined);
 
   return (
     <div style={s.root}>
@@ -155,7 +202,7 @@ export default function TemplatesPage() {
       </div>
 
       <div style={{ ...s.body, gridTemplateColumns: isMobile ? "1fr" : "280px 1fr" }}>
-        {/* Type filter tabs */}
+        {/* Type filter */}
         <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
           {["all", "email", "instagram"].map(t => (
             <button key={t} style={{ ...s.filterTab, ...(typeFilter === t ? s.filterTabActive : {}) }}
@@ -199,7 +246,7 @@ export default function TemplatesPage() {
             )}
         </div>
 
-        {/* Editor */}
+        {/* Editor panel */}
         <div style={s.editor}>
           {(!active && !isNew) ? (
             <div style={s.emptyState}>
@@ -229,65 +276,56 @@ export default function TemplatesPage() {
               <div style={s.field}>
                 <label style={s.label}>Message</label>
                 <p style={s.hint}>Use <code style={s.code}>{"{hotel_name}"}</code> to auto-fill the hotel name</p>
-                <div style={s.toolbar}>
-                  <ToolBtn cmd="bold" title="Bold"><strong>B</strong></ToolBtn>
-                  <ToolBtn cmd="italic" title="Italic"><em>I</em></ToolBtn>
-                  <ToolBtn cmd="underline" title="Underline"><u>U</u></ToolBtn>
-                  <div style={s.toolSep} />
-                  <ToolBtn cmd="insertUnorderedList" title="Bullet list">• List</ToolBtn>
-                  <ToolBtn cmd="insertOrderedList" title="Numbered list">1. List</ToolBtn>
-                  <div style={s.toolSep} />
-                  <ToolBtn cmd="removeFormat" title="Clear formatting">Clear</ToolBtn>
-                </div>
-                <div style={s.editorWrap}>
+
+                {/* Toolbar + editor in one bordered box */}
+                <div style={s.richEditorBox}>
+                  <Toolbar onCmd={execCmd} />
+                  <div style={s.richEditorDivider} />
                   <RichEditor
+                    ref={editorRef}
                     key={`body-${active?.id || "new"}`}
                     initialHtml={form.body}
                     onChange={html => setForm(f => ({ ...f, body: html }))}
                     placeholder="Hi {hotel_name} team,&#10;&#10;Write your message here..."
-                    style={s.richEditorStyle}
                   />
                 </div>
                 <p style={s.charCount}>{stripHtml(form.body).length} characters</p>
               </div>
 
-              <button
-                style={{ ...s.saveBtn, opacity: !form.name.trim() || !stripHtml(form.body).trim() || saving ? 0.5 : 1 }}
-                onClick={save}
-                disabled={!form.name.trim() || !stripHtml(form.body).trim() || saving}
-              >
-                {saving ? "Saving..." : isNew ? "Create Template" : "Save Changes"}
-              </button>
-
               {/* Email Signature */}
               {form.type === "email" && (
                 <div style={s.sigSection}>
-                  <div style={s.sigHeader}>
-                    <div>
-                      <p style={s.sigTitle}>Email Signature</p>
-                      <p style={s.sigSubtitle}>Automatically appended to every outreach email</p>
-                    </div>
-                    <button style={{ ...s.sigSaveBtn, opacity: signatureSaving ? 0.6 : 1 }} onClick={saveSignature} disabled={signatureSaving}>
-                      {signatureSaving ? "Saving..." : "Save Signature"}
-                    </button>
-                  </div>
-                  <div style={s.toolbar}>
-                    <SigToolBtn cmd="bold" title="Bold"><strong>B</strong></SigToolBtn>
-                    <SigToolBtn cmd="italic" title="Italic"><em>I</em></SigToolBtn>
-                    <SigToolBtn cmd="underline" title="Underline"><u>U</u></SigToolBtn>
-                  </div>
-                  <div style={s.editorWrap}>
+                  <label style={s.label}>Email Signature</label>
+                  <div style={s.sigBox}>
                     <div
                       ref={sigRef}
                       contentEditable
                       suppressContentEditableWarning
                       className="sig-editor"
-                      data-placeholder="— Your Name&#10;Job Title"
+                      data-placeholder="e.g. — Charles Gore&#10;UGC Creator"
                       style={s.sigEditorStyle}
                     />
                   </div>
+                  <div style={s.sigActions}>
+                    <button style={s.sigSaveBtn} onClick={saveSignature} disabled={signatureSaving}>
+                      {signatureSaving ? "Saving..." : "Save Signature"}
+                    </button>
+                    <button style={s.sigInsertBtn} onClick={insertSignature} title="Appends your signature to the message above">
+                      Insert into Message ↑
+                    </button>
+                  </div>
                 </div>
               )}
+
+              <div style={s.saveRow}>
+                <button
+                  style={{ ...s.saveBtn, opacity: !form.name.trim() || !stripHtml(form.body).trim() || saving ? 0.5 : 1 }}
+                  onClick={save}
+                  disabled={!form.name.trim() || !stripHtml(form.body).trim() || saving}
+                >
+                  {saving ? "Saving..." : isNew ? "Create Template" : "Save Changes"}
+                </button>
+              </div>
             </>
           )}
         </div>
@@ -352,11 +390,11 @@ const s = {
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 },
   title: { fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", fontSize: 28, fontWeight: 700, color: "#0F2544", marginBottom: 4 },
   subtitle: { fontSize: 14, color: "#9FB3C8" },
-  newBtn: { background: "#0F2544", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Plus Jakarta Sans, system-ui, sans-serif" },
+  newBtn: { background: "#0F2544", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   body: { display: "grid", gridTemplateColumns: "280px 1fr", gap: 20, alignItems: "start" },
   listPanel: { display: "flex", flexDirection: "column", gap: 8 },
   templateItem: { padding: "14px", borderRadius: 12, border: "1.5px solid #e2e8f0", cursor: "pointer", background: "#fff", transition: "all 0.15s", display: "flex", alignItems: "flex-start", gap: 10 },
-  templateItemActive: { border: "1.5px solid #6366f1", background: "#FEF0EC" },
+  templateItemActive: { border: "1.5px solid #E85D3D", background: "#FEF9F7" },
   templateName: { fontSize: 14, fontWeight: 600, color: "#0F2544", marginBottom: 2 },
   templateSubject: { fontSize: 12, color: "#E85D3D", marginBottom: 3 },
   templatePreview: { fontSize: 11, color: "#9FB3C8", lineHeight: 1.5 },
@@ -364,24 +402,27 @@ const s = {
   editor: { background: "#fff", borderRadius: 16, border: "1.5px solid #e2e8f0", padding: "24px" },
   editorHeader: { marginBottom: 20 },
   editorTitle: { fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", fontSize: 20, fontWeight: 700, color: "#0F2544" },
-  field: { marginBottom: 18 },
+  field: { marginBottom: 20 },
   label: { display: "block", fontSize: 11, fontWeight: 700, color: "#9FB3C8", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 6 },
   hint: { fontSize: 12, color: "#9FB3C8", marginBottom: 8 },
   code: { background: "#F0EBE5", padding: "1px 6px", borderRadius: 4, fontSize: 11, fontFamily: "monospace" },
-  input: { width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "11px 14px", fontSize: 14, fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", color: "#0F2544", outline: "none" },
-  toolbar: { display: "flex", gap: 4, marginBottom: 6, flexWrap: "wrap", alignItems: "center" },
-  toolBtn: { padding: "5px 11px", border: "1.5px solid #e2e8f0", borderRadius: 7, background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit", color: "#1E3A5F", lineHeight: 1 },
-  toolSep: { width: 1, height: 20, background: "#e2e8f0", margin: "0 2px" },
-  editorWrap: { border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "12px 14px", background: "#fff" },
-  richEditorStyle: { minHeight: 220, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", color: "#0F2544" },
-  charCount: { fontSize: 11, color: "#cbd5e1", marginTop: 4, textAlign: "right" },
-  saveBtn: { background: "#E85D3D", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", transition: "opacity 0.2s" },
-  sigSection: { marginTop: 28, borderTop: "1.5px solid #F0EBE5", paddingTop: 20 },
-  sigHeader: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 },
-  sigTitle: { fontSize: 13, fontWeight: 700, color: "#0F2544", marginBottom: 2 },
-  sigSubtitle: { fontSize: 11, color: "#9FB3C8" },
-  sigSaveBtn: { padding: "8px 16px", background: "#0F2544", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 },
-  sigEditorStyle: { minHeight: 72, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", color: "#0F2544" },
+  input: { width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "11px 14px", fontSize: 14, fontFamily: "inherit", color: "#0F2544", outline: "none" },
+  // Toolbar + editor in one box
+  richEditorBox: { border: "1.5px solid #e2e8f0", borderRadius: 12, overflow: "hidden", background: "#fff" },
+  richEditorDivider: { height: 1, background: "#f1f5f9" },
+  toolbar: { display: "flex", gap: 2, padding: "8px 10px", alignItems: "center", background: "#f8fafc", flexWrap: "wrap" },
+  toolBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "5px 10px", border: "none", borderRadius: 6, background: "transparent", fontSize: 13, cursor: "pointer", fontFamily: "inherit", color: "#1E3A5F", lineHeight: 1, minWidth: 32 },
+  toolSep: { width: 1, height: 18, background: "#e2e8f0", margin: "0 4px" },
+  charCount: { fontSize: 11, color: "#cbd5e1", marginTop: 6, textAlign: "right" },
+  // Signature
+  sigSection: { marginTop: 4, marginBottom: 20, background: "#f8fafc", borderRadius: 12, border: "1.5px solid #e2e8f0", padding: "16px" },
+  sigBox: { border: "1.5px solid #e2e8f0", borderRadius: 8, background: "#fff", padding: "10px 14px", marginBottom: 10 },
+  sigEditorStyle: { minHeight: 72, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "inherit", color: "#0F2544" },
+  sigActions: { display: "flex", gap: 8, alignItems: "center" },
+  sigSaveBtn: { padding: "8px 16px", background: "#0F2544", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  sigInsertBtn: { padding: "8px 16px", background: "#E85D3D", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  saveRow: { marginTop: 8 },
+  saveBtn: { width: "100%", background: "#E85D3D", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.2s" },
   emptyState: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", color: "#9FB3C8", fontSize: 14, textAlign: "center" },
   filterTab: { padding: "5px 12px", border: "1px solid #DDD5CC", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", color: "#9FB3C8", background: "#fff", fontFamily: "inherit", transition: "all 0.15s" },
   filterTabActive: { background: "#0F2544", color: "#F7F3EF", border: "1px solid #0F2544" },
@@ -393,6 +434,6 @@ const s = {
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" },
   modal: { background: "#fff", borderRadius: 16, padding: "28px", maxWidth: 420, width: "90%" },
   confirmModal: { background: "#fff", borderRadius: 16, padding: "28px", maxWidth: 380, width: "90%" },
-  cancelBtn: { background: "#fff", color: "#4A6A8A", border: "1.5px solid #e2e8f0", borderRadius: 9, padding: "10px 20px", fontSize: 14, cursor: "pointer", fontFamily: "Plus Jakarta Sans, system-ui, sans-serif" },
-  deleteConfirmBtn: { background: "#ef4444", color: "#fff", border: "none", borderRadius: 9, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Plus Jakarta Sans, system-ui, sans-serif" },
+  cancelBtn: { background: "#fff", color: "#4A6A8A", border: "1.5px solid #e2e8f0", borderRadius: 9, padding: "10px 20px", fontSize: 14, cursor: "pointer", fontFamily: "inherit" },
+  deleteConfirmBtn: { background: "#ef4444", color: "#fff", border: "none", borderRadius: 9, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
 };
