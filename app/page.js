@@ -171,15 +171,12 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
             </a>
           )}
         </div>
-        {hotel.email
-          ? <a href={`mailto:${hotel.email}`} style={s.emailLink}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              {hotel.email}
-            </a>
-          : hotel.emailStatus === "finding"
-            ? <p style={s.igNotFound}>Scanning for contact info...</p>
-            : null
-        }
+        {hotel.email && (
+          <a href={`mailto:${hotel.email}`} style={s.emailLink}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            {hotel.email}
+          </a>
+        )}
 
         <div style={{ position:"relative", marginTop:10 }}>
           <button
@@ -407,7 +404,7 @@ export default function Home() {
   const [lists, setLists]       = useState([]);
   const [addListDropdown, setAddListDropdown] = useState(null);
   const [addSuccess, setAddSuccess] = useState(null);
-  const [scanStatus, setScanStatus] = useState(null);
+
 
   // Per-tab state
   const [tabState, setTabState] = useState(() => {
@@ -550,10 +547,9 @@ export default function Home() {
           seenNames.add(normName);
           return true;
         })
-        .map(h => ({ ...h, emailStatus: null, email: null }));
+        .map(h => h);
 
       setTab(tabId, { hotels: hotelList, loading: false, searched: true });
-      findContacts(tabId, hotelList);
     } catch {
       setError("Could not find results. Please try again.");
       setTab(tabId, { loading: false });
@@ -584,9 +580,8 @@ export default function Home() {
           if (seenNames.has(n)) return false;
           seen.add(h.placeId); seenNames.add(n); return true;
         })
-        .map(h => ({ ...h, emailStatus: null, email: null }));
+        .map(h => h);
       setTab(activeTab, { hotels: hotelList, searched: true });
-      findContacts(activeTab, hotelList);
     } catch {
       setError("Could not search this area. Please try again.");
     }
@@ -600,51 +595,6 @@ export default function Home() {
     }
   };
 
-  const findContacts = async (tabId, hotelList) => {
-    const withSite = hotelList.filter(h => h.website);
-    if (!withSite.length) return;
-    setScanStatus({ done: 0, total: withSite.length });
-    let done = 0;
-
-    setTabState(prev => ({
-      ...prev,
-      [tabId]: {
-        ...prev[tabId],
-        hotels: prev[tabId].hotels.map(h =>
-          withSite.find(w => w.placeId === h.placeId)
-            ? { ...h, emailStatus: "finding" }
-            : h.emailStatus ? h : { ...h, emailStatus: "notfound" }
-        ),
-      },
-    }));
-
-    for (let i = 0; i < withSite.length; i += 3) {
-      const batch = withSite.slice(i, i + 3);
-      const batchResults = await Promise.all(batch.map(async hotel => {
-        try {
-          const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
-          const data = await res.json();
-          return { placeId: hotel.placeId, email: data.email || null, instagram: data.instagram || null, emailStatus: data.email ? "found" : data.instagram ? "found" : "notfound" };
-        } catch {
-          return { placeId: hotel.placeId, emailStatus: "notfound" };
-        }
-      }));
-      done += batch.length;
-      setScanStatus({ done, total: withSite.length });
-
-      setTabState(prev => ({
-        ...prev,
-        [tabId]: {
-          ...prev[tabId],
-          hotels: prev[tabId].hotels.map(h => {
-            const found = batchResults.find(r => r.placeId === h.placeId);
-            return found ? { ...h, ...found } : h;
-          }),
-        },
-      }));
-    }
-    setScanStatus(null);
-  };
 
   return (
     <main>
@@ -762,14 +712,6 @@ export default function Home() {
 
         {!activeLoading && activeSearched && activeHotels.length > 0 && (
           <>
-            {scanStatus && (
-              <div style={{ display:"inline-flex", alignItems:"center", gap:8, marginBottom:16, padding:"8px 14px", background:"#F0EBE5", borderRadius:20, fontSize:12, color:"#4A6A8A", fontWeight:500 }}>
-                <span style={{ width:7, height:7, borderRadius:"50%", background:"#E85D3D", flexShrink:0 }} />
-                {scanStatus.done < scanStatus.total
-                  ? `Scanning ${scanStatus.total} properties for contact details...`
-                  : `Found contacts across ${scanStatus.total} properties`}
-              </div>
-            )}
             <div style={s.resultsBar}>
               <div>
                 <h2 style={s.resultsTitle}>{activeHotels.length} {PROPERTY_TABS.find(t => t.id === activeTab)?.label} Found</h2>
