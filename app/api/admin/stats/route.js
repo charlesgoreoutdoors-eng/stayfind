@@ -118,7 +118,7 @@ export async function GET(request) {
         id: u.id,
         email: u.email || "—",
         name: prof.full_name || "",
-        plan: prof.plan || "free",
+        plan: prof.plan || "spark",
         joined: u.created_at,
         lists: listsByUser[u.id] || 0,
         hotels: hotelsByUser[u.id] || 0,
@@ -198,7 +198,7 @@ export async function POST(request) {
 
     if (action === "updatePlan") {
       const { userId, plan } = body;
-      const allowed = ["free", "starter", "pro", "agency"];
+      const allowed = ["spark", "glow", "radiant", "founding"];
       if (!userId || !allowed.includes(plan)) {
         return Response.json({ error: "Invalid plan" }, { status: 400 });
       }

@@ -5,6 +5,9 @@
     },
     "app/api/hotels/route.js": {
       "maxDuration": 60
+    },
+    "app/api/sequences/route.js": {
+      "maxDuration": 60
     }
   }
 }

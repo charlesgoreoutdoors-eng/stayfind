@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import { AuthProvider } from "../lib/auth";
 import AuthGuard from "../components/AuthGuard";
 import Sidebar from "../components/Sidebar";
+import TawkChat from "../components/TawkChat";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
           <AuthGuard>
             <Sidebar>{children}</Sidebar>
           </AuthGuard>
+          <TawkChat />
         </AuthProvider>
       </body>
     </html>

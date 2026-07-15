@@ -17,23 +17,29 @@ export default function AuthGuard({ children }) {
     return () => clearTimeout(timer);
   }, [loading]);
 
+  // Public routes render without an auth gate. The root "/" is a special
+  // case: logged-out visitors see the waitlist landing (rendered by
+  // app/page.js), logged-in visitors see the search app.
+  const isPublic = pathname === "/login" || pathname === "/waitlist" || pathname.startsWith("/auth");
+  const isRoot = pathname === "/";
+
   useEffect(() => {
     if (loading && !timedOut) return;
 
-    if (pathname === "/login" || pathname.startsWith("/auth")) return;
+    if (isPublic || isRoot) {
+      // Bounce logged-in users off the login screen into the app.
+      if (user && pathname === "/login") router.replace("/");
+      return;
+    }
 
     if (!user) {
       router.replace("/login");
       return;
     }
+  }, [user, loading, timedOut, pathname, router, isPublic, isRoot]);
 
-    if (user && pathname === "/login") {
-      router.replace("/");
-    }
-  }, [user, loading, timedOut, pathname, router]);
-
-  // Always render login and auth pages immediately
-  if (pathname === "/login" || pathname.startsWith("/auth")) {
+  // Always render login, waitlist and auth pages immediately
+  if (isPublic) {
     return children;
   }
 
@@ -58,8 +64,10 @@ export default function AuthGuard({ children }) {
     );
   }
 
-  // Not logged in — return null while redirect fires
-  if (!user) return null;
+  // Logged-out visitors on the root see the waitlist landing (app/page.js
+  // decides). On any other protected route, return null while the redirect
+  // to /login fires.
+  if (!user && !isRoot) return null;
 
   return children;
 }

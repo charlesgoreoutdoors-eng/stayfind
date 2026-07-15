@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { useIsMobile } from "../lib/useIsMobile";
+import Waitlist from "../components/Waitlist";
 
 const PRICE_RANGES = [
   { label: "Budget",    sub: "Under $100", value: "budget",   keyword: "budget affordable" },
@@ -391,7 +392,17 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
 
 const EMPTY_TAB_STATE = { hotels: [], loading: false, searched: false };
 
+// Root route: logged-out visitors see the Dapples waitlist landing,
+// logged-in users get the search app. AuthGuard already resolves loading
+// before rendering the root, so `user` is definitive here.
 export default function Home() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Waitlist />;
+  return <SearchApp />;
+}
+
+function SearchApp() {
   const _ss = (() => { try { const r = sessionStorage.getItem("sf_search"); return r ? JSON.parse(r) : {}; } catch { return {}; } })();
 
   const [location, setLocation] = useState(_ss.location || "");

@@ -1,0 +1,679 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-15T07:03:45Z",
+  "title": "Design System: StayFind",
+  "extensions": {
+    "colorMeta": {
+      "deep-harbour": {
+        "role": "primary",
+        "displayName": "Deep Harbour",
+        "canonical": "#0F2544",
+        "tonalRamp": [
+          "#040d17",
+          "#081626",
+          "#0F2544",
+          "#1a3760",
+          "#264e82",
+          "#3d6aa0",
+          "#6089b8",
+          "#a0b8d4"
+        ]
+      },
+      "deep-harbour-mid": {
+        "role": "primary",
+        "displayName": "Deep Harbour Mid",
+        "canonical": "#1E3A5F",
+        "tonalRamp": [
+          "#091526",
+          "#122238",
+          "#1E3A5F",
+          "#2a5080",
+          "#3d6fa5",
+          "#6491c0",
+          "#9ab4d5",
+          "#d0dded"
+        ]
+      },
+      "coral-spark": {
+        "role": "secondary",
+        "displayName": "Coral Spark",
+        "canonical": "#E85D3D",
+        "tonalRamp": [
+          "#5a1b0a",
+          "#8c2c15",
+          "#b83a22",
+          "#e85d3d",
+          "#f07e65",
+          "#f5a882",
+          "#facbb8",
+          "#fdeee9"
+        ]
+      },
+      "warm-canvas": {
+        "role": "neutral",
+        "displayName": "Warm Canvas",
+        "canonical": "#F7F3EF",
+        "tonalRamp": [
+          "#c4b9ad",
+          "#d4cbc1",
+          "#e0d8d0",
+          "#ece5dd",
+          "#f2ede7",
+          "#f7f3ef",
+          "#fbf9f7",
+          "#fefdfb"
+        ]
+      },
+      "slate-mist": {
+        "role": "neutral",
+        "displayName": "Slate Mist",
+        "canonical": "#9FB3C8",
+        "tonalRamp": [
+          "#253645",
+          "#34506a",
+          "#4a6a8a",
+          "#6a8dac",
+          "#9fb3c8",
+          "#c0cfdc",
+          "#dce5ee",
+          "#f0f4f8"
+        ]
+      },
+      "warm-divider": {
+        "role": "neutral",
+        "displayName": "Warm Divider",
+        "canonical": "#DDD5CC",
+        "tonalRamp": [
+          "#8a7f74",
+          "#a39891",
+          "#b8afa8",
+          "#cec8c2",
+          "#ddd5cc",
+          "#e8e3dd",
+          "#f1eeea",
+          "#f9f7f5"
+        ]
+      },
+      "dapple-ink": {
+        "role": "neutral",
+        "displayName": "Dapple Ink",
+        "canonical": "#2B2722",
+        "tonalRamp": [
+          "#332e29",
+          "#554d44",
+          "#786c5f",
+          "#9a8e7f",
+          "#b7aea4",
+          "#d2cdc6",
+          "#e8e6e3",
+          "#f6f5f4"
+        ]
+      },
+      "dapple-ink-muted": {
+        "role": "neutral",
+        "displayName": "Dapple Ink Muted",
+        "canonical": "#6B6258",
+        "tonalRamp": [
+          "#322e29",
+          "#544d45",
+          "#766c61",
+          "#978d81",
+          "#b5aea5",
+          "#d1ccc7",
+          "#e8e6e3",
+          "#f6f5f4"
+        ]
+      },
+      "dapple-ink-faint": {
+        "role": "neutral",
+        "displayName": "Dapple Ink Faint",
+        "canonical": "#9C9388",
+        "tonalRamp": [
+          "#322e2a",
+          "#544d45",
+          "#756c61",
+          "#978d82",
+          "#b5aea6",
+          "#d1ccc7",
+          "#e8e6e3",
+          "#f6f5f4"
+        ]
+      },
+      "dapple-placeholder": {
+        "role": "neutral",
+        "displayName": "Dapple Placeholder",
+        "canonical": "#B6AD9C",
+        "tonalRamp": [
+          "#353027",
+          "#585041",
+          "#7b705b",
+          "#9e927b",
+          "#bab1a1",
+          "#d4cec4",
+          "#e9e7e2",
+          "#f6f5f3"
+        ]
+      },
+      "dapple-border": {
+        "role": "neutral",
+        "displayName": "Dapple Border",
+        "canonical": "#DDD0B8",
+        "tonalRamp": [
+          "#3e331e",
+          "#675532",
+          "#917645",
+          "#b59864",
+          "#cab691",
+          "#ded1ba",
+          "#eee8dd",
+          "#f8f6f1"
+        ]
+      },
+      "dapple-sand": {
+        "role": "neutral",
+        "displayName": "Dapple Sand",
+        "canonical": "#F3E7CF",
+        "tonalRamp": [
+          "#493712",
+          "#7a5c1f",
+          "#ab812b",
+          "#d1a347",
+          "#debe7c",
+          "#ebd6ad",
+          "#f5ebd6",
+          "#fbf7ef"
+        ]
+      },
+      "dapple-nav-tint": {
+        "role": "neutral",
+        "displayName": "Dapple Nav Tint",
+        "canonical": "#FBF0DA",
+        "tonalRamp": [
+          "#533a09",
+          "#8a610f",
+          "#c18815",
+          "#e9ab30",
+          "#efc36c",
+          "#f5daa3",
+          "#faecd1",
+          "#fdf8ed"
+        ]
+      },
+      "dapple-cream": {
+        "role": "neutral",
+        "displayName": "Dapple Cream",
+        "canonical": "#FBF5EA",
+        "tonalRamp": [
+          "#4d370f",
+          "#815c18",
+          "#b48122",
+          "#daa33e",
+          "#e5be76",
+          "#efd6a9",
+          "#f7ebd4",
+          "#fcf7ee"
+        ]
+      },
+      "dapple-card": {
+        "role": "neutral",
+        "displayName": "Dapple Card",
+        "canonical": "#FFFCF4",
+        "tonalRamp": [
+          "#5c4300",
+          "#996f00",
+          "#d69c00",
+          "#ffc01a",
+          "#ffd25c",
+          "#ffe399",
+          "#fff1cc",
+          "#fff9eb"
+        ]
+      },
+      "dapple-forest": {
+        "role": "primary",
+        "displayName": "Dapple Forest",
+        "canonical": "#44503A",
+        "tonalRamp": [
+          "#2d3527",
+          "#4b5940",
+          "#6a7c5a",
+          "#8b9f7a",
+          "#acbaa0",
+          "#cbd4c4",
+          "#e5eae1",
+          "#f5f6f3"
+        ]
+      },
+      "dapple-forest-deep": {
+        "role": "primary",
+        "displayName": "Dapple Forest Deep",
+        "canonical": "#363F2E",
+        "tonalRamp": [
+          "#2d3527",
+          "#4c5841",
+          "#6a7c5a",
+          "#8b9e7a",
+          "#adbaa1",
+          "#ccd4c4",
+          "#e5e9e2",
+          "#f5f6f3"
+        ]
+      },
+      "dapple-amber": {
+        "role": "secondary",
+        "displayName": "Dapple Amber",
+        "canonical": "#E0954A",
+        "tonalRamp": [
+          "#4e2e0d",
+          "#834c16",
+          "#b76b1f",
+          "#dd8c3b",
+          "#e7ad74",
+          "#f0cca8",
+          "#f8e6d3",
+          "#fcf5ee"
+        ]
+      },
+      "dapple-amber-deep": {
+        "role": "secondary",
+        "displayName": "Dapple Amber Deep",
+        "canonical": "#B5702E",
+        "tonalRamp": [
+          "#492d13",
+          "#7a4b1f",
+          "#ab6a2b",
+          "#d08b48",
+          "#deac7d",
+          "#eacbae",
+          "#f5e5d6",
+          "#fbf5ef"
+        ]
+      },
+      "dapple-amber-deeper": {
+        "role": "secondary",
+        "displayName": "Dapple Amber Deeper",
+        "canonical": "#8B5E2A",
+        "tonalRamp": [
+          "#463015",
+          "#754f24",
+          "#a46f32",
+          "#ca914f",
+          "#d9b182",
+          "#e7ceb1",
+          "#f3e6d8",
+          "#faf5ef"
+        ]
+      },
+      "dapple-terracotta": {
+        "role": "secondary",
+        "displayName": "Dapple Terracotta",
+        "canonical": "#C96E3C",
+        "tonalRamp": [
+          "#482614",
+          "#784021",
+          "#a8592e",
+          "#cd794b",
+          "#dca07f",
+          "#e9c4af",
+          "#f4e1d7",
+          "#fbf3ef"
+        ]
+      },
+      "dapple-olive": {
+        "role": "tertiary",
+        "displayName": "Dapple Olive",
+        "canonical": "#C9D1A8",
+        "tonalRamp": [
+          "#373c20",
+          "#5b6435",
+          "#7f8c4a",
+          "#a2b069",
+          "#bdc794",
+          "#d6dcbc",
+          "#eaedde",
+          "#f7f8f2"
+        ]
+      },
+      "dapple-olive-mid": {
+        "role": "tertiary",
+        "displayName": "Dapple Olive Mid",
+        "canonical": "#8B9A6A",
+        "tonalRamp": [
+          "#313725",
+          "#525b3e",
+          "#738057",
+          "#95a276",
+          "#b3bd9e",
+          "#d0d6c2",
+          "#e7eae1",
+          "#f6f7f3"
+        ]
+      },
+      "dapple-glow-gold": {
+        "role": "secondary",
+        "displayName": "Dapple Glow Gold",
+        "canonical": "#F4C97A",
+        "tonalRamp": [
+          "#553907",
+          "#8d600c",
+          "#c68610",
+          "#eda92b",
+          "#f3c268",
+          "#f7d9a1",
+          "#fbecd0",
+          "#fdf7ec"
+        ]
+      },
+      "dapple-glow-honey": {
+        "role": "secondary",
+        "displayName": "Dapple Glow Honey",
+        "canonical": "#F0B979",
+        "tonalRamp": [
+          "#533109",
+          "#8a510f",
+          "#c17216",
+          "#e89331",
+          "#efb26c",
+          "#f5cfa3",
+          "#fae7d1",
+          "#fdf5ed"
+        ]
+      },
+      "dapple-glow-amber": {
+        "role": "secondary",
+        "displayName": "Dapple Glow Amber",
+        "canonical": "#E5A04A",
+        "tonalRamp": [
+          "#50320c",
+          "#865313",
+          "#bb741b",
+          "#e29636",
+          "#ebb470",
+          "#f2d0a6",
+          "#f9e8d2",
+          "#fcf6ed"
+        ]
+      },
+      "dapple-glow-pale": {
+        "role": "secondary",
+        "displayName": "Dapple Glow Pale",
+        "canonical": "#FDEBBE",
+        "tonalRamp": [
+          "#594003",
+          "#946b05",
+          "#d09606",
+          "#f8ba20",
+          "#face61",
+          "#fce19c",
+          "#fdf0ce",
+          "#fef9eb"
+        ]
+      },
+      "dapple-glow-ember": {
+        "role": "secondary",
+        "displayName": "Dapple Glow Ember",
+        "canonical": "#EBA94E",
+        "tonalRamp": [
+          "#523409",
+          "#895610",
+          "#c07916",
+          "#e89b31",
+          "#eeb86c",
+          "#f5d2a3",
+          "#fae9d1",
+          "#fdf6ed"
+        ]
+      },
+      "dapple-sand-dot": {
+        "role": "neutral",
+        "displayName": "Dapple Sand Dot",
+        "canonical": "#ECD9B8",
+        "tonalRamp": [
+          "#483513",
+          "#795820",
+          "#a97c2d",
+          "#cf9e4a",
+          "#ddba7e",
+          "#e9d4af",
+          "#f4e9d7",
+          "#fbf6ef"
+        ]
+      },
+      "dapple-url-grey": {
+        "role": "neutral",
+        "displayName": "Dapple Url Grey",
+        "canonical": "#C8C2B2",
+        "tonalRamp": [
+          "#363126",
+          "#595240",
+          "#7d7359",
+          "#9f9579",
+          "#bbb4a0",
+          "#d4d0c4",
+          "#eae7e1",
+          "#f7f6f3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Empty states, welcome screens. Appears when there's nothing else on screen."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles (Search Results, Your Lists). One per page."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings, results headers, card group labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All prose, table cells, email preview text. max-width: 65ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Table column headers, field hints, hotel card metadata. The workhorse."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Chip counts, status tags, timestamp dates. Use sparingly."
+      },
+      "dapple-display": {
+        "displayName": "Dapple Display",
+        "purpose": "Quicksand — Dapples wordmark, hero and section headings on marketing/new surfaces."
+      },
+      "dapple-body": {
+        "displayName": "Dapple Body",
+        "purpose": "Nunito Sans — body copy on Dapples marketing/new surfaces."
+      }
+    },
+    "shadows": [
+      {
+        "name": "micro",
+        "value": "0 1px 4px rgba(15,37,68,0.10)",
+        "purpose": "Toggle group active pill. Barely-there separation."
+      },
+      {
+        "name": "low",
+        "value": "0 2px 12px rgba(15,37,68,0.08)",
+        "purpose": "Hotel cards and map container at rest."
+      },
+      {
+        "name": "ambient",
+        "value": "0 8px 24px rgba(15,37,68,0.10)",
+        "purpose": "Autocomplete dropdown, PAC container."
+      },
+      {
+        "name": "overlay",
+        "value": "0 8px 28px rgba(15,37,68,0.14)",
+        "purpose": "List dropdowns, Add-to-List panel."
+      },
+      {
+        "name": "lifted",
+        "value": "0 8px 40px rgba(15,37,68,0.12)",
+        "purpose": "Search hero card — the primary workspace entry point."
+      },
+      {
+        "name": "hover",
+        "value": "0 12px 32px rgba(15,37,68,0.13)",
+        "purpose": "Hotel card on hover, paired with translateY(-4px)."
+      },
+      {
+        "name": "popup",
+        "value": "0 8px 32px rgba(15,37,68,0.16)",
+        "purpose": "Map detail popup. Highest in-page z-stack."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fast",
+        "value": "0.15s ease",
+        "purpose": "Nav item backgrounds, button hover, tab transitions."
+      },
+      {
+        "name": "standard",
+        "value": "0.2s ease",
+        "purpose": "Card hover transform+shadow, chevron rotation, spinner."
+      },
+      {
+        "name": "enter",
+        "value": "0.4s ease",
+        "purpose": "FadeUp entrance for hotel cards (opacity + translateY)."
+      },
+      {
+        "name": "drawer",
+        "value": "0.25s ease",
+        "purpose": "Mobile sidebar slide-in."
+      },
+      {
+        "name": "shimmer",
+        "value": "shimmer 1.4s infinite",
+        "purpose": "Skeleton loading animation — warm gradient sweep."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px",
+        "purpose": "Sidebar switches from drawer to sticky. Top bar hidden."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width within search card; the main search action.",
+      "html": "<button class=\"ds-btn-primary\">Search Hotels</button>",
+      "css": ".ds-btn-primary { display: block; width: 100%; padding: 14px 20px; background: #0F2544; color: #F7F3EF; border: none; border-radius: 12px; font-family: Manrope, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, background 0.2s; } .ds-btn-primary:hover { background: #162F54; } .ds-btn-primary:focus-visible { outline: 2px solid #E85D3D; outline-offset: 3px; } .ds-btn-primary:active { opacity: 0.85; }"
+    },
+    {
+      "name": "Coral Action Button",
+      "kind": "button",
+      "refersTo": "button-coral",
+      "description": "Secondary CTAs with energy: Find Emails, Send DM, Launch Sequence.",
+      "html": "<button class=\"ds-btn-coral\">Find Emails</button>",
+      "css": ".ds-btn-coral { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #E85D3D; color: #fff; border: none; border-radius: 12px; font-family: Manrope, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-btn-coral:hover { background: #B83A22; } .ds-btn-coral:focus-visible { outline: 2px solid #E85D3D; outline-offset: 3px; } .ds-btn-coral:active { background: #8c2c15; }"
+    },
+    {
+      "name": "Pill Tab Button",
+      "kind": "button",
+      "refersTo": "button-pill",
+      "description": "Property type tabs: Hotels, Vacation Rentals, Apartments.",
+      "html": "<button class=\"ds-tab-pill ds-tab-pill--active\">🏨 Hotels <span class=\"ds-tab-count\">24</span></button>",
+      "css": ".ds-tab-pill { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 24px; border: 1.5px solid #DDD5CC; background: #fff; color: #0F2544; font-family: Manrope, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all 0.15s; } .ds-tab-pill--active { background: #fff; color: #0F2544; border-color: #0F2544; box-shadow: 0 1px 4px rgba(15,37,68,0.10); } .ds-tab-pill:hover:not(.ds-tab-pill--active) { background: #F7F3EF; } .ds-tab-count { background: #F0EBE5; color: #0F2544; font-size: 0.6875rem; font-weight: 700; padding: 2px 7px; border-radius: 12px; min-width: 20px; text-align: center; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Location search field inside the search hero card.",
+      "html": "<div class=\"ds-input-wrap\"><svg class=\"ds-input-icon\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9FB3C8\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg><input class=\"ds-input-search\" placeholder=\"City, region or hotel name\"/></div>",
+      "css": ".ds-input-wrap { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid #DDD5CC; border-radius: 12px; padding: 12px 16px; transition: border-color 0.15s; } .ds-input-wrap:focus-within { border-color: #0F2544; } .ds-input-icon { flex-shrink: 0; } .ds-input-search { flex: 1; border: none; outline: none; font-family: Manrope, system-ui, sans-serif; font-size: 0.9375rem; color: #1E3A5F; background: transparent; } .ds-input-search::placeholder { color: #9FB3C8; }"
+    },
+    {
+      "name": "Hotel Card",
+      "kind": "card",
+      "description": "Search result card with photo, rating, and add-to-list action.",
+      "html": "<div class=\"ds-hotel-card\"><div class=\"ds-hotel-img\"></div><div class=\"ds-hotel-body\"><p class=\"ds-hotel-name\">The Grand Pacific</p><p class=\"ds-hotel-meta\">⭐ 4.8 · $$$ · San Francisco, CA</p><button class=\"ds-hotel-add\">+ Add to List</button></div></div>",
+      "css": ".ds-hotel-card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(15,37,68,0.08); border: 1px solid rgba(15,37,68,0.06); transition: transform 0.2s, box-shadow 0.2s; } .ds-hotel-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,37,68,0.13); } .ds-hotel-img { height: 160px; background: #EDE8E3; } .ds-hotel-body { padding: 14px 16px; } .ds-hotel-name { font-family: Manrope, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; color: #1E3A5F; margin-bottom: 4px; } .ds-hotel-meta { font-size: 0.8125rem; color: #9FB3C8; margin-bottom: 12px; } .ds-hotel-add { width: 100%; padding: 9px 12px; border: 1.5px solid #DDD5CC; border-radius: 8px; font-family: Manrope, system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; background: #F7F3EF; color: #1E3A5F; transition: all 0.15s; } .ds-hotel-add:hover { background: #F0EBE5; border-color: #0F2544; }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar navigation item — icon + label, with active state.",
+      "html": "<div class=\"ds-nav-item ds-nav-item--active\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#F5A882\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z\"/></svg><span class=\"ds-nav-label\">Search</span></div>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; } .ds-nav-item:hover { background: rgba(255,255,255,0.07); } .ds-nav-item--active { background: rgba(232,93,61,0.18); } .ds-nav-label { font-family: Manrope, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #7A9BBF; flex: 1; } .ds-nav-item--active .ds-nav-label { color: #F5A882; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Toolbar actions — view toggle, list/map switch.",
+      "html": "<button class=\"ds-btn-ghost\">🗺 Map View</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border: none; border-radius: 8px; font-family: Manrope, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 500; cursor: pointer; color: #7A9BBF; background: transparent; transition: all 0.15s; } .ds-btn-ghost:hover { color: #0F2544; background: #F0EBE5; } .ds-btn-ghost--active { background: #fff; color: #0F2544; box-shadow: 0 1px 4px rgba(15,37,68,0.10); } .ds-btn-ghost:focus-visible { outline: 2px solid #E85D3D; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Boutique Concierge",
+    "overview": "StayFind carries the feeling of a great hotel front desk: quietly confident, warm before you even ask, never flustered. The interface knows what you need and has it ready. It does not announce itself — it recedes, and the creator's work comes forward.\n\nThe color strategy is restrained: Deep Harbour navy grounds the system with authority, Coral Spark activates the things that matter, and a warm off-white canvas keeps everything breathable. Nothing on this tool fights for attention.\n\nNotion is the reference for editorial calm. This is not generic SaaS blue, not creator-pink softness, not a consumer travel booking engine. It is a tool a creator reaches for between trips — purposeful, premium, and invisible.",
+    "keyCharacteristics": [
+      "Dark navy sidebar anchors authority without aggression",
+      "Warm canvas body keeps the workspace inviting, not clinical",
+      "Coral Spark used only where it matters: primary actions, active states, brand mark",
+      "Manrope carries the full hierarchy — one family, multiple weights, no pairing needed",
+      "Shadows are navy-tinted — every drop of depth belongs to the brand"
+    ],
+    "rules": [
+      {
+        "name": "The Coral Ration Rule",
+        "body": "Coral Spark (#E85D3D) appears on at most two elements at the same time on any given screen. Its rarity is the point.",
+        "section": "colors"
+      },
+      {
+        "name": "The Navy Shadow Rule",
+        "body": "All box-shadow values use rgba(15,37,68,...) as their color base, never generic rgba(0,0,0,...). Shadows are navy-tinted.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Manrope carries the entire type system. Do not introduce a second typeface. Hierarchy is created through weight and size contrast, not family contrast.",
+        "section": "typography"
+      },
+      {
+        "name": "The 500-On-Dark Rule",
+        "body": "Any text on the Deep Harbour navy sidebar must be weight 500 or above. Perceived weight of light text on dark drops by one notch; compensate.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are shadowless at rest unless they are interactive cards or floating elements. Do not add shadows to headers, nav items, or static sections for depth.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Coral Spark (#E85D3D) for primary actions and active states only. Its scarcity is what makes it work.",
+      "Do use navy-tinted shadows (rgba(15,37,68,...)) for all box-shadow declarations.",
+      "Do maintain weight 500 or above for any text on the Deep Harbour navy sidebar.",
+      "Do use Manrope as the sole typeface — weight contrast (400 vs 700) creates hierarchy.",
+      "Do use the Warm Divider border (#DDD5CC) for all input outlines and card strokes.",
+      "Do apply border-radius: 14px to hotel cards and map containers.",
+      "Do keep the coral accent to ≤2 simultaneous on-screen uses."
+    ],
+    "donts": [
+      "Don't use generic SaaS blue (Material blue, Bootstrap primary, or any non-Deep-Harbour blue). Must not look like HubSpot or Salesforce.",
+      "Don't use pastel, soft, or pink-adjacent tones as UI color. Coral Spark is warm, not sweet.",
+      "Don't use consumer travel UI patterns — large hero images, star-rating rows, booking-engine forms.",
+      "Don't apply border-left greater than 1px as a colored accent stripe — background tint or nothing.",
+      "Don't use gradient text (background-clip: text). Emphasis is weight and size.",
+      "Don't add shadows to static content — shadows signal interactivity, not decoration.",
+      "Don't introduce a second typeface.",
+      "Don't put Coral Spark on inactive or default states.",
+      "Don't use cool-gray neutrals — all neutrals come from the warm or navy ramp."
+    ]
+  }
+}

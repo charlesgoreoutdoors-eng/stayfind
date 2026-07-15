@@ -15,6 +15,31 @@ colors:
   warm-card: "#FFFFFF"
   slate-mist: "#9FB3C8"
   error-bg: "#FEF0EC"
+  # ── Dapples brand palette (golden-hour) — marketing / new surfaces (dapples.io) ──
+  dapple-ink: "#2B2722"
+  dapple-ink-muted: "#6B6258"
+  dapple-ink-faint: "#9C9388"
+  dapple-placeholder: "#B6AD9C"
+  dapple-border: "#DDD0B8"
+  dapple-sand: "#F3E7CF"
+  dapple-nav-tint: "#FBF0DA"
+  dapple-cream: "#FBF5EA"
+  dapple-card: "#FFFCF4"
+  dapple-forest: "#44503A"
+  dapple-forest-deep: "#363F2E"
+  dapple-amber: "#E0954A"
+  dapple-amber-deep: "#B5702E"
+  dapple-amber-deeper: "#8B5E2A"
+  dapple-terracotta: "#C96E3C"
+  dapple-olive: "#C9D1A8"
+  dapple-olive-mid: "#8B9A6A"
+  dapple-glow-gold: "#F4C97A"
+  dapple-glow-honey: "#F0B979"
+  dapple-glow-amber: "#E5A04A"
+  dapple-glow-pale: "#FDEBBE"
+  dapple-glow-ember: "#EBA94E"
+  dapple-sand-dot: "#ECD9B8"
+  dapple-url-grey: "#C8C2B2"
 typography:
   display:
     fontFamily: "Manrope, system-ui, sans-serif"
@@ -52,6 +77,19 @@ typography:
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: "0.06em"
+  # ── Dapples brand type (golden-hour) — Quicksand display + Nunito Sans body ──
+  dapple-display:
+    fontFamily: "Quicksand, system-ui, sans-serif"
+    fontSize: "clamp(2rem, 5vw, 2.875rem)"
+    fontWeight: 600
+    lineHeight: 1.08
+    letterSpacing: "-0.02em"
+  dapple-body:
+    fontFamily: "Nunito Sans, system-ui, sans-serif"
+    fontSize: "1.0625rem"
+    fontWeight: 400
+    lineHeight: 1.6
+    letterSpacing: "0em"
 rounded:
   xs: "5px"
   sm: "8px"
@@ -156,6 +194,26 @@ A two-register palette: authority from the navy ramp, warmth from the coral and 
 
 **The Navy Shadow Rule.** All `box-shadow` values use `rgba(15, 37, 68, ...)` as their color base, never generic `rgba(0, 0, 0, ...)`. Shadows are navy-tinted. Generic black shadows belong to other tools.
 
+### Dapples Brand (Golden-Hour) — marketing / new surfaces
+
+The go-forward brand for public-facing and new surfaces (`dapples.io`, the waitlist, landing pages). A warm golden-hour system: soft cream grounds, deep-forest actions, and scattered amber/olive light. Distinct from the StayFind app chrome above — do not mix the two on the same surface.
+
+**Ink & grounds**
+- **Dapple Ink** (`#2B2722`): Primary text and headings.
+- **Dapple Ink Muted** (`#6B6258`) / **Dapple Ink Faint** (`#9C9388`): Subtext and tertiary labels.
+- **Dapple Cream** (`#FBF5EA`): Page background. **Dapple Card** (`#FFFCF4`): raised cards. **Dapple Nav Tint** (`#FBF0DA`) / **Dapple Sand** (`#F3E7CF`): nav and section bands.
+- **Dapple Border** (`#DDD0B8`): input and card strokes. **Dapple Placeholder** (`#B6AD9C`): placeholder text.
+
+**Actions & accents**
+- **Dapple Forest** (`#44503A`) → **Dapple Forest Deep** (`#363F2E`) on hover: primary buttons, browser-chrome bars.
+- **Dapple Amber** (`#E0954A`), **Amber Deep** (`#B5702E`), **Amber Deeper** (`#8B5E2A`), **Terracotta** (`#C96E3C`): warm highlights, "Dapples" comparison column, step badges, selection.
+- **Dapple Olive** (`#C9D1A8`) / **Olive Mid** (`#8B9A6A`): cool counterpoint dots and accents.
+
+**Golden-hour glow (decorative only)**
+- **Glow Gold** (`#F4C97A`), **Honey** (`#F0B979`), **Amber** (`#E5A04A`), **Pale** (`#FDEBBE`), **Ember** (`#EBA94E`): blurred light orbs behind heroes and the wordmark. Never text or fills. Plus **Sand Dot** (`#ECD9B8`) and **URL Grey** (`#C8C2B2`) for the browser-mockup chrome.
+
+**The Two-Brand Rule.** StayFind (navy/coral) dresses the logged-in app; Dapples (cream/forest/amber) dresses marketing and new public surfaces. A single page picks one brand and commits — never blend the two palettes.
+
 ## 3. Typography
 
 **Body / Display Font:** Manrope (loaded via `next/font/google`, 400–700, variable)
@@ -171,7 +229,9 @@ A two-register palette: authority from the navy ramp, warmth from the coral and 
 - **Caption** (500, 0.6875rem / 11px, leading 1.3, tracking +0.06em): Tiny meta — chip counts, status tags, timestamp dates. Use sparingly; below this is inaccessible.
 
 ### Named Rules
-**The One Family Rule.** Manrope carries the entire type system. Do not introduce a second typeface — not a serif for "warmth", not a display face for "personality". Hierarchy is created through weight contrast (400 vs 700) and size contrast (13px vs 22px), not family contrast.
+**The One Family Rule.** Within the **StayFind app**, Manrope carries the entire type system. Do not introduce a second typeface — not a serif for "warmth", not a display face for "personality". Hierarchy is created through weight contrast (400 vs 700) and size contrast (13px vs 22px), not family contrast.
+
+**The Dapples Pairing Rule.** **Dapples** marketing/new surfaces pair **Quicksand** (display — the rounded-geometric wordmark and headings) with **Nunito Sans** (humanist body). This pairing is scoped to Dapples per the Two-Brand Rule and never appears inside the StayFind app; likewise Manrope never dresses a Dapples page.
 
 **The 500-On-Dark Rule.** Any text appearing on the Deep Harbour navy sidebar must be weight 500 or above. The perceived weight of light-colored text on a dark background drops by one notch; compensate.
 

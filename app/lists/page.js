@@ -54,7 +54,7 @@ export default function ListsPage() {
   const [hunterScraping, setHunterScraping] = useState(false);
   const [hunterProgress, setHunterProgress] = useState({ done: 0, total: 0, found: 0 });
   const [contactsModal, setContactsModal] = useState(null);
-  const [userPlan, setUserPlan] = useState("free");
+  const [userPlan, setUserPlan] = useState("spark");
   const [showListDropdown, setShowListDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const { user } = useAuth();
@@ -576,7 +576,7 @@ export default function ListsPage() {
                       <div style={s.hunterSpinner} />
                       <span>Finding contacts... {hunterProgress.done}/{hunterProgress.total} — {hunterProgress.found} found</span>
                     </div>
-                  ) : ["pro","agency","founding"].includes(userPlan) ? (
+                  ) : ["glow","radiant","founding"].includes(userPlan) ? (
                     <button
                       style={{ ...s.hunterBtn, ...((igScraping || emailScraping) ? s.igScrapeBtnDisabled : {}) }}
                       onClick={findHunterEmails}
@@ -590,7 +590,7 @@ export default function ListsPage() {
                       Find Specific Emails
                     </button>
                   ) : (
-                    <div style={{ position:"relative" }} title="Upgrade to Agency plan to find direct contacts">
+                    <div style={{ position:"relative" }} title="Upgrade to Glow plan to find direct contacts">
                       <button style={{ ...s.hunterBtn, opacity:0.4, cursor:"not-allowed" }} disabled>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>

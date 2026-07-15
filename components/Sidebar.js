@@ -68,7 +68,9 @@ export default function Sidebar({ children }) {
     setExpanded(prev => ({ ...prev, [href]: !prev[href] }));
   };
 
-  if (pathname === "/login") return <>{children}</>;
+  // No app chrome on the public marketing/auth surfaces, or for logged-out
+  // visitors (who see the waitlist landing at the root).
+  if (pathname === "/login" || pathname === "/waitlist" || !user) return <>{children}</>;
 
   const isAdmin = (user?.email || "").toLowerCase() === ADMIN_EMAIL;
   const navItems = isAdmin
@@ -231,7 +233,7 @@ export default function Sidebar({ children }) {
                   {profile?.full_name || user.email}
                 </p>
                 <p style={{ fontSize:11, color:"#2D5A8A", marginBottom:10 }}>
-                  {profile?.plan === "pro" ? "Pro Plan" : "Free Plan"}
+                  {(profile?.plan || "spark").replace(/^\w/, c => c.toUpperCase())} Plan
                 </p>
                 <button
                   onClick={async () => { await signOut(); router.push("/login"); }}

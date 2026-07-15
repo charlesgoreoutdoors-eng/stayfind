@@ -17,7 +17,7 @@ const PROPERTY_OPTIONS = [
   { value: "apartments", label: "Apartments" },
   { value: "all",        label: "All Three" },
 ];
-const PLANS = ["free", "starter", "pro", "agency"];
+const PLANS = ["spark", "glow", "radiant", "founding"];
 const PER_PAGE = 20;
 
 export default function AdminPage() {

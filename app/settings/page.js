@@ -4,11 +4,35 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useGmail } from "../../lib/useGmail";
 
+const TIMEZONES = [
+  { label: "Pacific/Honolulu — Hawaii (UTC−10)",          value: "Pacific/Honolulu" },
+  { label: "America/Anchorage — Alaska (UTC−9)",          value: "America/Anchorage" },
+  { label: "America/Los_Angeles — Pacific Time (UTC−8)",  value: "America/Los_Angeles" },
+  { label: "America/Denver — Mountain Time (UTC−7)",      value: "America/Denver" },
+  { label: "America/Chicago — Central Time (UTC−6)",      value: "America/Chicago" },
+  { label: "America/New_York — Eastern Time (UTC−5)",     value: "America/New_York" },
+  { label: "America/Halifax — Atlantic Time (UTC−4)",     value: "America/Halifax" },
+  { label: "America/Sao_Paulo — Brazil (UTC−3)",          value: "America/Sao_Paulo" },
+  { label: "UTC — Universal Time (UTC+0)",                value: "UTC" },
+  { label: "Europe/London — UK (UTC+0/+1)",               value: "Europe/London" },
+  { label: "Europe/Paris — Central Europe (UTC+1/+2)",    value: "Europe/Paris" },
+  { label: "Europe/Helsinki — Eastern Europe (UTC+2/+3)", value: "Europe/Helsinki" },
+  { label: "Europe/Moscow — Moscow (UTC+3)",              value: "Europe/Moscow" },
+  { label: "Asia/Dubai — Gulf (UTC+4)",                   value: "Asia/Dubai" },
+  { label: "Asia/Kolkata — India (UTC+5:30)",             value: "Asia/Kolkata" },
+  { label: "Asia/Bangkok — Indochina (UTC+7)",            value: "Asia/Bangkok" },
+  { label: "Asia/Singapore — Singapore/Perth (UTC+8)",    value: "Asia/Singapore" },
+  { label: "Asia/Tokyo — Japan/Korea (UTC+9)",            value: "Asia/Tokyo" },
+  { label: "Australia/Brisbane — QLD (UTC+10)",           value: "Australia/Brisbane" },
+  { label: "Australia/Sydney — NSW/VIC (UTC+10/+11)",     value: "Australia/Sydney" },
+  { label: "Pacific/Auckland — New Zealand (UTC+12/+13)", value: "Pacific/Auckland" },
+];
+
 const PLAN_LABELS = {
-  free:    { label: "Free Plan",    desc: "Basic search and list features." },
-  starter: { label: "Starter Plan", desc: "More searches and sequences." },
-  pro:     { label: "Pro Plan",     desc: "Full access to outreach tools." },
-  agency:  { label: "Agency Plan",  desc: "Unlimited usage for teams." },
+  spark:    { label: "Spark Plan",    desc: "Basic search and list features." },
+  glow:     { label: "Glow Plan",     desc: "More searches, sequences, and direct contacts." },
+  radiant:  { label: "Radiant Plan",  desc: "Full access to outreach tools." },
+  founding: { label: "Founding Plan", desc: "Founding member — unlimited access." },
 };
 
 export default function SettingsPage() {
@@ -39,16 +63,27 @@ export default function SettingsPage() {
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitSaved, setLimitSaved] = useState(false);
 
+  // Timezone
+  const [timezone, setTimezone]     = useState("UTC");
+  const [origTimezone, setOrigTimezone] = useState("UTC");
+  const [savingTz, setSavingTz]     = useState(false);
+  const [tzSaved, setTzSaved]       = useState(false);
+
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
-    supabase.from("profiles").select("full_name, daily_email_limit").eq("id", user.id).single()
+    // Auto-detect browser timezone as a sensible default
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    supabase.from("profiles").select("full_name, daily_email_limit, timezone").eq("id", user.id).single()
       .then(({ data }) => {
         setName(data?.full_name || "");
         setOrigName(data?.full_name || "");
         if (data?.daily_email_limit) setLimit(data.daily_email_limit);
+        const tz = data?.timezone || detected;
+        setTimezone(tz);
+        setOrigTimezone(tz);
         setLoading(false);
       });
   }, [user]);
@@ -86,6 +121,16 @@ export default function SettingsPage() {
     else { setPwMsg("ok:Password updated."); setPw1(""); setPw2(""); }
   };
 
+  // ── Timezone ──
+  const saveTz = async () => {
+    setSavingTz(true);
+    await supabase.from("profiles").update({ timezone }).eq("id", user.id);
+    setOrigTimezone(timezone);
+    setSavingTz(false);
+    setTzSaved(true);
+    setTimeout(() => setTzSaved(false), 2500);
+  };
+
   // ── Email limit ──
   const saveLimit = async () => {
     setSavingLimit(true);
@@ -95,8 +140,8 @@ export default function SettingsPage() {
     setTimeout(() => setLimitSaved(false), 2500);
   };
 
-  const plan = profile?.plan || "free";
-  const planInfo = PLAN_LABELS[plan] || PLAN_LABELS.free;
+  const plan = profile?.plan || "spark";
+  const planInfo = PLAN_LABELS[plan] || PLAN_LABELS.spark;
   const gmailConnected = !!gmailToken;
 
   const Msg = ({ value }) => {
@@ -183,7 +228,7 @@ export default function SettingsPage() {
           </div>
           <span style={s.planBadge}>{plan.toUpperCase()}</span>
         </div>
-        {plan !== "agency" && (
+        {!["radiant", "founding"].includes(plan) && (
           <a href="mailto:hello@stayfind.app?subject=Upgrade%20my%20plan" style={s.upgradeBtn}>
             Upgrade plan
           </a>
@@ -220,6 +265,31 @@ export default function SettingsPage() {
       {/* ── EMAIL SENDING ── */}
       <div style={s.section}>
         <h3 style={s.sectionTitle}>Email Sending</h3>
+
+        <div style={s.field}>
+          <label style={s.label}>Your timezone</label>
+          <p style={s.hint} >StayFind sends emails between 8am and 6pm in your local time.</p>
+          <div style={{ ...s.inlineRow, marginTop:8 }}>
+            <select
+              style={{ ...s.input, cursor:"pointer" }}
+              value={timezone}
+              onChange={e => setTimezone(e.target.value)}
+              disabled={loading}
+            >
+              {TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+            <button
+              style={{ ...s.saveBtn, opacity: (savingTz || timezone === origTimezone) ? 0.5 : 1 }}
+              onClick={saveTz}
+              disabled={savingTz || timezone === origTimezone}
+            >
+              {savingTz ? "Saving…" : tzSaved ? "Saved ✓" : "Save"}
+            </button>
+          </div>
+        </div>
+
         <div style={s.field}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
             <label style={s.label}>Daily email limit</label>
