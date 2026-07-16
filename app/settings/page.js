@@ -28,6 +28,15 @@ const TIMEZONES = [
   { label: "Pacific/Auckland — New Zealand (UTC+12/+13)", value: "Pacific/Auckland" },
 ];
 
+// Left-rail sections. Client-side switch only — no routing.
+const SECTIONS = [
+  { id: "profile",  label: "Profile" },
+  { id: "password", label: "Password" },
+  { id: "plan",     label: "Plan & Billing" },
+  { id: "gmail",    label: "Gmail" },
+  { id: "sending",  label: "Email Sending" },
+];
+
 const PLAN_LABELS = {
   spark:    { label: "Spark Plan",    desc: "Basic search and list features." },
   glow:     { label: "Glow Plan",     desc: "More searches, sequences, and direct contacts." },
@@ -40,6 +49,8 @@ export default function SettingsPage() {
   const { gmailToken, gmailEmail, gmailLoading, tokenExpired, connectGmail, disconnectGmail } = useGmail();
 
   const isGoogleOnly = (user?.app_metadata?.provider === "google");
+
+  const [active, setActive] = useState("profile");
 
   // Profile
   const [name, setName]           = useState("");
@@ -154,12 +165,44 @@ export default function SettingsPage() {
     );
   };
 
+  // Google-only accounts can't set a password, so that section is omitted.
+  const sections = SECTIONS.filter(sec => sec.id !== "password" || !isGoogleOnly);
+
   return (
     <div style={s.root}>
+      <style>{`
+        .dp-rail-item:hover { background: var(--color-ground-sand); }
+        .dp-rail-item.active:hover { background: var(--color-action-forest); }
+        @media (max-width: 760px) {
+          .dp-settings-grid { grid-template-columns: 1fr !important; }
+          .dp-settings-rail { flex-direction: row !important; overflow-x: auto; padding-bottom: 4px; }
+          .dp-settings-rail .dp-rail-item { white-space: nowrap; }
+        }
+      `}</style>
+
       <h2 style={s.heading}>Settings</h2>
 
+      <div className="dp-settings-grid" style={s.grid}>
+        {/* Left rail */}
+        <nav className="dp-settings-rail" style={s.rail}>
+          {sections.map(sec => (
+            <button
+              key={sec.id}
+              className={`dp-rail-item${active === sec.id ? " active" : ""}`}
+              style={{ ...s.railItem, ...(active === sec.id ? s.railItemActive : {}) }}
+              onClick={() => setActive(sec.id)}
+            >
+              {sec.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Active panel */}
+        <div style={s.card}>
+
       {/* ── PROFILE ── */}
-      <div style={s.section}>
+      {active === "profile" && (
+      <div>
         <h3 style={s.sectionTitle}>Profile</h3>
 
         <div style={s.field}>
@@ -192,10 +235,11 @@ export default function SettingsPage() {
           <Msg value={emailMsg} />
         </div>
       </div>
+      )}
 
       {/* ── PASSWORD ── */}
-      {!isGoogleOnly && (
-        <div style={s.section}>
+      {active === "password" && !isGoogleOnly && (
+        <div>
           <h3 style={s.sectionTitle}>Change Password</h3>
           <div style={s.field}>
             <label style={s.label}>New password</label>
@@ -219,7 +263,8 @@ export default function SettingsPage() {
       )}
 
       {/* ── PLAN & BILLING ── */}
-      <div style={s.section}>
+      {active === "plan" && (
+      <div>
         <h3 style={s.sectionTitle}>Plan & Billing</h3>
         <div style={s.planRow}>
           <div>
@@ -235,9 +280,11 @@ export default function SettingsPage() {
         )}
         <p style={s.hint}>Need a different plan or have a billing question? Contact us and we'll sort it out.</p>
       </div>
+      )}
 
       {/* ── GMAIL CONNECTION ── */}
-      <div style={s.section}>
+      {active === "gmail" && (
+      <div>
         <h3 style={s.sectionTitle}>Gmail Connection</h3>
         <div style={s.planRow}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -261,9 +308,11 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* ── EMAIL SENDING ── */}
-      <div style={s.section}>
+      {active === "sending" && (
+      <div>
         <h3 style={s.sectionTitle}>Email Sending</h3>
 
         <div style={s.field}>
@@ -316,15 +365,25 @@ export default function SettingsPage() {
           {savingLimit ? "Saving…" : limitSaved ? "Saved ✓" : "Save Changes"}
         </button>
       </div>
+      )}
+
+        </div>
+      </div>
     </div>
   );
 }
 
 const s = {
-  root: { padding:"32px 24px 80px", maxWidth:580 },
-  heading: { fontSize:22, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.4px", marginBottom:28 },
-  section: { background:"var(--color-ground-card)", borderRadius:16, border:"1px solid var(--color-border)", padding:"24px 24px 22px", marginBottom:20 },
-  sectionTitle: { fontSize:14, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:20 },
+  root: { padding:"32px 36px 40px", maxWidth:1160, margin:"0 auto" },
+  heading: { fontFamily:"var(--font-display)", fontSize:22, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.01em", marginBottom:22 },
+
+  grid: { display:"grid", gridTemplateColumns:"200px 1fr", gap:24, alignItems:"start" },
+  rail: { display:"flex", flexDirection:"column", gap:2 },
+  railItem: { padding:"10px 14px", borderRadius:"var(--radius-md)", fontSize:13, fontWeight:600, color:"var(--color-ink-mid)", background:"none", border:"none", textAlign:"left", cursor:"pointer", fontFamily:"inherit", transition:"background 0.15s, color 0.15s" },
+  railItemActive: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", fontWeight:700 },
+  card: { background:"var(--color-ground-card)", borderRadius:"var(--radius-card)", border:"1px solid var(--color-border)", boxShadow:"var(--shadow-low)", padding:26 },
+
+  sectionTitle: { fontFamily:"var(--font-display)", fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:20 },
   field: { marginBottom:18 },
   label: { display:"block", fontSize:13, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:7 },
   input: { flex:1, width:"100%", padding:"10px 13px", border:"1px solid var(--color-border)", borderRadius:9, fontSize:14, color:"var(--color-ink-primary)", background:"var(--color-ground-card)" },
