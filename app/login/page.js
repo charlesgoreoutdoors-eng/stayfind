@@ -3,6 +3,17 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
+// Dapples wordmark on light ground — the "Scattered Light" mark.
+function Wordmark() {
+  return (
+    <span style={{ position:"relative", display:"inline-block", fontFamily:"var(--font-display)", fontWeight:600, fontSize:26, letterSpacing:"-0.01em", color:"var(--color-ink-primary)", lineHeight:1 }}>
+      <span style={{ position:"absolute", top:"-0.24em", left:"4%", width:"0.30em", height:"0.30em", borderRadius:"50%", background:"var(--color-glow-1)", opacity:0.8, filter:"blur(2px)" }} />
+      <span style={{ position:"absolute", top:"0.30em", left:"60%", width:"0.18em", height:"0.18em", borderRadius:"50%", background:"var(--color-cool-olive)", opacity:0.75, filter:"blur(1.5px)" }} />
+      <span style={{ position:"relative" }}>Dapples</span>
+    </span>
+  );
+}
+
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -68,147 +79,99 @@ function LoginInner() {
     if (error) { setError(error.message); setGoogleLoading(false); }
   };
 
+  const canSubmit = email.trim() && password.trim() && (mode === "signin" || name.trim()) && !loading;
+
   return (
     <div style={s.root}>
       <style>{`
-        @media (max-width: 640px) {
-          .login-left { display: none !important; }
-          .login-right { width: 100% !important; padding: 32px 20px !important; }
-        }
+        .dp-login-in:focus { border-color: var(--color-action-forest) !important; }
+        .dp-login-primary { transition: background .15s ease; }
+        .dp-login-primary:hover:not(:disabled) { background: var(--color-action-forest-hover) !important; }
+        .dp-login-google:hover:not(:disabled) { border-color: var(--color-accent-amber-deep) !important; }
+        @media (max-width: 520px) { .dp-login-card { padding: 32px 22px !important; } }
       `}</style>
-      {/* Left panel - branding */}
-      <div style={s.left} className="login-left">
-        <div style={s.leftInner}>
-          <div style={s.logo}>
-            <div style={s.logoIcon}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            </div>
-            <span style={s.logoText}>StayFind</span>
-          </div>
-          <h1 style={s.leftHeadline}>The outreach platform for content creators</h1>
-          <p style={s.leftSub}>Find hotels, build relationships, grow your brand.</p>
 
-          <div style={s.features}>
-            {[
-              { icon: "M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z", text: "Search hotels by location and budget" },
-              { icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2", text: "Organise contacts into lists" },
-              { icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9", text: "Send personalised outreach at scale" },
-              { icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", text: "Manage all replies in one inbox" },
-            ].map((f, i) => (
-              <div key={i} style={s.feature}>
-                <div style={s.featureIcon}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5A882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={f.icon}/>
-                  </svg>
-                </div>
-                <span style={s.featureText}>{f.text}</span>
-              </div>
-            ))}
+      {/* Golden-hour glow orbs */}
+      <span style={{ ...orb, top:-60, left:"12%", width:260, height:260, background:"var(--color-glow-1)", opacity:0.4, filter:"blur(70px)" }} />
+      <span style={{ ...orb, bottom:-60, right:"10%", width:240, height:240, background:"var(--color-glow-3)", opacity:0.3, filter:"blur(65px)" }} />
+      <span style={{ ...orb, top:"35%", right:"30%", width:140, height:140, background:"var(--color-cool-olive)", opacity:0.25, filter:"blur(50px)" }} />
+
+      <div className="dp-login-card" style={s.card}>
+        <div style={{ textAlign:"center", marginBottom:28 }}>
+          <Wordmark />
+          <div style={s.title}>{mode === "signin" ? "Welcome back" : "Create your account"}</div>
+          <div style={s.sub}>
+            {mode === "signin" ? "Sign in to keep landing collaborations" : "Start finding hotel partners today"}
           </div>
         </div>
-      </div>
 
-      {/* Right panel - form */}
-      <div style={s.right} className="login-right">
-        <div style={s.formWrap}>
-          <h2 style={s.formTitle}>
-            {mode === "signin" ? "Welcome back" : "Create your account"}
-          </h2>
-          <p style={s.formSub}>
-            {mode === "signin" ? "Sign in to your StayFind account" : "Start finding hotel partners today"}
-          </p>
+        {error && <div style={s.errorBox}>{error}</div>}
+        {success && <div style={s.successBox}>{success}</div>}
 
-          {error && <div style={s.errorBox}>{error}</div>}
-          {success && <div style={s.successBox}>{success}</div>}
-
-          {/* Google button */}
-          <button style={s.googleBtn} onClick={handleGoogle} disabled={googleLoading}>
-            {googleLoading ? (
-              <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-                <span style={s.spinnerDark} />Connecting...
-              </span>
-            ) : (
-              <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continue with Google
-              </span>
-            )}
-          </button>
-
-          <div style={s.divider}>
-            <div style={s.dividerLine} />
-            <span style={s.dividerText}>or</span>
-            <div style={s.dividerLine} />
-          </div>
-
-          {/* Name field - signup only */}
-          {mode === "signup" && (
-            <div style={s.field}>
-              <label style={s.label}>Full Name</label>
-              <input
-                style={s.input}
-                placeholder="Your name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                autoComplete="name"
-              />
-            </div>
+        {/* Google */}
+        <button className="dp-login-google" style={s.googleBtn} onClick={handleGoogle} disabled={googleLoading}>
+          {googleLoading ? (
+            <><span style={s.spinnerDark} />Connecting...</>
+          ) : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Continue with Google
+            </>
           )}
+        </button>
 
+        <div style={s.divider}>
+          <div style={s.dividerLine} /><span style={s.dividerText}>or</span><div style={s.dividerLine} />
+        </div>
+
+        {/* Name — signup only */}
+        {mode === "signup" && (
           <div style={s.field}>
-            <label style={s.label}>Email</label>
-            <input
-              style={s.input}
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              autoComplete="email"
-            />
+            <label style={s.label}>Full Name</label>
+            <input className="dp-login-in" style={s.input} placeholder="Your name"
+              value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
           </div>
+        )}
 
-          <div style={s.field}>
-            <label style={s.label}>Password</label>
-            <input
-              style={s.input}
-              type="password"
-              placeholder={mode === "signup" ? "Min 6 characters" : "Your password"}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            />
-          </div>
+        <div style={s.field}>
+          <label style={s.label}>Email</label>
+          <input className="dp-login-in" style={s.input} type="email" placeholder="you@example.com"
+            value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+        </div>
 
-          <button
-            style={{ ...s.submitBtn, opacity: email.trim() && password.trim() && (mode === "signin" || name.trim()) && !loading ? 1 : 0.45 }}
-            onClick={handleSubmit}
-            disabled={loading || !email.trim() || !password.trim() || (mode === "signup" && !name.trim())}
-          >
-            {loading ? (
-              <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-                <span style={s.spinnerLight} />{mode === "signup" ? "Creating account..." : "Signing in..."}
-              </span>
-            ) : mode === "signup" ? "Create Account" : "Sign In"}
+        <div style={s.field}>
+          <label style={s.label}>Password</label>
+          <input className="dp-login-in" style={s.input} type="password"
+            placeholder={mode === "signup" ? "Min 6 characters" : "Your password"}
+            value={password} onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+        </div>
+
+        <button
+          className="dp-login-primary"
+          style={{ ...s.submitBtn, opacity: canSubmit ? 1 : 0.45, cursor: canSubmit ? "pointer" : "default" }}
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+        >
+          {loading
+            ? <><span style={s.spinnerLight} />{mode === "signup" ? "Creating account..." : "Signing in..."}</>
+            : mode === "signup" ? "Create Account" : "Sign In"}
+        </button>
+
+        <p style={s.switchText}>
+          {mode === "signin" ? "New here? " : "Already have an account? "}
+          <button style={s.switchBtn} onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setSuccess(""); }}>
+            {mode === "signin" ? "Create an account" : "Sign in"}
           </button>
-
-          <p style={s.switchText}>
-            {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
-            <button style={s.switchBtn} onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setSuccess(""); }}>
-              {mode === "signin" ? "Sign up free" : "Sign in"}
-            </button>
-          </p>
-
           {mode === "signin" && (
-            <div style={s.forgotWrap}>
+            <>
+              {" · "}
               <button style={s.forgotBtn} onClick={async () => {
                 if (!email.trim()) {
                   setError("Enter your email address above first, then click Forgot password.");
@@ -222,9 +185,9 @@ function LoginInner() {
               }}>
                 Forgot password?
               </button>
-            </div>
+            </>
           )}
-        </div>
+        </p>
       </div>
     </div>
   );
@@ -232,43 +195,32 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight:"100vh", background:"#F7F3EF" }} />}>
+    <Suspense fallback={<div style={{ minHeight:"100vh", background:"var(--color-ground-nav-tint)" }} />}>
       <LoginInner />
     </Suspense>
   );
 }
 
+const orb = { position:"absolute", borderRadius:"50%", pointerEvents:"none" };
+
 const s = {
-  root: { display:"flex", minHeight:"100vh", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  left: { width:"45%", background:"#0F2544", display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 40px" },
-  leftInner: { maxWidth:360 },
-  logo: { display:"flex", alignItems:"center", gap:10, marginBottom:48 },
-  logoIcon: { width:36, height:36, background:"#E85D3D", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center" },
-  logoText: { fontSize:20, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px" },
-  leftHeadline: { fontSize:32, fontWeight:700, color:"#F7F3EF", lineHeight:1.2, marginBottom:12, letterSpacing:"-0.5px" },
-  leftSub: { fontSize:15, color:"#4A6A8A", lineHeight:1.6, marginBottom:40 },
-  features: { display:"flex", flexDirection:"column", gap:16 },
-  feature: { display:"flex", alignItems:"center", gap:12 },
-  featureIcon: { width:28, height:28, background:"rgba(232,93,61,0.15)", borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-  featureText: { fontSize:14, color:"#7A9BBF", lineHeight:1.4 },
-  right: { flex:1, background:"#F7F3EF", display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 40px" },
-  formWrap: { width:"100%", maxWidth:400 },
-  formTitle: { fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:6, letterSpacing:"-0.3px" },
-  formSub: { fontSize:14, color:"#9FB3C8", marginBottom:28 },
-  errorBox: { background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:10, padding:"11px 14px", color:"#B83A22", fontSize:13, marginBottom:16 },
-  successBox: { background:"#E8F8F5", border:"1px solid #A8E6E0", borderRadius:10, padding:"11px 14px", color:"#1A6B5A", fontSize:13, marginBottom:16 },
-  googleBtn: { width:"100%", padding:13, background:"#fff", border:"1.5px solid #DDD5CC", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", color:"#1E3A5F", marginBottom:20, fontFamily:"inherit", transition:"border-color 0.15s" },
-  divider: { display:"flex", alignItems:"center", gap:12, marginBottom:20 },
-  dividerLine: { flex:1, height:1, background:"#DDD5CC" },
-  dividerText: { fontSize:12, color:"#9FB3C8", fontWeight:500 },
-  field: { marginBottom:16 },
-  label: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:7 },
-  input: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"12px 14px", fontSize:14, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", transition:"border-color 0.15s" },
-  submitBtn: { width:"100%", padding:13, background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"opacity 0.2s", marginBottom:16 },
-  spinnerDark: { display:"inline-block", width:14, height:14, border:"2px solid rgba(30,58,95,0.2)", borderTopColor:"#1E3A5F", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  spinnerLight: { display:"inline-block", width:14, height:14, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  switchText: { fontSize:13, color:"#9FB3C8", textAlign:"center", marginBottom:8 },
-  switchBtn: { background:"none", border:"none", cursor:"pointer", color:"#E85D3D", fontWeight:600, fontSize:13, fontFamily:"inherit" },
-  forgotWrap: { textAlign:"right", marginTop:-8, marginBottom:16 },
-  forgotBtn: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", fontSize:12, fontFamily:"inherit", textDecoration:"underline" },
+  root: { position:"relative", overflow:"hidden", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:24, background:"var(--color-ground-nav-tint)", fontFamily:"var(--font-body)", color:"var(--color-ink-primary)" },
+  card: { position:"relative", width:"100%", maxWidth:420, background:"var(--color-ground-card)", borderRadius:22, border:"1px solid rgba(43,39,34,0.08)", boxShadow:"0 26px 56px -34px rgba(120,80,30,0.5)", padding:"44px 40px" },
+  title: { fontFamily:"var(--font-display)", fontSize:20, fontWeight:700, marginTop:14 },
+  sub: { fontSize:13, color:"var(--color-ink-muted)", marginTop:4 },
+  errorBox: { background:"#FBEDE9", border:"1px solid rgba(180,67,46,0.3)", borderRadius:"var(--radius-md)", padding:"11px 14px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
+  successBox: { background:"rgba(139,154,106,0.16)", border:"1px solid rgba(139,154,106,0.4)", borderRadius:"var(--radius-md)", padding:"11px 14px", color:"var(--color-ink-primary)", fontSize:13, marginBottom:16 },
+  googleBtn: { width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:10, padding:13, background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-lg)", fontSize:14, fontWeight:600, cursor:"pointer", color:"var(--color-ink-primary)", marginBottom:16, fontFamily:"inherit", transition:"border-color 0.15s" },
+  divider: { display:"flex", alignItems:"center", gap:12, marginBottom:16 },
+  dividerLine: { flex:1, height:1, background:"rgba(43,39,34,0.12)" },
+  dividerText: { fontSize:12, color:"var(--color-ink-muted)" },
+  field: { marginBottom:13 },
+  label: { display:"block", fontSize:12, fontWeight:700, color:"var(--color-ink-mid)", marginBottom:6 },
+  input: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-md)", padding:"11px 14px", fontSize:14, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", background:"var(--color-ground-card)", transition:"border-color 0.15s" },
+  submitBtn: { width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:10, padding:13, background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-lg)", fontSize:14, fontWeight:700, fontFamily:"var(--font-display)", marginTop:3, marginBottom:12 },
+  spinnerDark: { display:"inline-block", width:14, height:14, border:"2px solid rgba(43,39,34,0.2)", borderTopColor:"var(--color-ink-primary)", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  spinnerLight: { display:"inline-block", width:14, height:14, border:"2px solid rgba(251,245,234,0.3)", borderTopColor:"var(--color-ground-page)", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  switchText: { fontSize:12.5, color:"var(--color-ink-muted)", textAlign:"center", margin:0 },
+  switchBtn: { background:"none", border:"none", cursor:"pointer", color:"var(--color-accent-amber-deep)", fontWeight:700, fontSize:12.5, fontFamily:"inherit", padding:0 },
+  forgotBtn: { background:"none", border:"none", cursor:"pointer", color:"var(--color-ink-muted)", fontSize:12.5, fontFamily:"inherit", textDecoration:"underline", padding:0 },
 };

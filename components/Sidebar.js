@@ -29,7 +29,6 @@ const NAV = [
     children: [
       { href: "/sequences/templates", label: "Templates" },
       { href: "/sequences/builder",   label: "Flows" },
-      { href: "/sequences/compose",   label: "Compose" },
       { href: "/sequences/tracking",  label: "Tracking" },
     ],
   },
@@ -54,6 +53,17 @@ const NAV = [
     icon: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm6.93-3c0-.36-.03-.71-.08-1.05l2.27-1.78a.54.54 0 0 0 .13-.69l-2.15-3.72a.54.54 0 0 0-.66-.24l-2.68 1.08a7.9 7.9 0 0 0-1.82-1.05l-.4-2.85A.53.53 0 0 0 12 2h-4.3a.53.53 0 0 0-.53.45l-.4 2.85a7.9 7.9 0 0 0-1.82 1.05L2.37 5.27a.54.54 0 0 0-.66.24L-.44 9.23a.53.53 0 0 0 .13.69l2.27 1.78A8.06 8.06 0 0 0 1.88 12c0 .36.03.71.08 1.05l-2.27 1.78a.54.54 0 0 0-.13.69l2.15 3.72c.13.24.41.33.66.24l2.68-1.08c.57.4 1.18.74 1.82 1.05l.4 2.85c.07.26.3.45.53.45h4.3c.25 0 .46-.19.53-.45l.4-2.85a7.9 7.9 0 0 0 1.82-1.05l2.68 1.08c.25.09.53 0 .66-.24l2.15-3.72a.54.54 0 0 0-.13-.69l-2.27-1.78c.05-.34.08-.69.08-1.05z",
   },
 ];
+
+// The "Scattered Light" wordmark — Dapples with soft blurred accent dots.
+function Wordmark({ size = 17 }) {
+  return (
+    <span style={{ position: "relative", display: "inline-block", fontFamily: "var(--font-display)", fontWeight: 600, fontSize: size, letterSpacing: "-0.01em", color: "var(--color-ground-page)", lineHeight: 1 }}>
+      <span style={{ position: "absolute", top: "-0.24em", left: "4%", width: "0.30em", height: "0.30em", borderRadius: "50%", background: "var(--color-glow-1)", opacity: 0.85, filter: "blur(1.5px)" }} />
+      <span style={{ position: "absolute", top: "0.16em", left: "56%", width: "0.22em", height: "0.22em", borderRadius: "50%", background: "var(--color-cool-olive)", opacity: 0.8, filter: "blur(1px)" }} />
+      <span style={{ position: "relative" }}>Dapples</span>
+    </span>
+  );
+}
 
 export default function Sidebar({ children }) {
   const [open, setOpen] = useState(false);
@@ -84,9 +94,6 @@ export default function Sidebar({ children }) {
   return (
     <>
       <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #F7F3EF; font-family: var(--font-sans, "Manrope", system-ui, sans-serif); -webkit-font-smoothing: antialiased; color: #1E3A5F; }
-        ::placeholder { color: #9FB3C8; }
         a { text-decoration: none; color: inherit; }
         input, select, textarea, button { font-family: inherit; }
 
@@ -94,7 +101,7 @@ export default function Sidebar({ children }) {
 
         .sf-sidebar {
           position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
-          background: #0F2544; z-index: 150;
+          background: var(--color-action-forest); z-index: 150;
           display: flex; flex-direction: column; padding: 0 12px 24px;
           transform: translateX(-100%); transition: transform 0.25s ease;
         }
@@ -108,23 +115,23 @@ export default function Sidebar({ children }) {
 
         .sf-topbar {
           position: fixed; top: 0; left: 0; right: 0; height: 52px;
-          background: #0F2544; display: flex; align-items: center;
+          background: var(--color-action-forest); display: flex; align-items: center;
           padding: 0 16px; gap: 14px; z-index: 200;
         }
-        .sf-main { flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; }
-        .sf-overlay { position: fixed; inset: 0; background: rgba(15,37,68,0.55); z-index: 149; }
+        .sf-main { flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; background: var(--color-ground-page); }
+        .sf-overlay { position: fixed; inset: 0; background: rgba(43,39,34,0.55); z-index: 149; }
 
-        .sf-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
-        .sf-nav-item:hover { background: rgba(255,255,255,0.07); }
-        .sf-nav-item.active { background: rgba(232,93,61,0.18); }
-        .sf-nav-label { font-size: 14px; font-weight: 500; color: #7A9BBF; flex: 1; }
-        .sf-nav-item.active .sf-nav-label { color: #F5A882; }
+        .sf-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s; }
+        .sf-nav-item:hover { background: rgba(251,245,234,0.1); }
+        .sf-nav-item.active { background: rgba(224,149,74,0.2); }
+        .sf-nav-label { font-size: 14px; font-weight: 500; color: rgba(251,245,234,0.6); flex: 1; }
+        .sf-nav-item.active .sf-nav-label { color: var(--color-glow-1); }
 
-        .sf-child-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 42px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
-        .sf-child-item:hover { background: rgba(255,255,255,0.05); }
-        .sf-child-item.active { background: rgba(232,93,61,0.12); }
-        .sf-child-label { font-size: 13px; font-weight: 400; color: #4A6A8A; }
-        .sf-child-item.active .sf-child-label { color: #F5A882; font-weight: 500; }
+        .sf-child-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 42px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; }
+        .sf-child-item:hover { background: rgba(251,245,234,0.07); }
+        .sf-child-item.active { background: rgba(224,149,74,0.14); }
+        .sf-child-label { font-size: 13px; font-weight: 400; color: rgba(251,245,234,0.5); }
+        .sf-child-item.active .sf-child-label { color: var(--color-glow-1); font-weight: 500; }
 
         .sf-chevron { transition: transform 0.2s; }
         .sf-chevron.open { transform: rotate(180deg); }
@@ -134,25 +141,25 @@ export default function Sidebar({ children }) {
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         .fade-up { animation: fadeUp 0.4s ease both; }
         .hotel-card { transition: transform 0.2s, box-shadow 0.2s; }
-        .hotel-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,37,68,0.13) !important; }
+        .hotel-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover) !important; }
 
-        /* Focus ring override for dark sidebar */
-        .sf-sidebar :focus-visible { outline-color: #F5A882; }
+        /* Focus ring override for the forest sidebar */
+        .sf-sidebar :focus-visible { outline-color: var(--color-glow-1); }
 
-        .pac-container { font-family: var(--font-sans, "Manrope", system-ui, sans-serif); border-radius:12px; border:1px solid #DDD5CC; box-shadow:0 8px 24px rgba(15,37,68,0.1); margin-top:4px; z-index:9999 !important; }
-        .pac-item { padding:10px 14px; font-size:14px; cursor:pointer; color:#1E3A5F; }
-        .pac-item:hover { background:#F7F3EF; }
+        .pac-container { font-family: var(--font-body); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-ambient); margin-top: 4px; z-index: 9999 !important; background: var(--color-ground-card); }
+        .pac-item { padding: 10px 14px; font-size: 14px; cursor: pointer; color: var(--color-ink-primary); }
+        .pac-item:hover { background: var(--color-ground-sand); }
       `}</style>
 
       <div className="sf-layout">
         {/* Mobile top bar */}
         <div className="sf-topbar">
-          <button onClick={() => setOpen(v => !v)} style={{ background:"none", border:"none", cursor:"pointer", color:"#F7F3EF", display:"flex", alignItems:"center", padding:4 }}>
+          <button onClick={() => setOpen(v => !v)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--color-ground-page)", display:"flex", alignItems:"center", padding:4 }}>
             {open
               ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>}
           </button>
-          <span style={{ fontSize:16, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px" }}>StayFind</span>
+          <Wordmark size={16} />
         </div>
 
         {open && <div className="sf-overlay" onClick={() => setOpen(false)} />}
@@ -160,13 +167,7 @@ export default function Sidebar({ children }) {
         <div className={`sf-sidebar${open ? " open" : ""}`}>
           {/* Logo */}
           <Link href="/" onClick={() => { try { sessionStorage.removeItem("sf_search"); } catch {} }} style={{ display:"flex", alignItems:"center", gap:10, padding:"24px 8px 28px", textDecoration:"none" }}>
-            <div style={{ width:32, height:32, background:"#E85D3D", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            </div>
-            <span style={{ fontSize:16, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px" }}>StayFind</span>
+            <Wordmark size={17} />
           </Link>
 
           {/* Nav */}
@@ -190,7 +191,7 @@ export default function Sidebar({ children }) {
                     }}
                   >
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-                      stroke={isActive ? "#F5A882" : "#4A6A8A"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      stroke={isActive ? "var(--color-glow-1)" : "rgba(251,245,234,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d={item.icon}/>
                     </svg>
                     <span className="sf-nav-label">{item.label}</span>
@@ -198,7 +199,7 @@ export default function Sidebar({ children }) {
                       <svg
                         className={`sf-chevron${isExpanded ? " open" : ""}`}
                         width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="#4A6A8A" strokeWidth="2.5">
+                        stroke="rgba(251,245,234,0.5)" strokeWidth="2.5">
                         <polyline points="6 9 12 15 18 9"/>
                       </svg>
                     )}
@@ -212,7 +213,7 @@ export default function Sidebar({ children }) {
                         return (
                           <Link key={child.href} href={child.href} onClick={() => setOpen(false)}>
                             <div className={`sf-child-item${childActive ? " active" : ""}`}>
-                              <div style={{ width:4, height:4, borderRadius:"50%", background: childActive ? "#F5A882" : "#2D5A8A", flexShrink:0 }} />
+                              <div style={{ width:4, height:4, borderRadius:"50%", background: childActive ? "var(--color-glow-1)" : "rgba(251,245,234,0.3)", flexShrink:0 }} />
                               <span className="sf-child-label">{child.label}</span>
                             </div>
                           </Link>
@@ -226,18 +227,18 @@ export default function Sidebar({ children }) {
           </nav>
 
           {/* User info + sign out */}
-          <div style={{ marginTop:"auto", paddingTop:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ marginTop:"auto", paddingTop:16, borderTop:"1px solid rgba(251,245,234,0.08)" }}>
             {user && (
               <div style={{ padding:"10px 8px" }}>
-                <p style={{ fontSize:12, color:"#4A6A8A", fontWeight:500, marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                <p style={{ fontSize:12, color:"rgba(251,245,234,0.5)", fontWeight:500, marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {profile?.full_name || user.email}
                 </p>
-                <p style={{ fontSize:11, color:"#2D5A8A", marginBottom:10 }}>
+                <p style={{ fontSize:11, color:"rgba(251,245,234,0.35)", marginBottom:10 }}>
                   {(profile?.plan || "spark").replace(/^\w/, c => c.toUpperCase())} Plan
                 </p>
                 <button
                   onClick={async () => { await signOut(); router.push("/login"); }}
-                  style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"8px 12px", cursor:"pointer", color:"#4A6A8A", fontSize:12, fontFamily:"inherit", width:"100%" }}
+                  style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"1px solid rgba(251,245,234,0.12)", borderRadius:"var(--radius-sm)", padding:"8px 12px", cursor:"pointer", color:"rgba(251,245,234,0.6)", fontSize:12, fontFamily:"inherit", width:"100%" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

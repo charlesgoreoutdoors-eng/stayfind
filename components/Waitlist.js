@@ -1,13 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Quicksand, Nunito_Sans } from "next/font/google";
 
-// ── Dapples brand fonts ──────────────────────────────────────────────────
-const quicksand = Quicksand({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-quicksand", display: "swap" });
-const nunito = Nunito_Sans({ subsets: ["latin"], weight: ["300", "400", "600", "700", "800"], variable: "--font-nunito", display: "swap" });
-
-const HEAD = "var(--font-quicksand), 'Quicksand', system-ui, sans-serif";
-const BODY = "var(--font-nunito), 'Nunito Sans', system-ui, sans-serif";
+// Brand type is loaded once in app/layout.js and exposed via globals.css.
+const HEAD = "var(--font-display)";
+const BODY = "var(--font-body)";
 
 // ── Content ──────────────────────────────────────────────────────────────
 const STEPS = [
@@ -85,7 +81,7 @@ export default function Waitlist() {
   };
 
   return (
-    <main className={`${quicksand.variable} ${nunito.variable}`} style={s.page}>
+    <main style={s.page}>
       <style>{css}</style>
 
       {/* ── Nav ── */}

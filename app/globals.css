@@ -1,6 +1,53 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ─── Dapples design tokens ───────────────────────────────────────────────
+   Single source of truth for the brand. Values mirror DESIGN.md's registered
+   "Dapples Brand (Golden-Hour)" palette. Change the brand here, not in pages. */
+
 :root {
+  /* Colors — Ink */
+  --color-ink-primary:  #2B2722;
+  --color-ink-mid:      #6B6258;
+  --color-ink-muted:    #9C9388;
+  --color-ink-faint:    #B6AD9C;
+
+  /* Colors — Grounds */
+  --color-ground-page:     #FBF5EA;
+  --color-ground-card:     #FFFCF4;
+  --color-ground-nav-tint: #FBF0DA;
+  --color-ground-sand:     #F3E7CF;
+
+  /* Colors — Border */
+  --color-border: #DDD0B8;
+
+  /* Colors — Actions */
+  --color-action-forest:       #44503A;
+  --color-action-forest-hover: #363F2E;
+
+  /* Colors — Accents */
+  --color-accent-amber:        #E0954A;
+  --color-accent-amber-deep:   #B5702E;
+  --color-accent-amber-deeper: #8B5E2A;
+  --color-accent-terracotta:   #C96E3C;
+
+  /* Colors — Cool counterpoint */
+  --color-cool-olive:     #C9D1A8;
+  --color-cool-olive-mid: #8B9A6A;
+
+  /* Colors — Glow orbs (decorative blur only, never text/fill) */
+  --color-glow-1: #F4C97A;
+  --color-glow-2: #F0B979;
+  --color-glow-3: #E5A04A;
+  --color-glow-4: #FDEBBE;
+  --color-glow-5: #EBA94E;
+
+  /* Colors — Error */
+  --color-error: #B4432E;
+
+  /* Typography */
+  --font-display: var(--font-quicksand), "Quicksand", system-ui, sans-serif;
+  --font-body:    var(--font-nunito), "Nunito Sans", system-ui, sans-serif;
+
   /* Type scale — fixed rem, ~1.2 ratio */
   --text-xs:   0.6875rem;  /* 11px — captions, tiny meta */
   --text-sm:   0.8125rem;  /* 13px — table cells, secondary UI */
@@ -23,24 +70,54 @@
   --tracking-tight:  -0.02em;
   --tracking-normal:  0em;
   --tracking-wide:    0.06em;  /* uppercase labels */
+
+  /* Spacing */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-2xl: 28px;
+  --space-3xl: 40px;
+
+  /* Radii */
+  --radius-xs:   5px;
+  --radius-sm:   8px;
+  --radius-md:   10px;
+  --radius-lg:   12px;
+  --radius-xl:   14px;
+  --radius-card: 16px;
+  --radius-pill: 24px;
+
+  /* Shadows — warm-tinted */
+  --shadow-micro:   0 1px 4px rgba(140,90,30,0.08);
+  --shadow-low:     0 2px 12px rgba(140,90,30,0.10);
+  --shadow-ambient: 0 8px 24px rgba(140,90,30,0.12);
+  --shadow-overlay: 0 8px 28px rgba(140,90,30,0.14);
+  --shadow-hover:   0 12px 32px rgba(140,90,30,0.15);
+  --shadow-popup:   0 8px 32px rgba(140,90,30,0.18);
+  --shadow-card:    0 18px 40px -36px rgba(120,80,30,0.55);
+  --shadow-lifted:  0 30px 70px -46px rgba(140,90,30,0.5);
 }
 
 body {
-  background: #F7F3EF;
-  font-family: var(--font-sans, "Manrope", system-ui, sans-serif);
+  background: var(--color-ground-page);
+  font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   font-kerning: normal;
-  color: #1E3A5F;
+  color: var(--color-ink-primary);
   overflow-x: hidden;
 }
 
 main { overflow-x: hidden; }
 
+::placeholder { color: var(--color-ink-faint); }
+
 /* Focus rings — WCAG AA compliance */
 :focus-visible {
-  outline: 2px solid #E85D3D;
+  outline: 2px solid var(--color-action-forest);
   outline-offset: 2px;
   border-radius: 4px;
 }
