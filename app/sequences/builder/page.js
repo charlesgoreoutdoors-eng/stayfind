@@ -29,7 +29,7 @@ const RichEditor = forwardRef(function RichEditor({ initialHtml, onChange, place
       suppressContentEditableWarning
       className="rich-editor"
       data-placeholder={placeholder}
-      style={{ minHeight: 180, outline: "none", lineHeight: 1.8, fontSize: 13, fontFamily: "inherit", color: "#1E3A5F", padding: "12px 14px" }}
+      style={{ minHeight: 180, outline: "none", lineHeight: 1.8, fontSize: 13, fontFamily: "inherit", color: "var(--color-ink-primary)", padding: "12px 14px" }}
       onInput={() => onChange && onChange(innerRef.current?.innerHTML || "")}
     />
   );
@@ -118,7 +118,7 @@ function StepCard({ step, number, templates, onChange, onRemove, canRemove, sign
             {signature && (
               <>
                 <div style={s.toolSep} />
-                <button style={{ ...s.toolBtn, fontSize: 12, color: "#E85D3D", whiteSpace: "nowrap" }}
+                <button style={{ ...s.toolBtn, fontSize: 12, color: "var(--color-accent-terracotta)", whiteSpace: "nowrap" }}
                   title="Insert your signature at the end of this message"
                   onMouseDown={e => { e.preventDefault(); insertSignature(); }}>
                   + Signature
@@ -126,7 +126,7 @@ function StepCard({ step, number, templates, onChange, onRemove, canRemove, sign
               </>
             )}
           </div>
-          <div style={{ height: 1, background: "#f1f5f9" }} />
+          <div style={{ height: 1, background: "rgba(43,39,34,0.07)" }} />
           <RichEditor
             ref={editorRef}
             key={`step-${number}-${step.templateId || "custom"}`}
@@ -159,11 +159,11 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
 
         <div style={s.modalBody}>
           {gmailToken
-            ? <div style={{ display:"flex", alignItems:"center", gap:8, background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#166534", fontWeight:500 }}>
-                <div style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e" }} />
+            ? <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--status-success-bg)", border:"1px solid rgba(22,101,52,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"var(--status-success-ink)", fontWeight:500 }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:"var(--status-success-ink)" }} />
                 Gmail connected — ready to send
               </div>
-            : <div style={{ background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#92400e" }}>
+            : <div style={{ background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"var(--color-accent-amber-deeper)" }}>
                 Gmail not connected. Go to the Messages page to connect first.
               </div>
           }
@@ -407,7 +407,7 @@ export default function SequenceBuilderPage() {
           ) : sequences.length === 0 && !isNew ? (
             <div style={s.empty}>
               <span style={{ fontSize:32 }}>✉️</span>
-              <p style={{ fontSize:13, color:"#9FB3C8", textAlign:"center", marginTop:8 }}>No flows yet. Create one to automate your outreach.</p>
+              <p style={{ fontSize:13, color:"var(--color-ink-muted)", textAlign:"center", marginTop:8 }}>No flows yet. Create one to automate your outreach.</p>
             </div>
           ) : (
             sequences.map(seq => (
@@ -421,12 +421,12 @@ export default function SequenceBuilderPage() {
                 </div>
                 <div style={{ display:"flex", gap:6 }} onClick={e => e.stopPropagation()}>
                   <button style={s.launchIconBtn} onClick={() => setLaunchModal(seq)} title="Launch sequence">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="2.5">
                       <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                     </svg>
                   </button>
                   <button style={s.deleteIconBtn} onClick={() => setDeleteConfirm(seq.id)} title="Delete">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
                       <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
                     </svg>
                   </button>
@@ -441,7 +441,7 @@ export default function SequenceBuilderPage() {
           {!activeSeq && !isNew ? (
             <div style={s.empty}>
               <span style={{ fontSize:36 }}>📧</span>
-              <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12 }}>Select a flow to edit or create a new one</p>
+              <p style={{ fontSize:14, color:"var(--color-ink-muted)", marginTop:12 }}>Select a flow to edit or create a new one</p>
             </div>
           ) : (
             <>
@@ -465,9 +465,9 @@ export default function SequenceBuilderPage() {
               )}
 
               {/* Signature section */}
-              <div style={{ background:"#FAF7F4", borderRadius:14, border:"1px solid #F0EBE5", padding:"18px 20px", marginBottom:16 }}>
-                <p style={{ fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 }}>Email Signature</p>
-                <p style={{ fontSize:12, color:"#9FB3C8", marginBottom:10 }}>Write your signature below, save it, then click &ldquo;Insert into Message&rdquo; on any step above.</p>
+              <div style={{ background:"var(--color-ground-sand)", borderRadius:14, border:"1px solid var(--color-ground-sand)", padding:"18px 20px", marginBottom:16 }}>
+                <p style={{ fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 }}>Email Signature</p>
+                <p style={{ fontSize:12, color:"var(--color-ink-muted)", marginBottom:10 }}>Write your signature below, save it, then click &ldquo;Insert into Message&rdquo; on any step above.</p>
                 <div style={s.richEditorBox}>
                   <div
                     ref={sigRef}
@@ -475,12 +475,12 @@ export default function SequenceBuilderPage() {
                     suppressContentEditableWarning
                     className="sig-editor"
                     data-placeholder="e.g. Best regards,&#10;Your name&#10;UGC Creator"
-                    style={{ minHeight:72, outline:"none", lineHeight:1.75, fontSize:13, fontFamily:"inherit", color:"#1E3A5F", padding:"10px 14px" }}
+                    style={{ minHeight:72, outline:"none", lineHeight:1.75, fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", padding:"10px 14px" }}
                   />
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:10 }}>
                   <button
-                    style={{ padding:"8px 16px", background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", opacity: sigSaving ? 0.6 : 1 }}
+                    style={{ padding:"8px 16px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", opacity: sigSaving ? 0.6 : 1 }}
                     onClick={saveSignature} disabled={sigSaving}>
                     {sigSaving ? "Saving..." : "Save Signature"}
                   </button>
@@ -519,11 +519,11 @@ export default function SequenceBuilderPage() {
       {deleteConfirm && (
         <div style={s.overlay}>
           <div style={{ ...s.modal, maxWidth:380 }}>
-            <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", marginBottom:8 }}>Delete this sequence?</h3>
-            <p style={{ fontSize:13, color:"#64748b", marginBottom:20 }}>This cannot be undone.</p>
+            <h3 style={{ fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:8 }}>Delete this sequence?</h3>
+            <p style={{ fontSize:13, color:"var(--color-ink-mid)", marginBottom:20 }}>This cannot be undone.</p>
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
               <button style={s.cancelBtn} onClick={() => setDeleteConfirm(null)}>Cancel</button>
-              <button style={{ ...s.launchBtn, background:"#ef4444" }} onClick={() => deleteSequence(deleteConfirm)}>Delete</button>
+              <button style={{ ...s.launchBtn, background:"var(--color-error)" }} onClick={() => deleteSequence(deleteConfirm)}>Delete</button>
             </div>
           </div>
         </div>
@@ -535,57 +535,57 @@ export default function SequenceBuilderPage() {
 const s = {
   layout: { display:"grid", gridTemplateColumns:"260px 1fr", gap:20, alignItems:"start" },
   listPanel: { display:"flex", flexDirection:"column", gap:8 },
-  newBtn: { width:"100%", padding:"10px 16px", background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", marginBottom:4 },
-  seqItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", borderRadius:12, border:"1.5px solid #DDD5CC", cursor:"pointer", background:"#fff", transition:"all 0.15s" },
-  seqItemActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC" },
-  seqName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
-  seqMeta: { fontSize:11, color:"#9FB3C8" },
-  launchIconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid #F5A882", background:"#FEF0EC", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
-  deleteIconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid #fee2e2", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
-  editor: { background:"#fff", borderRadius:16, border:"1.5px solid #DDD5CC", padding:"24px" },
+  newBtn: { width:"100%", padding:"10px 16px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", marginBottom:4 },
+  seqItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", borderRadius:12, border:"1.5px solid var(--color-border)", cursor:"pointer", background:"var(--color-ground-card)", transition:"all 0.15s" },
+  seqItemActive: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--status-error-bg)" },
+  seqName: { fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:2 },
+  seqMeta: { fontSize:11, color:"var(--color-ink-muted)" },
+  launchIconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--color-accent-amber)", background:"var(--status-error-bg)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
+  deleteIconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--status-error-bg)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
+  editor: { background:"var(--color-ground-card)", borderRadius:16, border:"1.5px solid var(--color-border)", padding:"24px" },
   editorHeader: { marginBottom:24 },
-  nameInput: { width:"100%", border:"none", outline:"none", fontSize:20, fontWeight:700, color:"#0F2544", fontFamily:"inherit", borderBottom:"2px solid #F0EBE5", paddingBottom:8 },
-  richEditorBox: { border:"1.5px solid #DDD5CC", borderRadius:10, overflow:"hidden", background:"#fff" },
-  toolbar: { display:"flex", gap:2, padding:"7px 8px", alignItems:"center", background:"#f8fafc", flexWrap:"wrap" },
-  toolBtn: { display:"flex", alignItems:"center", justifyContent:"center", padding:"5px 10px", border:"none", borderRadius:6, background:"transparent", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:"#1E3A5F", lineHeight:1, minWidth:30 },
-  toolSep: { width:1, height:18, background:"#DDD5CC", margin:"0 3px" },
-  stepCard: { background:"#FAF7F4", borderRadius:14, border:"1px solid #F0EBE5", padding:"20px", marginBottom:16 },
+  nameInput: { width:"100%", border:"none", outline:"none", fontSize:20, fontWeight:700, color:"var(--color-ink-primary)", fontFamily:"inherit", borderBottom:"2px solid var(--color-ground-sand)", paddingBottom:8 },
+  richEditorBox: { border:"1.5px solid var(--color-border)", borderRadius:10, overflow:"hidden", background:"var(--color-ground-card)" },
+  toolbar: { display:"flex", gap:2, padding:"7px 8px", alignItems:"center", background:"var(--color-ground-sand)", flexWrap:"wrap" },
+  toolBtn: { display:"flex", alignItems:"center", justifyContent:"center", padding:"5px 10px", border:"none", borderRadius:6, background:"transparent", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:"var(--color-ink-primary)", lineHeight:1, minWidth:30 },
+  toolSep: { width:1, height:18, background:"var(--color-border)", margin:"0 3px" },
+  stepCard: { background:"var(--color-ground-sand)", borderRadius:14, border:"1px solid var(--color-ground-sand)", padding:"20px", marginBottom:16 },
   stepHeader: { display:"flex", alignItems:"center", gap:12, marginBottom:18, flexWrap:"wrap" },
-  stepBadge: { fontSize:12, fontWeight:700, color:"#E85D3D", background:"#FEF0EC", padding:"4px 12px", borderRadius:20 },
-  stepNote: { fontSize:12, color:"#9FB3C8" },
-  delaySelect: { border:"1.5px solid #DDD5CC", borderRadius:8, padding:"6px 12px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", cursor:"pointer" },
-  removeBtn: { marginLeft:"auto", fontSize:12, color:"#ef4444", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
+  stepBadge: { fontSize:12, fontWeight:700, color:"var(--color-accent-terracotta)", background:"var(--status-error-bg)", padding:"4px 12px", borderRadius:20 },
+  stepNote: { fontSize:12, color:"var(--color-ink-muted)" },
+  delaySelect: { border:"1.5px solid var(--color-border)", borderRadius:8, padding:"6px 12px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", background:"var(--color-ground-card)", cursor:"pointer" },
+  removeBtn: { marginLeft:"auto", fontSize:12, color:"var(--color-error)", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
   field: { marginBottom:14 },
-  label: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
-  hint: { fontSize:12, color:"#9FB3C8", marginBottom:6 },
-  code: { background:"#F0EBE5", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
-  select: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", cursor:"pointer" },
-  input: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none" },
-  textarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
-  charCount: { fontSize:11, color:"#CBD5E1", textAlign:"right", marginTop:3 },
-  addStepBtn: { width:"100%", padding:"12px", border:"2px dashed #DDD5CC", borderRadius:12, fontSize:13, fontWeight:600, color:"#9FB3C8", background:"none", cursor:"pointer", fontFamily:"inherit", marginBottom:20, transition:"all 0.15s" },
+  label: { display:"block", fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
+  hint: { fontSize:12, color:"var(--color-ink-muted)", marginBottom:6 },
+  code: { background:"var(--color-ground-sand)", padding:"1px 6px", borderRadius:4, fontSize:11, fontFamily:"monospace" },
+  select: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", background:"var(--color-ground-card)", cursor:"pointer" },
+  input: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none" },
+  textarea: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"vertical", lineHeight:1.7 },
+  charCount: { fontSize:11, color:"var(--color-border)", textAlign:"right", marginTop:3 },
+  addStepBtn: { width:"100%", padding:"12px", border:"2px dashed var(--color-border)", borderRadius:12, fontSize:13, fontWeight:600, color:"var(--color-ink-muted)", background:"none", cursor:"pointer", fontFamily:"inherit", marginBottom:20, transition:"all 0.15s" },
   saveRow: { display:"flex", gap:12, marginTop:8 },
-  saveBtn: { flex:1, padding:13, background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"opacity 0.2s" },
-  launchBtn: { display:"flex", alignItems:"center", gap:8, padding:"13px 24px", background:"#E85D3D", color:"#fff", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  saveBtn: { flex:1, padding:13, background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"opacity 0.2s" },
+  launchBtn: { display:"flex", alignItems:"center", gap:8, padding:"13px 24px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 24px", gap:8 },
-  spinner: { width:24, height:24, border:"2.5px solid #F0EBE5", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
-  errorBox: { background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:10, padding:"12px 16px", color:"#B83A22", fontSize:13, marginBottom:16 },
-  successBox: { background:"#E8F8F5", border:"1px solid #A8E6E0", borderRadius:10, padding:"12px 16px", color:"#1A6B5A", fontSize:13, marginBottom:16 },
-  overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
-  modal: { background:"#fff", borderRadius:16, width:"100%", maxWidth:500, maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
-  modalHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 24px 16px", borderBottom:"1px solid #F0EBE5" },
-  modalTitle: { fontSize:18, fontWeight:700, color:"#0F2544" },
-  modalClose: { background:"none", border:"none", fontSize:16, cursor:"pointer", color:"#9FB3C8" },
+  spinner: { width:24, height:24, border:"2.5px solid var(--color-ground-sand)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
+  errorBox: { background:"var(--status-error-bg)", border:"1px solid var(--color-accent-amber)", borderRadius:10, padding:"12px 16px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
+  successBox: { background:"var(--status-success-bg)", border:"1px solid rgba(22,101,52,0.3)", borderRadius:10, padding:"12px 16px", color:"var(--status-success-ink)", fontSize:13, marginBottom:16 },
+  overlay: { position:"fixed", inset:0, background:"rgba(43,39,34,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  modal: { background:"var(--color-ground-card)", borderRadius:16, width:"100%", maxWidth:500, maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
+  modalHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 24px 16px", borderBottom:"1px solid var(--color-ground-sand)" },
+  modalTitle: { fontSize:18, fontWeight:700, color:"var(--color-ink-primary)" },
+  modalClose: { background:"none", border:"none", fontSize:16, cursor:"pointer", color:"var(--color-ink-muted)" },
   modalBody: { padding:"20px 24px", overflowY:"auto", flex:1 },
-  modalFooter: { padding:"16px 24px", borderTop:"1px solid #F0EBE5", display:"flex", justifyContent:"flex-end", gap:12 },
+  modalFooter: { padding:"16px 24px", borderTop:"1px solid var(--color-ground-sand)", display:"flex", justifyContent:"flex-end", gap:12 },
   modeRow: { display:"flex", gap:8, marginBottom:20 },
-  modeBtn: { flex:1, padding:"10px", border:"1.5px solid #DDD5CC", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", color:"#4A6A8A", background:"#fff", transition:"all 0.15s" },
-  modeBtnActive: { border:"1.5px solid #E85D3D", background:"#FEF0EC", color:"#E85D3D" },
-  launchInfo: { fontSize:12, color:"#9FB3C8", marginTop:6 },
-  stepsPreview: { background:"#FAF7F4", borderRadius:10, padding:"14px 16px", marginTop:8 },
-  stepsPreviewTitle: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:10 },
+  modeBtn: { flex:1, padding:"10px", border:"1.5px solid var(--color-border)", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", color:"var(--color-ink-mid)", background:"var(--color-ground-card)", transition:"all 0.15s" },
+  modeBtnActive: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--status-error-bg)", color:"var(--color-error)" },
+  launchInfo: { fontSize:12, color:"var(--color-ink-muted)", marginTop:6 },
+  stepsPreview: { background:"var(--color-ground-sand)", borderRadius:10, padding:"14px 16px", marginTop:8 },
+  stepsPreviewTitle: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:10 },
   stepsPreviewItem: { display:"flex", alignItems:"center", gap:10, marginBottom:8 },
-  stepsPreviewDot: { width:8, height:8, borderRadius:"50%", background:"#E85D3D", flexShrink:0 },
-  stepsPreviewText: { fontSize:13, color:"#1E3A5F" },
-  cancelBtn: { padding:"10px 20px", border:"1.5px solid #DDD5CC", borderRadius:9, background:"#fff", fontSize:13, cursor:"pointer", color:"#4A6A8A", fontFamily:"inherit" },
+  stepsPreviewDot: { width:8, height:8, borderRadius:"50%", background:"var(--color-action-forest)", flexShrink:0 },
+  stepsPreviewText: { fontSize:13, color:"var(--color-ink-primary)" },
+  cancelBtn: { padding:"10px 20px", border:"1.5px solid var(--color-border)", borderRadius:9, background:"var(--color-ground-card)", fontSize:13, cursor:"pointer", color:"var(--color-ink-mid)", fontFamily:"inherit" },
 };

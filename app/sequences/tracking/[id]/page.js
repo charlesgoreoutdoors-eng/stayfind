@@ -119,11 +119,11 @@ export default function SequenceDetailPage() {
   const replyRate = total > 0 ? Math.round((replied / total) * 100) : 0;
 
   const statusColor = (status) => {
-    if (status === "active")    return { bg:"#e8f8f5", color:"#1A6B5A" };
-    if (status === "completed") return { bg:"#eef2ff", color:"#4338ca" };
-    if (status === "replied")   return { bg:"#dcfce7", color:"#166534" };
-    if (status === "cancelled") return { bg:"#f1f5f9", color:"#64748b" };
-    return { bg:"#f1f5f9", color:"#64748b" };
+    if (status === "active")    return { bg:"var(--status-success-bg)", color:"var(--status-success-ink)" };
+    if (status === "completed") return { bg:"var(--status-sent-bg)", color:"var(--status-sent-ink)" };
+    if (status === "replied")   return { bg:"var(--status-success-bg)", color:"var(--status-success-ink)" };
+    if (status === "cancelled") return { bg:"rgba(43,39,34,0.07)", color:"var(--color-ink-mid)" };
+    return { bg:"rgba(43,39,34,0.07)", color:"var(--color-ink-mid)" };
   };
 
   const hasFilters = filterStep !== "all" || filterList !== "all";
@@ -131,7 +131,7 @@ export default function SequenceDetailPage() {
   return (
     <div>
       {/* Back link */}
-      <Link href="/sequences/tracking" style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:13, color:"#9FB3C8", textDecoration:"none", marginBottom:20, fontWeight:500 }}>
+      <Link href="/sequences/tracking" style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:13, color:"var(--color-ink-muted)", textDecoration:"none", marginBottom:20, fontWeight:500 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
@@ -140,7 +140,7 @@ export default function SequenceDetailPage() {
 
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 }}>
-        <h2 style={{ fontSize:20, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" }}>
+        <h2 style={{ fontSize:20, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.3px" }}>
           {sequence?.name || "Sequence"}
         </h2>
         <div style={{ display:"flex", gap:8 }}>
@@ -158,11 +158,11 @@ export default function SequenceDetailPage() {
       {/* Stats */}
       <div style={{ ...s.statsRow, gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", marginBottom:24 }}>
         {[
-          { label:"Hotels",     value: total,        color:"#0F2544" },
-          { label:"Active",     value: active,       color:"#E85D3D" },
-          { label:"Replied",    value: replied,      color:"#2A9D8F" },
-          { label:"Completed",  value: completed,    color:"#4338ca" },
-          { label:"Reply Rate", value: `${replyRate}%`, color:"#C13584" },
+          { label:"Hotels",     value: total,        color:"var(--color-ink-primary)" },
+          { label:"Active",     value: active,       color:"var(--color-accent-terracotta)" },
+          { label:"Replied",    value: replied,      color:"var(--status-success-ink)" },
+          { label:"Completed",  value: completed,    color:"var(--status-sent-ink)" },
+          { label:"Reply Rate", value: `${replyRate}%`, color:"var(--brand-instagram)" },
         ].map((stat, i) => (
           <div key={i} style={s.statCard}>
             <p style={{ ...s.statValue, color: stat.color }}>{loading ? "—" : stat.value}</p>
@@ -205,7 +205,7 @@ export default function SequenceDetailPage() {
         )}
 
         {hasFilters && (
-          <span style={{ fontSize:12, color:"#9FB3C8", marginLeft:"auto" }}>
+          <span style={{ fontSize:12, color:"var(--color-ink-muted)", marginLeft:"auto" }}>
             Showing {filteredJobs.length} of {jobs.length}
           </span>
         )}
@@ -217,7 +217,7 @@ export default function SequenceDetailPage() {
       ) : filteredJobs.length === 0 ? (
         <div style={s.empty}>
           <span style={{ fontSize:36 }}>📭</span>
-          <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12 }}>
+          <p style={{ fontSize:14, color:"var(--color-ink-muted)", marginTop:12 }}>
             {hasFilters ? "No jobs match these filters." : "No jobs in this sequence yet."}
           </p>
         </div>
@@ -244,7 +244,7 @@ export default function SequenceDetailPage() {
                   {job.list_name ? (
                     <span style={s.listBadge}>{job.list_name}</span>
                   ) : (
-                    <span style={{ fontSize:12, color:"#C4C4C4" }}>—</span>
+                    <span style={{ fontSize:12, color:"var(--color-border)" }}>—</span>
                   )}
                 </div>
                 <div style={{ flex:1, paddingRight:12 }}>
@@ -270,7 +270,7 @@ export default function SequenceDetailPage() {
                 <div style={{ width:40, display:"flex", alignItems:"center", justifyContent:"center" }}>
                   {job.status === "active" && (
                     <button style={s.cancelBtn} onClick={() => setCancelConfirm(job.id)} title="Cancel">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2.5">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                       </svg>
                     </button>
@@ -285,9 +285,9 @@ export default function SequenceDetailPage() {
       {/* Delete modal */}
       {showDelete && (
         <div style={s.overlay}>
-          <div style={{ background:"#fff", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
-            <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", marginBottom:8 }}>Delete this sequence?</h3>
-            <p style={{ fontSize:13, color:"#64748b", marginBottom:20 }}>
+          <div style={{ background:"var(--color-ground-card)", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
+            <h3 style={{ fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:8 }}>Delete this sequence?</h3>
+            <p style={{ fontSize:13, color:"var(--color-ink-mid)", marginBottom:20 }}>
               This will permanently delete <strong>{sequence?.name}</strong> and all its tracking data. Any active jobs will be cancelled. This cannot be undone.
             </p>
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
@@ -303,11 +303,11 @@ export default function SequenceDetailPage() {
       {/* Cancel confirm modal */}
       {cancelConfirm && (
         <div style={s.overlay}>
-          <div style={{ background:"#fff", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
+          <div style={{ background:"var(--color-ground-card)", borderRadius:16, padding:28, maxWidth:380, width:"100%" }}>
             {cancelConfirm === "all" ? (
               <>
-                <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", marginBottom:8 }}>Cancel all active jobs?</h3>
-                <p style={{ fontSize:13, color:"#64748b", marginBottom:20 }}>No more emails will be sent for this sequence.</p>
+                <h3 style={{ fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:8 }}>Cancel all active jobs?</h3>
+                <p style={{ fontSize:13, color:"var(--color-ink-mid)", marginBottom:20 }}>No more emails will be sent for this sequence.</p>
                 <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
                   <button style={s.keepBtn} onClick={() => setCancelConfirm(null)}>Keep Active</button>
                   <button style={s.confirmCancelBtn} onClick={cancelAll}>Cancel All</button>
@@ -315,8 +315,8 @@ export default function SequenceDetailPage() {
               </>
             ) : (
               <>
-                <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", marginBottom:8 }}>Cancel this job?</h3>
-                <p style={{ fontSize:13, color:"#64748b", marginBottom:20 }}>No more emails will be sent to this hotel.</p>
+                <h3 style={{ fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:8 }}>Cancel this job?</h3>
+                <p style={{ fontSize:13, color:"var(--color-ink-mid)", marginBottom:20 }}>No more emails will be sent to this hotel.</p>
                 <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
                   <button style={s.keepBtn} onClick={() => setCancelConfirm(null)}>Keep Active</button>
                   <button style={s.confirmCancelBtn} onClick={() => cancelJob(cancelConfirm)}>Cancel Job</button>
@@ -332,29 +332,29 @@ export default function SequenceDetailPage() {
 
 const s = {
   statsRow: { display:"grid", gap:14, marginBottom:24 },
-  statCard: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", padding:"16px 18px" },
+  statCard: { background:"var(--color-ground-card)", borderRadius:14, border:"1px solid var(--color-border)", padding:"16px 18px" },
   statValue: { fontSize:28, fontWeight:700, letterSpacing:"-0.5px", marginBottom:4 },
-  statLabel: { fontSize:12, color:"#9FB3C8", fontWeight:500 },
-  cancelAllBtn: { padding:"8px 16px", background:"#fff", border:"1.5px solid #ef4444", borderRadius:9, fontSize:13, fontWeight:600, color:"#ef4444", cursor:"pointer" },
-  deleteBtn: { padding:"8px 16px", background:"#ef4444", border:"none", borderRadius:9, fontSize:13, fontWeight:600, color:"#fff", cursor:"pointer" },
-  filterSelect: { padding:"7px 12px", border:"1.5px solid #DDD5CC", borderRadius:9, fontSize:13, color:"#0F2544", background:"#fff", cursor:"pointer", fontFamily:"inherit", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239FB3C8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center", paddingRight:30 },
-  clearBtn: { padding:"7px 12px", background:"none", border:"1.5px solid #DDD5CC", borderRadius:9, fontSize:12, color:"#9FB3C8", cursor:"pointer", fontFamily:"inherit", fontWeight:500 },
-  tableWrap: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", overflow:"auto" },
-  tableHead: { display:"flex", padding:"10px 20px", background:"#FAF7F4", borderBottom:"1px solid #F0EBE5", minWidth:700 },
-  th: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
-  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid #F8F4F0", alignItems:"center", minWidth:700 },
-  hotelName: { fontSize:13, fontWeight:600, color:"#0F2544", marginBottom:2 },
-  hotelEmail: { fontSize:11, color:"#9FB3C8" },
-  listBadge: { fontSize:11, fontWeight:600, background:"#EEF2FF", color:"#4338ca", padding:"3px 10px", borderRadius:20, display:"inline-block", maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  stepBadge: { fontSize:11, fontWeight:700, background:"#F0EBE5", color:"#4A6A8A", padding:"3px 10px", borderRadius:20 },
+  statLabel: { fontSize:12, color:"var(--color-ink-muted)", fontWeight:500 },
+  cancelAllBtn: { padding:"8px 16px", background:"var(--color-ground-card)", border:"1.5px solid var(--color-error)", borderRadius:9, fontSize:13, fontWeight:600, color:"var(--color-error)", cursor:"pointer" },
+  deleteBtn: { padding:"8px 16px", background:"var(--color-error)", border:"none", borderRadius:9, fontSize:13, fontWeight:600, color:"var(--color-ground-page)", cursor:"pointer" },
+  filterSelect: { padding:"7px 12px", border:"1.5px solid var(--color-border)", borderRadius:9, fontSize:13, color:"var(--color-ink-primary)", background:"var(--color-ground-card)", cursor:"pointer", fontFamily:"inherit", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239FB3C8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center", paddingRight:30 },
+  clearBtn: { padding:"7px 12px", background:"none", border:"1.5px solid var(--color-border)", borderRadius:9, fontSize:12, color:"var(--color-ink-muted)", cursor:"pointer", fontFamily:"inherit", fontWeight:500 },
+  tableWrap: { background:"var(--color-ground-card)", borderRadius:14, border:"1px solid var(--color-border)", overflow:"auto" },
+  tableHead: { display:"flex", padding:"10px 20px", background:"var(--color-ground-sand)", borderBottom:"1px solid var(--color-ground-sand)", minWidth:700 },
+  th: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"0.5px", textTransform:"uppercase" },
+  tableRow: { display:"flex", padding:"14px 20px", borderBottom:"1px solid var(--color-mist)", alignItems:"center", minWidth:700 },
+  hotelName: { fontSize:13, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:2 },
+  hotelEmail: { fontSize:11, color:"var(--color-ink-muted)" },
+  listBadge: { fontSize:11, fontWeight:600, background:"var(--status-sent-bg)", color:"var(--status-sent-ink)", padding:"3px 10px", borderRadius:20, display:"inline-block", maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  stepBadge: { fontSize:11, fontWeight:700, background:"var(--color-ground-sand)", color:"var(--color-ink-mid)", padding:"3px 10px", borderRadius:20 },
   statusBadge: { fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20 },
-  nextSend: { fontSize:12, color:"#1E3A5F", fontWeight:500 },
-  repliedAt: { fontSize:12, color:"#2A9D8F", fontWeight:600 },
-  startedAt: { fontSize:11, color:"#9FB3C8" },
+  nextSend: { fontSize:12, color:"var(--color-ink-primary)", fontWeight:500 },
+  repliedAt: { fontSize:12, color:"var(--status-success-ink)", fontWeight:600 },
+  startedAt: { fontSize:11, color:"var(--color-ink-muted)" },
   cancelBtn: { background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", justifyContent:"center" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 24px", gap:8 },
-  spinner: { width:24, height:24, border:"2.5px solid #F0EBE5", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
-  overlay: { position:"fixed", inset:0, background:"rgba(15,37,68,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
-  keepBtn: { padding:"10px 20px", border:"1.5px solid #DDD5CC", borderRadius:9, background:"#fff", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:"#4A6A8A" },
-  confirmCancelBtn: { padding:"10px 20px", background:"#ef4444", color:"#fff", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  spinner: { width:24, height:24, border:"2.5px solid var(--color-ground-sand)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
+  overlay: { position:"fixed", inset:0, background:"rgba(43,39,34,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  keepBtn: { padding:"10px 20px", border:"1.5px solid var(--color-border)", borderRadius:9, background:"var(--color-ground-card)", fontSize:13, cursor:"pointer", fontFamily:"inherit", color:"var(--color-ink-mid)" },
+  confirmCancelBtn: { padding:"10px 20px", background:"var(--color-error)", color:"var(--color-ground-page)", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
 };

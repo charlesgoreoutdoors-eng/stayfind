@@ -153,7 +153,7 @@ main { overflow-x: hidden; }
 }
 .rich-editor:empty::before, .sig-editor:empty::before {
   content: attr(data-placeholder);
-  color: #9FB3C8;
+  color: var(--color-ink-faint);
   pointer-events: none;
 }
 .rich-editor ul, .rich-editor ol, .sig-editor ul, .sig-editor ol {

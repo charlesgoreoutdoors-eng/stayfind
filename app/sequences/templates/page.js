@@ -29,7 +29,7 @@ const RichEditor = forwardRef(function RichEditor({ initialHtml, onChange, place
         lineHeight: 1.8,
         fontSize: 14,
         fontFamily: "inherit",
-        color: "#0F2544",
+        color: "var(--color-ink-primary)",
         padding: "14px 16px",
       }}
     />
@@ -67,7 +67,7 @@ function Toolbar({ onCmd, extraButtons }) {
         </svg>
       </button>
       <div style={s.toolSep} />
-      <button style={{ ...s.toolBtn, fontSize: 11, color: "#9FB3C8" }} title="Clear formatting" onMouseDown={e => { e.preventDefault(); onCmd("removeFormat"); }}>
+      <button style={{ ...s.toolBtn, fontSize: 11, color: "var(--color-ink-muted)" }} title="Clear formatting" onMouseDown={e => { e.preventDefault(); onCmd("removeFormat"); }}>
         Clear
       </button>
       {extraButtons}
@@ -237,7 +237,7 @@ export default function TemplatesPage() {
                     <p style={s.templatePreview}>{stripHtml(t.body).substring(0, 60)}...</p>
                   </div>
                   <button style={s.deleteBtn} onClick={e => { e.stopPropagation(); setDeleteConfirm(t.id); }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
                       <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M9 6V4h6v2" />
                     </svg>
                   </button>
@@ -335,28 +335,28 @@ export default function TemplatesPage() {
       {showTypePicker && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#0F2544", marginBottom: 6 }}>What type of template?</h3>
-            <p style={{ fontSize: 13, color: "#9FB3C8", marginBottom: 24 }}>Choose the type before writing your message</p>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 6 }}>What type of template?</h3>
+            <p style={{ fontSize: 13, color: "var(--color-ink-muted)", marginBottom: 24 }}>Choose the type before writing your message</p>
             <div style={{ display: "flex", gap: 12, flexDirection: "column" }}>
               <button style={s.typePickerBtn} onClick={() => startNewTemplate("email")}>
                 <div style={s.typePickerIcon}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9" /></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9" /></svg>
                 </div>
                 <div style={{ flex: 1, textAlign: "left" }}>
-                  <p style={{ fontWeight: 700, color: "#0F2544", fontSize: 15, marginBottom: 2 }}>Email Template</p>
-                  <p style={{ fontSize: 12, color: "#9FB3C8" }}>Has subject line — used for email outreach</p>
+                  <p style={{ fontWeight: 700, color: "var(--color-ink-primary)", fontSize: 15, marginBottom: 2 }}>Email Template</p>
+                  <p style={{ fontSize: 12, color: "var(--color-ink-muted)" }}>Has subject line — used for email outreach</p>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-border)" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
               </button>
               <button style={s.typePickerBtn} onClick={() => startNewTemplate("instagram")}>
-                <div style={{ ...s.typePickerIcon, background: "#FDF0F8" }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C13584" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="#C13584" /></svg>
+                <div style={{ ...s.typePickerIcon, background: "rgba(193,53,132,0.08)" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand-instagram)" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="var(--brand-instagram)" /></svg>
                 </div>
                 <div style={{ flex: 1, textAlign: "left" }}>
-                  <p style={{ fontWeight: 700, color: "#0F2544", fontSize: 15, marginBottom: 2 }}>Instagram DM Template</p>
-                  <p style={{ fontSize: 12, color: "#9FB3C8" }}>No subject — used for Instagram direct messages</p>
+                  <p style={{ fontWeight: 700, color: "var(--color-ink-primary)", fontSize: 15, marginBottom: 2 }}>Instagram DM Template</p>
+                  <p style={{ fontSize: 12, color: "var(--color-ink-muted)" }}>No subject — used for Instagram direct messages</p>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-border)" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
               </button>
             </div>
             <button style={{ ...s.cancelBtn, marginTop: 16, width: "100%" }} onClick={() => setShowTypePicker(false)}>Cancel</button>
@@ -368,7 +368,7 @@ export default function TemplatesPage() {
         <div style={s.overlay}>
           <div style={s.confirmModal}>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>Delete this template?</h3>
-            <p style={{ fontSize: 14, color: "#4A6A8A", marginBottom: 20 }}>This cannot be undone.</p>
+            <p style={{ fontSize: 14, color: "var(--color-ink-mid)", marginBottom: 20 }}>This cannot be undone.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button style={s.cancelBtn} onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button style={s.deleteConfirmBtn} onClick={() => deleteTemplate(deleteConfirm)}>Delete</button>
@@ -388,52 +388,52 @@ function stripHtml(html) {
 const s = {
   root: { padding: "32px 24px 80px", maxWidth: 1100, margin: "0 auto" },
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 },
-  title: { fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", fontSize: 28, fontWeight: 700, color: "#0F2544", marginBottom: 4 },
-  subtitle: { fontSize: 14, color: "#9FB3C8" },
-  newBtn: { background: "#0F2544", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  title: { fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 4 },
+  subtitle: { fontSize: 14, color: "var(--color-ink-muted)" },
+  newBtn: { background: "var(--color-ink-primary)", color:"var(--color-ground-page)", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   body: { display: "grid", gridTemplateColumns: "280px 1fr", gap: 20, alignItems: "start" },
   listPanel: { display: "flex", flexDirection: "column", gap: 8 },
-  templateItem: { padding: "14px", borderRadius: 12, border: "1.5px solid #e2e8f0", cursor: "pointer", background: "#fff", transition: "all 0.15s", display: "flex", alignItems: "flex-start", gap: 10 },
-  templateItemActive: { border: "1.5px solid #E85D3D", background: "#FEF9F7" },
-  templateName: { fontSize: 14, fontWeight: 600, color: "#0F2544", marginBottom: 2 },
-  templateSubject: { fontSize: 12, color: "#E85D3D", marginBottom: 3 },
-  templatePreview: { fontSize: 11, color: "#9FB3C8", lineHeight: 1.5 },
+  templateItem: { padding: "14px", borderRadius: 12, border: "1.5px solid var(--color-border)", cursor: "pointer", background:"var(--color-ground-card)", transition: "all 0.15s", display: "flex", alignItems: "flex-start", gap: 10 },
+  templateItemActive: { border:"1.5px solid var(--color-accent-terracotta)", background: "var(--color-ground-card)" },
+  templateName: { fontSize: 14, fontWeight: 600, color: "var(--color-ink-primary)", marginBottom: 2 },
+  templateSubject: { fontSize: 12, color: "var(--color-accent-terracotta)", marginBottom: 3 },
+  templatePreview: { fontSize: 11, color: "var(--color-ink-muted)", lineHeight: 1.5 },
   deleteBtn: { background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 },
-  editor: { background: "#fff", borderRadius: 16, border: "1.5px solid #e2e8f0", padding: "24px" },
+  editor: { background:"var(--color-ground-card)", borderRadius: 16, border: "1.5px solid var(--color-border)", padding: "24px" },
   editorHeader: { marginBottom: 20 },
-  editorTitle: { fontFamily: "Plus Jakarta Sans, system-ui, sans-serif", fontSize: 20, fontWeight: 700, color: "#0F2544" },
+  editorTitle: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--color-ink-primary)" },
   field: { marginBottom: 20 },
-  label: { display: "block", fontSize: 11, fontWeight: 700, color: "#9FB3C8", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 6 },
-  hint: { fontSize: 12, color: "#9FB3C8", marginBottom: 8 },
-  code: { background: "#F0EBE5", padding: "1px 6px", borderRadius: 4, fontSize: 11, fontFamily: "monospace" },
-  input: { width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "11px 14px", fontSize: 14, fontFamily: "inherit", color: "#0F2544", outline: "none" },
+  label: { display: "block", fontSize: 11, fontWeight: 700, color: "var(--color-ink-muted)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 6 },
+  hint: { fontSize: 12, color: "var(--color-ink-muted)", marginBottom: 8 },
+  code: { background: "var(--color-ground-sand)", padding: "1px 6px", borderRadius: 4, fontSize: 11, fontFamily: "monospace" },
+  input: { width: "100%", border: "1.5px solid var(--color-border)", borderRadius: 10, padding: "11px 14px", fontSize: 14, fontFamily: "inherit", color: "var(--color-ink-primary)", outline: "none" },
   // Toolbar + editor in one box
-  richEditorBox: { border: "1.5px solid #e2e8f0", borderRadius: 12, overflow: "hidden", background: "#fff" },
-  richEditorDivider: { height: 1, background: "#f1f5f9" },
-  toolbar: { display: "flex", gap: 2, padding: "8px 10px", alignItems: "center", background: "#f8fafc", flexWrap: "wrap" },
-  toolBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "5px 10px", border: "none", borderRadius: 6, background: "transparent", fontSize: 13, cursor: "pointer", fontFamily: "inherit", color: "#1E3A5F", lineHeight: 1, minWidth: 32 },
-  toolSep: { width: 1, height: 18, background: "#e2e8f0", margin: "0 4px" },
-  charCount: { fontSize: 11, color: "#cbd5e1", marginTop: 6, textAlign: "right" },
+  richEditorBox: { border: "1.5px solid var(--color-border)", borderRadius: 12, overflow: "hidden", background:"var(--color-ground-card)" },
+  richEditorDivider: { height: 1, background: "rgba(43,39,34,0.07)" },
+  toolbar: { display: "flex", gap: 2, padding: "8px 10px", alignItems: "center", background: "var(--color-ground-sand)", flexWrap: "wrap" },
+  toolBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "5px 10px", border: "none", borderRadius: 6, background: "transparent", fontSize: 13, cursor: "pointer", fontFamily: "inherit", color: "var(--color-ink-primary)", lineHeight: 1, minWidth: 32 },
+  toolSep: { width: 1, height: 18, background: "var(--color-border)", margin: "0 4px" },
+  charCount: { fontSize: 11, color: "var(--color-border)", marginTop: 6, textAlign: "right" },
   // Signature
-  sigSection: { marginTop: 4, marginBottom: 20, background: "#f8fafc", borderRadius: 12, border: "1.5px solid #e2e8f0", padding: "16px" },
-  sigBox: { border: "1.5px solid #e2e8f0", borderRadius: 8, background: "#fff", padding: "10px 14px", marginBottom: 10 },
-  sigEditorStyle: { minHeight: 72, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "inherit", color: "#0F2544" },
+  sigSection: { marginTop: 4, marginBottom: 20, background: "var(--color-ground-sand)", borderRadius: 12, border: "1.5px solid var(--color-border)", padding: "16px" },
+  sigBox: { border: "1.5px solid var(--color-border)", borderRadius: 8, background:"var(--color-ground-card)", padding: "10px 14px", marginBottom: 10 },
+  sigEditorStyle: { minHeight: 72, outline: "none", lineHeight: 1.75, fontSize: 13, fontFamily: "inherit", color: "var(--color-ink-primary)" },
   sigActions: { display: "flex", gap: 8, alignItems: "center" },
-  sigSaveBtn: { padding: "8px 16px", background: "#0F2544", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
-  sigInsertBtn: { padding: "8px 16px", background: "#E85D3D", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  sigSaveBtn: { padding: "8px 16px", background: "var(--color-ink-primary)", color:"var(--color-ground-page)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  sigInsertBtn: { padding: "8px 16px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   saveRow: { marginTop: 8 },
-  saveBtn: { width: "100%", background: "#E85D3D", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.2s" },
-  emptyState: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", color: "#9FB3C8", fontSize: 14, textAlign: "center" },
-  filterTab: { padding: "5px 12px", border: "1px solid #DDD5CC", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", color: "#9FB3C8", background: "#fff", fontFamily: "inherit", transition: "all 0.15s" },
-  filterTabActive: { background: "#0F2544", color: "#F7F3EF", border: "1px solid #0F2544" },
-  typePickerBtn: { display: "flex", alignItems: "center", gap: 14, padding: "16px", border: "1.5px solid #DDD5CC", borderRadius: 12, background: "#fff", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", width: "100%" },
-  typePickerIcon: { width: 48, height: 48, borderRadius: 12, background: "#FEF0EC", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  typePill: { fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: "#FEF0EC", color: "#E85D3D" },
-  typePillIG: { background: "#FDF0F8", color: "#C13584" },
-  empty: { color: "#9FB3C8", fontSize: 14, padding: "24px", textAlign: "center" },
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" },
-  modal: { background: "#fff", borderRadius: 16, padding: "28px", maxWidth: 420, width: "90%" },
-  confirmModal: { background: "#fff", borderRadius: 16, padding: "28px", maxWidth: 380, width: "90%" },
-  cancelBtn: { background: "#fff", color: "#4A6A8A", border: "1.5px solid #e2e8f0", borderRadius: 9, padding: "10px 20px", fontSize: 14, cursor: "pointer", fontFamily: "inherit" },
-  deleteConfirmBtn: { background: "#ef4444", color: "#fff", border: "none", borderRadius: 9, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  saveBtn: { width: "100%", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: 10, padding: "13px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.2s" },
+  emptyState: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", color: "var(--color-ink-muted)", fontSize: 14, textAlign: "center" },
+  filterTab: { padding: "5px 12px", border: "1px solid var(--color-border)", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", color: "var(--color-ink-muted)", background:"var(--color-ground-card)", fontFamily: "inherit", transition: "all 0.15s" },
+  filterTabActive: { background: "var(--color-ink-primary)", color: "var(--color-ground-page)", border: "1px solid var(--color-ink-primary)" },
+  typePickerBtn: { display: "flex", alignItems: "center", gap: 14, padding: "16px", border: "1.5px solid var(--color-border)", borderRadius: 12, background:"var(--color-ground-card)", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", width: "100%" },
+  typePickerIcon: { width: 48, height: 48, borderRadius: 12, background: "var(--status-error-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  typePill: { fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: "var(--status-error-bg)", color:"var(--color-error)" },
+  typePillIG: { background: "rgba(193,53,132,0.08)", color: "var(--brand-instagram)" },
+  empty: { color: "var(--color-ink-muted)", fontSize: 14, padding: "24px", textAlign: "center" },
+  overlay: { position: "fixed", inset: 0, background: "rgba(43,39,34,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" },
+  modal: { background:"var(--color-ground-card)", borderRadius: 16, padding: "28px", maxWidth: 420, width: "90%" },
+  confirmModal: { background:"var(--color-ground-card)", borderRadius: 16, padding: "28px", maxWidth: 380, width: "90%" },
+  cancelBtn: { background:"var(--color-ground-card)", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: 9, padding: "10px 20px", fontSize: 14, cursor: "pointer", fontFamily: "inherit" },
+  deleteConfirmBtn: { background: "var(--color-error)", color:"var(--color-ground-page)", border: "none", borderRadius: 9, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
 };
