@@ -40,6 +40,7 @@ colors:
   dapple-glow-ember: "#EBA94E"
   dapple-sand-dot: "#ECD9B8"
   dapple-url-grey: "#C8C2B2"
+  dapple-error: "#B4432E"
 typography:
   display:
     fontFamily: "Manrope, system-ui, sans-serif"
@@ -203,6 +204,7 @@ The go-forward brand for public-facing and new surfaces (`dapples.io`, the waitl
 - **Dapple Ink Muted** (`#6B6258`) / **Dapple Ink Faint** (`#9C9388`): Subtext and tertiary labels.
 - **Dapple Cream** (`#FBF5EA`): Page background. **Dapple Card** (`#FFFCF4`): raised cards. **Dapple Nav Tint** (`#FBF0DA`) / **Dapple Sand** (`#F3E7CF`): nav and section bands.
 - **Dapple Border** (`#DDD0B8`): input and card strokes. **Dapple Placeholder** (`#B6AD9C`): placeholder text.
+- **Dapple Error** (`#B4432E`): a warm brick red for validation / error text on Dapples surfaces — the only red in the golden-hour system, used sparingly.
 
 **Actions & accents**
 - **Dapple Forest** (`#44503A`) → **Dapple Forest Deep** (`#363F2E`) on hover: primary buttons, browser-chrome bars.

@@ -55,13 +55,33 @@ const FOOTER_DOTS = [
 
 export default function Waitlist() {
   const [email, setEmail] = useState("");
-  const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-  const submit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
     if (!email.trim()) return;
-    // TODO: persist to the real waitlist backend when it's available.
-    setDone(true);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess(true);
+        setEmail("");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -95,23 +115,30 @@ export default function Waitlist() {
               <p style={s.h1sub}>A quick and easy way to search, contact and track your outreach</p>
             </div>
 
-            {done ? (
+            {success ? (
               <div style={s.doneCard}>
-                <div style={{ fontFamily: HEAD, fontSize: 20, fontWeight: 700, color: "#2B2722", marginBottom: 5 }}>You&apos;re on the list.</div>
+                <div style={{ fontFamily: HEAD, fontSize: 20, fontWeight: 700, color: "#2B2722", marginBottom: 5 }}>You&apos;re on the list! 🎉</div>
                 <div style={{ fontSize: 14.5, lineHeight: 1.55, color: "#6B6258" }}>
-                  We&apos;ll reach out as founding spots open — lifetime Pro access is yours, and we&apos;d love your voice in shaping it.
+                  We&apos;ll be in touch soon.
                 </div>
               </div>
             ) : (
-              <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 2 }}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 2 }}>
                 <div style={s.formRow}>
                   <input
                     className="dpl-in" type="email" required placeholder="you@studio.com"
-                    value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email address"
-                    style={s.input}
+                    value={email} onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSubmit(e)}
+                    aria-label="Email address" style={s.input}
                   />
-                  <button type="submit" className="dpl-primary" style={s.primaryBtn}>Join waitlist</button>
+                  <button
+                    type="submit" className="dpl-primary" disabled={loading}
+                    style={{ ...s.primaryBtn, ...(loading ? { opacity: 0.7, cursor: "default" } : {}) }}
+                  >
+                    {loading ? "Joining..." : "Join waitlist"}
+                  </button>
                 </div>
+                {error && <p style={s.error}>{error}</p>}
                 <p style={s.founding}>
                   Founding creators get <b style={{ color: "#2B2722" }}>lifetime Pro access pricing</b> and a direct hand in shaping the product.
                 </p>
@@ -214,6 +241,7 @@ const s = {
   input: { flex: 1, minWidth: 200, background: "#FFFCF4", border: "1.5px solid #DDD0B8", borderRadius: 14, padding: "15px 17px", fontSize: 15, color: "#2B2722", fontFamily: BODY, outline: "none" },
   primaryBtn: { background: "#44503A", color: "#FBF5EA", border: "none", borderRadius: 14, padding: "15px 24px", fontSize: 15, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontFamily: HEAD },
   founding: { fontSize: 15, lineHeight: 1.5, color: "#6B6258", fontWeight: 700 },
+  error: { fontSize: 13, color: "#B4432E", fontWeight: 600, margin: 0 },
   doneCard: { background: "#FFFCF4", border: "1px solid rgba(43,39,34,0.08)", borderRadius: 18, padding: "22px 24px", boxShadow: "0 18px 40px -34px rgba(120,80,30,0.55)" },
 
   browser: { borderRadius: 20, overflow: "hidden", boxShadow: "0 26px 56px -34px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)" },

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-15T07:03:45Z",
+  "generatedAt": "2026-07-16T01:42:51Z",
   "title": "Design System: StayFind",
   "extensions": {
     "colorMeta": {
@@ -452,6 +452,21 @@
           "#d4d0c4",
           "#eae7e1",
           "#f7f6f3"
+        ]
+      },
+      "dapple-error": {
+        "role": "secondary",
+        "displayName": "Dapple Error",
+        "canonical": "#B4432E",
+        "tonalRamp": [
+          "#491b13",
+          "#7a2d1f",
+          "#ab402c",
+          "#d05e48",
+          "#de8c7d",
+          "#eab7ae",
+          "#f5dbd6",
+          "#fbf1ef"
         ]
       }
     },
