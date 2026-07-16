@@ -4,6 +4,16 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useIsMobile } from "../../lib/useIsMobile";
 
+// Seeded once for a brand-new user so the page demonstrates a filled-out
+// portfolio instead of an empty state. These are real, deletable rows — they
+// carry no uploaded file (file_url stays null), so their View action is
+// disabled until the user replaces them with a real upload.
+const SAMPLE_PORTFOLIOS = [
+  { name: "Travel Photography 2025",   file_name: "travel-photography-2025.pdf",  file_size: 4_200_000, file_url: null },
+  { name: "Boutique Stays Media Kit",  file_name: "boutique-stays-media-kit.pdf", file_size: 2_800_000, file_url: null },
+  { name: "Instagram Rate Card",       file_name: "instagram-rate-card.pdf",      file_size: 1_100_000, file_url: null },
+];
+
 export default function PortfolioPage() {
   const [portfolios, setPortfolios]     = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -29,9 +39,27 @@ export default function PortfolioPage() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-    if (error) setError("Could not load portfolios.");
-    else setPortfolios(data || []);
+    if (error) { setError("Could not load portfolios."); setLoading(false); return; }
+
+    // A brand-new user sees three sample rows so the page shows what a
+    // filled-out portfolio looks like. They're real rows they can delete or
+    // replace — seeded once, only when the portfolio is completely empty.
+    if ((data || []).length === 0) {
+      const seeded = await seedSamples();
+      setPortfolios(seeded);
+    } else {
+      setPortfolios(data);
+    }
     setLoading(false);
+  };
+
+  const seedSamples = async () => {
+    const rows = SAMPLE_PORTFOLIOS.map(sample => ({ ...sample, user_id: user.id }));
+    const { data, error } = await supabase.from("portfolios").insert(rows).select();
+    // If seeding fails (e.g. offline), fall back to the real empty state
+    // rather than showing cards that aren't actually saved.
+    if (error) return [];
+    return data || [];
   };
 
   const handleFileSelect = (file) => {
@@ -103,9 +131,11 @@ export default function PortfolioPage() {
 
   const deletePortfolio = async (portfolio) => {
     try {
-      // Extract filename from URL
-      const fileName = portfolio.file_url.split("/").pop();
-      await supabase.storage.from("portfolios").remove([fileName]);
+      // Sample rows have no uploaded file — only remove storage for real ones.
+      if (portfolio.file_url) {
+        const fileName = portfolio.file_url.split("/").pop();
+        await supabase.storage.from("portfolios").remove([fileName]);
+      }
       await supabase.from("portfolios").delete().eq("id", portfolio.id);
       setPortfolios(prev => prev.filter(p => p.id !== portfolio.id));
       setDeleteConfirm(null);
@@ -246,21 +276,38 @@ export default function PortfolioPage() {
                     </svg>
                   </div>
                   <div style={s.portfolioInfo}>
-                    <p style={s.portfolioName}>{portfolio.name}</p>
+                    <p style={s.portfolioName}>
+                      {portfolio.name}
+                      {!portfolio.file_url && <span style={s.sampleTag}>Sample</span>}
+                    </p>
                     <p style={s.portfolioMeta}>
                       {portfolio.file_name}
                       {portfolio.file_size && <span style={s.portfolioSize}> - {formatSize(portfolio.file_size)}</span>}
                     </p>
-                    <p style={s.portfolioDate}>{new Date(portfolio.created_at).toLocaleDateString()}</p>
+                    <p style={s.portfolioDate}>
+                      {portfolio.file_url
+                        ? new Date(portfolio.created_at).toLocaleDateString()
+                        : "Example — upload your own to replace it"}
+                    </p>
                   </div>
                   <div style={s.portfolioActions}>
-                    <a href={portfolio.file_url} target="_blank" rel="noreferrer" style={s.viewBtn} title="View PDF">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      View
-                    </a>
+                    {portfolio.file_url ? (
+                      <a href={portfolio.file_url} target="_blank" rel="noreferrer" style={s.viewBtn} title="View PDF">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View
+                      </a>
+                    ) : (
+                      <span style={{ ...s.viewBtn, ...s.viewBtnDisabled }} title="Sample — no file uploaded yet">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View
+                      </span>
+                    )}
                     <button style={s.deleteBtn} onClick={() => setDeleteConfirm(portfolio)} title="Delete">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
                         <polyline points="3 6 5 6 21 6"/>
@@ -333,7 +380,9 @@ const s = {
   portfolioSize: { color:"var(--color-border)" },
   portfolioDate: { fontSize:11, color:"var(--color-border)" },
   portfolioActions: { display:"flex", alignItems:"center", gap:8, flexShrink:0 },
-  viewBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 12px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", textDecoration:"none" },
+  viewBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 12px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", textDecoration:"none" },
+  viewBtnDisabled: { background:"var(--color-ground-sand)", color:"var(--color-ink-muted)", cursor:"default" },
+  sampleTag: { marginLeft:8, fontSize:10, fontWeight:700, letterSpacing:"0.04em", textTransform:"uppercase", color:"var(--color-accent-amber-deep)", background:"var(--color-amber-tint)", padding:"2px 7px", borderRadius:"var(--radius-pill)", verticalAlign:"middle" },
   deleteBtn: { width:32, height:32, background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:8, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
   overlay: { position:"fixed", inset:0, background:"rgba(43,39,34,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
   modal: { background:"var(--color-ground-card)", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
