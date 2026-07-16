@@ -43,7 +43,7 @@ function Stars({ rating }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:3 }}>
       {[1,2,3,4,5].map(i => (
-        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(rating) ? "#E85D3D" : "#DDD5CC"}>
+        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(rating) ? "var(--color-accent-amber)" : "var(--color-border)"}>
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
       ))}
@@ -54,10 +54,10 @@ function Stars({ rating }) {
 function SkeletonCard() {
   return (
     <div style={s.card}>
-      <div style={{ height:200, background:"linear-gradient(90deg,#EDE8E3 25%,#E2DBD5 50%,#EDE8E3 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite", borderRadius:"14px 14px 0 0" }} />
+      <div style={{ height:200, background:"linear-gradient(90deg,var(--color-ground-sand) 25%,var(--color-border) 50%,var(--color-ground-sand) 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite", borderRadius:"14px 14px 0 0" }} />
       <div style={{ padding:"16px 18px" }}>
         {[75,50,90,55].map((w,i) => (
-          <div key={i} style={{ height:i===0?16:12, width:`${w}%`, borderRadius:6, marginBottom:10, background:"linear-gradient(90deg,#EDE8E3 25%,#E2DBD5 50%,#EDE8E3 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }}/>
+          <div key={i} style={{ height:i===0?16:12, width:`${w}%`, borderRadius:6, marginBottom:10, background:"linear-gradient(90deg,var(--color-ground-sand) 25%,var(--color-border) 50%,var(--color-ground-sand) 75%)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }}/>
         ))}
       </div>
     </div>
@@ -120,17 +120,17 @@ function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
 }
 
 const dd = {
-  wrap: { position:"absolute", bottom:"calc(100% + 6px)", left:0, right:0, background:"#fff", borderRadius:12, border:"1px solid #DDD5CC", boxShadow:"0 8px 28px rgba(15,37,68,0.14)", padding:"12px", zIndex:200 },
+  wrap: { position:"absolute", bottom:"calc(100% + 6px)", left:0, right:0, background:"var(--color-ground-card)", borderRadius:"var(--radius-lg)", border:"1px solid var(--color-border)", boxShadow:"var(--shadow-overlay)", padding:"12px", zIndex:200 },
   header: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 },
-  title: { fontSize:12, fontWeight:600, color:"#1E3A5F" },
-  close: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", display:"flex", alignItems:"center", padding:2 },
-  error: { fontSize:12, color:"#B83A22", background:"#FEF0EC", borderRadius:6, padding:"6px 8px", marginBottom:8 },
-  empty: { fontSize:12, color:"#9FB3C8", padding:"4px 0 8px" },
-  item: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"none", background:"none", cursor:"pointer", fontSize:13, color:"#1E3A5F", fontFamily:"inherit", marginBottom:2 },
-  newBtn: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"1.5px dashed #F5A882", background:"none", cursor:"pointer", fontSize:12, color:"#E85D3D", fontFamily:"inherit", marginTop:6, fontWeight:600 },
+  title: { fontSize:12, fontWeight:600, color:"var(--color-ink-primary)" },
+  close: { background:"none", border:"none", cursor:"pointer", color:"var(--color-ink-muted)", display:"flex", alignItems:"center", padding:2 },
+  error: { fontSize:12, color:"var(--color-error)", background:"var(--status-error-bg)", borderRadius:6, padding:"6px 8px", marginBottom:8 },
+  empty: { fontSize:12, color:"var(--color-ink-muted)", padding:"4px 0 8px" },
+  item: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"none", background:"none", cursor:"pointer", fontSize:13, color:"var(--color-ink-primary)", fontFamily:"inherit", marginBottom:2 },
+  newBtn: { display:"block", width:"100%", textAlign:"left", padding:"8px 10px", borderRadius:8, border:"1.5px dashed var(--color-accent-amber)", background:"none", cursor:"pointer", fontSize:12, color:"var(--color-accent-amber-deep)", fontFamily:"inherit", marginTop:6, fontWeight:600 },
   newForm: { display:"flex", gap:6, marginTop:8 },
-  newInput: { flex:1, border:"1.5px solid #DDD5CC", borderRadius:7, padding:"7px 10px", fontSize:12, fontFamily:"inherit", outline:"none", color:"#1E3A5F" },
-  createBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:7, padding:"7px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
+  newInput: { flex:1, border:"1.5px solid var(--color-border)", borderRadius:7, padding:"7px 10px", fontSize:12, fontFamily:"inherit", outline:"none", color:"var(--color-ink-primary)" },
+  createBtn: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:7, padding:"7px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
 };
 
 function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, onToggleDropdown, addSuccess }) {
@@ -244,8 +244,8 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
       bounds.extend({ lat: hotel.lat, lng: hotel.lng });
       const marker = new window.google.maps.Marker({
         position: { lat: hotel.lat, lng: hotel.lng }, map,
-        label: { text: String(i + 1), color: "#fff", fontSize: "12px", fontWeight: "700" },
-        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 18, fillColor: "#E85D3D", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2.5 },
+        label: { text: String(i + 1), color: "#FBF5EA", fontSize: "12px", fontWeight: "700" },
+        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 18, fillColor: "#C96E3C", fillOpacity: 1, strokeColor: "#FFFCF4", strokeWeight: 2.5 },
       });
       marker.addListener("click", () => {
         setSelectedHotel(hotel); setImgErr(false); setMapDropdown(false);
@@ -268,13 +268,15 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
     const map = new window.google.maps.Map(mapRef.current, {
       center: { lat: validHotels[0].lat, lng: validHotels[0].lng },
       zoom: 13,
+      // Google Maps needs literal hex here — CSS vars don't resolve in the
+      // Maps styler, so these mirror the Dapples tokens by value.
       styles: [
-        { featureType:"all", elementType:"geometry", stylers:[{ color:"#F7F3EF" }] },
+        { featureType:"all", elementType:"geometry", stylers:[{ color:"#FBF5EA" }] },
         { featureType:"water", elementType:"geometry", stylers:[{ color:"#B8D4E8" }] },
-        { featureType:"road", elementType:"geometry", stylers:[{ color:"#FFFFFF" }] },
-        { featureType:"road.arterial", elementType:"geometry", stylers:[{ color:"#F0EBE5" }] },
+        { featureType:"road", elementType:"geometry", stylers:[{ color:"#FFFCF4" }] },
+        { featureType:"road.arterial", elementType:"geometry", stylers:[{ color:"#F3E7CF" }] },
         { featureType:"poi", elementType:"labels", stylers:[{ visibility:"off" }] },
-        { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#D4E8D4" }] },
+        { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#C9D1A8" }] },
       ],
       mapTypeControl:false, streetViewControl:false, zoomControl:true,
       scrollwheel:true, gestureHandling:"greedy",
@@ -610,15 +612,16 @@ function SearchApp() {
   return (
     <main>
       <div style={s.header}>
+        <span style={s.headerGlow} />
         <div style={s.headerInner}>
-          {!isMobile && <h1 style={s.headline}>Find Hotels to Partner With</h1>}
+          {!isMobile && <h1 style={s.headline}>Find hotels to partner with</h1>}
 
           {isMobile ? (
             /* ── Mobile search bar ── */
             <div style={s.mobileSearchWrap}>
               <div style={s.searchBar}>
                 <div style={s.searchInputWrap}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                   <input ref={inputRef} style={s.searchInput} placeholder="Search hotels by city or location..."
                     value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
                 </div>
@@ -638,7 +641,7 @@ function SearchApp() {
             /* ── Desktop search bar ── */
             <div style={s.searchBar}>
               <div style={s.searchInputWrap}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <input ref={inputRef} style={s.searchInput} placeholder="Search hotels by city or location..."
                   value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
               </div>
@@ -672,7 +675,7 @@ function SearchApp() {
                               onChange={() => setAmenities(prev =>
                                 prev.includes(am.value) ? prev.filter(v => v !== am.value) : [...prev, am.value]
                               )}
-                              style={{ accentColor:"#E85D3D", width:14, height:14, cursor:"pointer", flexShrink:0 }} />
+                              style={{ accentColor:"var(--color-accent-terracotta)", width:14, height:14, cursor:"pointer", flexShrink:0 }} />
                             <span style={{ userSelect:"none" }}>{am.label}</span>
                           </label>
                         ))}
@@ -715,9 +718,9 @@ function SearchApp() {
       <div style={s.resultsWrap}>
         {activeLoading && (
           <div style={{ textAlign:"center", padding:"60px 24px" }}>
-            <div style={{ width:40, height:40, border:"3px solid #DDD5CC", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 20px" }} />
-            <p style={{ fontSize:15, fontWeight:600, color:"#0F2544", marginBottom:6 }}>Searching across the area...</p>
-            <p style={{ fontSize:13, color:"#9FB3C8" }}>This may take a few seconds — we search multiple zones to find every property</p>
+            <div style={{ width:40, height:40, border:"3px solid var(--color-border)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 20px" }} />
+            <p style={{ fontSize:15, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:6 }}>Searching across the area...</p>
+            <p style={{ fontSize:13, color:"var(--color-ink-muted)" }}>This may take a few seconds — we search multiple zones to find every property</p>
           </div>
         )}
 
@@ -795,7 +798,7 @@ function SearchApp() {
                       onChange={() => setAmenities(prev =>
                         prev.includes(am.value) ? prev.filter(v => v !== am.value) : [...prev, am.value]
                       )}
-                      style={{ accentColor:"#E85D3D", width:17, height:17, cursor:"pointer", flexShrink:0 }} />
+                      style={{ accentColor:"var(--color-accent-terracotta)", width:17, height:17, cursor:"pointer", flexShrink:0 }} />
                     <span style={{ userSelect:"none" }}>{am.label}</span>
                   </label>
                 ))}
@@ -810,87 +813,89 @@ function SearchApp() {
 }
 
 const s = {
-  header: { background:"#0F2544", padding:"16px 16px 20px" },
-  headerInner: { display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:980, margin:"0 auto", gap:16, flexWrap:"wrap" },
-  headline: { fontSize:18, fontWeight:700, color:"#F7F3EF", letterSpacing:"-0.3px", flexShrink:0 },
-  searchBar: { display:"flex", alignItems:"center", gap:0, background:"#fff", borderRadius:12, border:"1px solid rgba(15,37,68,0.06)", flex:1, boxShadow:"0 2px 12px rgba(15,37,68,0.15)" },
-  searchInputWrap: { display:"flex", alignItems:"center", gap:8, flex:1, padding:"0 14px", minWidth:0 },
-  searchInput: { flex:1, border:"none", outline:"none", fontSize:14, color:"#1E3A5F", background:"transparent", padding:"12px 0", minWidth:0 },
-  searchDivider: { width:1, height:24, background:"#DDD5CC", flexShrink:0 },
-  priceSelect: { border:"none", outline:"none", fontSize:13, color:"#4A6A8A", fontWeight:500, padding:"12px 14px", background:"transparent", cursor:"pointer", fontFamily:"inherit", flexShrink:0 },
-  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"rgba(247,243,239,0.1)", border:"1px solid rgba(247,243,239,0.2)", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:"#F7F3EF", flexShrink:0 },
-  gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"rgba(42,157,143,0.2)", border:"1px solid rgba(42,157,143,0.4)", borderRadius:10, padding:"8px 14px" },
-  gmailDot: { width:8, height:8, borderRadius:"50%", background:"#2A9D8F", flexShrink:0 },
-  gmailText: { fontSize:12, color:"#A8E6E0", fontWeight:500 },
-  gmailDisconnect: { fontSize:11, color:"#A8E6E0", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
+  // Hero band — sand ground with a golden-hour glow behind the search bar.
+  header: { position:"relative", overflow:"hidden", background:"var(--color-ground-nav-tint)", padding:"30px 40px 26px" },
+  headerGlow: { position:"absolute", top:-40, right:"8%", width:180, height:180, borderRadius:"50%", background:"var(--color-glow-1)", opacity:0.35, filter:"blur(55px)", pointerEvents:"none" },
+  headerInner: { position:"relative", display:"flex", flexDirection:"column", alignItems:"stretch", maxWidth:1080, margin:"0 auto", gap:16 },
+  headline: { fontFamily:"var(--font-display)", fontSize:24, fontWeight:700, letterSpacing:"-0.01em", color:"var(--color-ink-primary)", flexShrink:0 },
+  searchBar: { display:"flex", alignItems:"center", gap:0, background:"var(--color-ground-card)", borderRadius:"var(--radius-card)", border:"1px solid rgba(43,39,34,0.08)", flex:1, boxShadow:"0 14px 34px -22px rgba(120,80,30,0.4)" },
+  searchInputWrap: { display:"flex", alignItems:"center", gap:10, flex:1, padding:"0 18px", minWidth:0 },
+  searchInput: { flex:1, border:"none", outline:"none", fontSize:14.5, color:"var(--color-ink-primary)", background:"transparent", padding:"15px 0", minWidth:0, fontFamily:"inherit" },
+  searchDivider: { width:1, height:26, background:"rgba(43,39,34,0.1)", flexShrink:0 },
+  priceSelect: { border:"none", outline:"none", fontSize:13.5, color:"var(--color-ink-mid)", fontWeight:600, padding:"15px 18px", background:"transparent", cursor:"pointer", fontFamily:"inherit", flexShrink:0 },
+  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", fontSize:13, fontWeight:600, cursor:"pointer", color:"var(--color-ink-primary)", flexShrink:0 },
+  gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"var(--status-success-bg)", borderRadius:"var(--radius-md)", padding:"8px 14px" },
+  gmailDot: { width:8, height:8, borderRadius:"50%", background:"var(--status-success-ink)", flexShrink:0 },
+  gmailText: { fontSize:12, color:"var(--status-success-ink)", fontWeight:600 },
+  gmailDisconnect: { fontSize:11, color:"var(--status-success-ink)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
   mobileSearchWrap: { display:"flex", flexDirection:"column", gap:8, width:"100%" },
   mobileSearchActions: { display:"flex", gap:8 },
-  mobileFilterBtn: { position:"relative", display:"flex", alignItems:"center", justifyContent:"center", gap:6, flex:1, padding:"12px 14px", background:"rgba(255,255,255,0.12)", border:"1.5px solid rgba(255,255,255,0.2)", borderRadius:10, cursor:"pointer", fontSize:14, fontWeight:600, color:"#F7F3EF", fontFamily:"inherit" },
-  mobileFilterDot: { position:"absolute", top:8, right:8, width:7, height:7, borderRadius:"50%", background:"#E85D3D" },
-  mobileSearchBtn: { flex:2, display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 20px", background:"#E85D3D", color:"#fff", border:"none", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"opacity 0.2s" },
-  modalOverlay: { position:"fixed", inset:0, background:"rgba(15,37,68,0.5)", zIndex:500, display:"flex", alignItems:"flex-end" },
-  modalSheet: { background:"#fff", borderRadius:"20px 20px 0 0", padding:"24px 20px 48px", width:"100%", maxHeight:"80vh", overflowY:"auto" },
+  mobileFilterBtn: { position:"relative", display:"flex", alignItems:"center", justifyContent:"center", gap:6, flex:1, padding:"12px 14px", background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-md)", cursor:"pointer", fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", fontFamily:"inherit" },
+  mobileFilterDot: { position:"absolute", top:8, right:8, width:7, height:7, borderRadius:"50%", background:"var(--color-accent-terracotta)" },
+  mobileSearchBtn: { flex:2, display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 20px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-md)", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)", transition:"opacity 0.2s" },
+  modalOverlay: { position:"fixed", inset:0, background:"rgba(43,39,34,0.5)", zIndex:500, display:"flex", alignItems:"flex-end" },
+  modalSheet: { background:"var(--color-ground-card)", borderRadius:"20px 20px 0 0", padding:"24px 20px 48px", width:"100%", maxHeight:"80vh", overflowY:"auto" },
   modalHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 },
-  modalTitle: { fontSize:17, fontWeight:700, color:"#0F2544" },
-  modalCloseBtn: { width:32, height:32, borderRadius:"50%", background:"#F0EBE5", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"#4A6A8A" },
-  modalDoneBtn: { width:"100%", padding:"15px", background:"#E85D3D", color:"#fff", border:"none", borderRadius:12, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"inherit", marginTop:24 },
-  filterBtn: { display:"flex", alignItems:"center", gap:6, position:"relative", padding:"12px 16px", background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:600, color:"#4A6A8A", fontFamily:"inherit", flexShrink:0, whiteSpace:"nowrap" },
-  filterDot: { position:"absolute", top:8, right:8, width:7, height:7, borderRadius:"50%", background:"#E85D3D", flexShrink:0 },
-  filterDropdown: { position:"absolute", top:"calc(100% + 8px)", right:0, background:"#fff", borderRadius:14, boxShadow:"0 4px 24px rgba(15,37,68,0.14)", border:"1px solid rgba(15,37,68,0.07)", padding:20, zIndex:100, minWidth:280 },
+  modalTitle: { fontFamily:"var(--font-display)", fontSize:17, fontWeight:700, color:"var(--color-ink-primary)" },
+  modalCloseBtn: { width:32, height:32, borderRadius:"50%", background:"var(--color-ground-sand)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--color-ink-mid)" },
+  modalDoneBtn: { width:"100%", padding:"15px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-lg)", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)", marginTop:24 },
+  filterBtn: { display:"flex", alignItems:"center", gap:6, position:"relative", padding:"15px 18px", background:"none", border:"none", cursor:"pointer", fontSize:13.5, fontWeight:600, color:"var(--color-ink-mid)", fontFamily:"inherit", flexShrink:0, whiteSpace:"nowrap" },
+  filterDot: { position:"absolute", top:8, right:8, width:7, height:7, borderRadius:"50%", background:"var(--color-accent-terracotta)", flexShrink:0 },
+  filterDropdown: { position:"absolute", top:"calc(100% + 8px)", right:0, background:"var(--color-ground-card)", borderRadius:"var(--radius-card)", boxShadow:"var(--shadow-overlay)", border:"1px solid var(--color-border)", padding:20, zIndex:100, minWidth:280 },
   filterSection: { marginBottom:18 },
-  filterSectionLabel: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.07em", marginBottom:10 },
+  filterSectionLabel: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"0.07em", textTransform:"uppercase", marginBottom:10 },
   priceLevelRow: { display:"flex", gap:8 },
-  priceLevelBtn: { flex:1, padding:"9px 0", border:"1.5px solid #DDD5CC", borderRadius:8, background:"none", cursor:"pointer", fontSize:14, fontWeight:700, color:"#4A6A8A", fontFamily:"inherit", transition:"all 0.15s" },
-  priceLevelBtnActive: { background:"#E85D3D", color:"#fff", borderColor:"#E85D3D" },
+  priceLevelBtn: { flex:1, padding:"9px 0", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-sm)", background:"none", cursor:"pointer", fontSize:14, fontWeight:700, color:"var(--color-ink-mid)", fontFamily:"inherit", transition:"all 0.15s" },
+  priceLevelBtnActive: { background:"var(--color-accent-terracotta)", color:"var(--color-ground-page)", borderColor:"var(--color-accent-terracotta)" },
   amenitiesGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 20px" },
-  amenityLabel: { display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:13, color:"#1E3A5F", fontWeight:500 },
-  searchBtn: { padding:"12px 20px", background:"#E85D3D", color:"#fff", border:"none", fontSize:14, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s", display:"flex", alignItems:"center", gap:8, flexShrink:0, fontFamily:"inherit", borderRadius:"0 12px 12px 0" },
-  spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(247,243,239,0.3)", borderTopColor:"#F7F3EF", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  errorBox: { marginTop:10, padding:"10px 16px", background:"#FEF0EC", border:"1px solid #B83A22", borderRadius:8, color:"#B83A22", fontSize:13, maxWidth:980, margin:"10px auto 0" },
-  tabsWrap: { maxWidth:980, margin:"16px auto 0", padding:"0 16px" },
+  amenityLabel: { display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:13, color:"var(--color-ink-primary)", fontWeight:500 },
+  searchBtn: { padding:"15px 26px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", fontSize:14, fontWeight:700, cursor:"pointer", transition:"opacity 0.2s", display:"flex", alignItems:"center", gap:8, flexShrink:0, fontFamily:"var(--font-display)", borderRadius:"0 var(--radius-card) var(--radius-card) 0" },
+  spinner: { display:"inline-block", width:15, height:15, border:"2px solid rgba(251,245,234,0.3)", borderTopColor:"var(--color-ground-page)", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  errorBox: { padding:"10px 16px", background:"var(--status-error-bg)", border:"1px solid var(--color-error)", borderRadius:"var(--radius-sm)", color:"var(--color-error)", fontSize:13, maxWidth:1080, margin:"10px auto 0" },
+  tabsWrap: { maxWidth:1080, margin:"18px auto 0", padding:"0 40px" },
   tabs: { display:"flex", gap:8, flexWrap:"wrap" },
-  tabBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 18px", borderRadius:24, border:"1.5px solid #DDD5CC", background:"#fff", color:"#0F2544", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
-  tabBtnActive: { background:"#E85D3D", color:"#fff", border:"1.5px solid #E85D3D" },
-  tabCount: { background:"#F0EBE5", color:"#0F2544", fontSize:11, fontWeight:700, padding:"2px 7px", borderRadius:12, minWidth:20, textAlign:"center" },
-  tabCountActive: { background:"rgba(255,255,255,0.25)", color:"#fff" },
-  tabSpinner: { display:"inline-block", width:11, height:11, border:"2px solid rgba(232,93,61,0.3)", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
-  resultsWrap: { maxWidth:980, margin:"20px auto 80px", padding:"0 16px" },
-  resultsBar: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 },
-  resultsTitle: { fontSize:22, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" },
-  resultsSub: { fontSize:13, color:"#4A6A8A", marginTop:3 },
-  viewToggle: { display:"flex", background:"#EDE8E3", borderRadius:10, padding:3, gap:3 },
-  toggleBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 14px", border:"none", borderRadius:8, fontSize:13, fontWeight:500, cursor:"pointer", color:"#7A9BBF", background:"transparent", transition:"all 0.15s" },
-  toggleActive: { background:"#fff", color:"#0F2544", boxShadow:"0 1px 4px rgba(15,37,68,0.1)" },
-  grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:20 },
-  card: { background:"#fff", borderRadius:14, overflow:"visible", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
-  imgBox: { position:"relative", height:196, background:"#EDE8E3", overflow:"hidden", borderRadius:"14px 14px 0 0" },
+  tabBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 18px", borderRadius:"var(--radius-pill)", border:"1.5px solid var(--color-border)", background:"var(--color-ground-card)", color:"var(--color-ink-primary)", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
+  tabBtnActive: { background:"var(--color-accent-terracotta)", color:"var(--color-ground-page)", border:"1.5px solid transparent" },
+  tabCount: { background:"var(--color-ground-sand)", color:"var(--color-ink-primary)", fontSize:11, fontWeight:700, padding:"2px 7px", borderRadius:12, minWidth:20, textAlign:"center" },
+  tabCountActive: { background:"rgba(251,245,234,0.3)", color:"var(--color-ground-page)" },
+  tabSpinner: { display:"inline-block", width:11, height:11, border:"2px solid rgba(201,110,60,0.3)", borderTopColor:"var(--color-accent-terracotta)", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
+  resultsWrap: { maxWidth:1080, margin:"24px auto 40px", padding:"0 40px" },
+  resultsBar: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18, flexWrap:"wrap", gap:12 },
+  resultsTitle: { fontFamily:"var(--font-display)", fontSize:20, fontWeight:700, color:"var(--color-ink-primary)" },
+  resultsSub: { fontSize:12.5, color:"var(--color-ink-muted)", marginTop:2 },
+  viewToggle: { display:"flex", background:"var(--color-ground-sand)", borderRadius:"var(--radius-md)", padding:3, gap:3 },
+  toggleBtn: { display:"flex", alignItems:"center", gap:5, padding:"7px 14px", border:"none", borderRadius:"var(--radius-sm)", fontSize:12.5, fontWeight:500, cursor:"pointer", color:"var(--color-ink-muted)", background:"transparent", transition:"all 0.15s", fontFamily:"inherit" },
+  toggleActive: { background:"var(--color-ground-card)", color:"var(--color-ink-primary)", fontWeight:600, boxShadow:"0 1px 4px rgba(43,39,34,0.1)" },
+  grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:18 },
+  card: { background:"var(--color-ground-card)", borderRadius:"var(--radius-card)", overflow:"visible", boxShadow:"var(--shadow-low)", border:"1px solid var(--color-border)" },
+  imgBox: { position:"relative", height:150, background:"var(--color-ground-sand)", overflow:"hidden", borderRadius:"var(--radius-card) var(--radius-card) 0 0" },
   img: { width:"100%", height:"100%", objectFit:"cover", display:"block" },
-  imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#EDE8E3 0%,#DDD5CC 100%)" },
-  imgGradient: { position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent,rgba(15,37,68,0.2))", pointerEvents:"none" },
-  pricePill: { position:"absolute", top:10, right:10, background:"rgba(15,37,68,0.7)", color:"#F7F3EF", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, backdropFilter:"blur(4px)" },
-  cardBody: { padding:"14px 16px 16px" },
-  hotelName: { fontSize:16, fontWeight:700, color:"#0F2544", marginBottom:4, lineHeight:1.25, letterSpacing:"-0.2px" },
-  address: { fontSize:12, color:"#4A6A8A", marginBottom:6, lineHeight:1.4 },
-  desc: { fontSize:12, color:"#4A6A8A", lineHeight:1.6, marginBottom:10 },
-  cardFooter: { paddingTop:10, borderTop:"1px solid #F0EBE5", marginBottom:8 },
-  ratingText: { fontSize:11, color:"#4A6A8A", marginLeft:4 },
-  websiteLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none", marginBottom:2 },
-  igLink: { display:"inline-flex", alignItems:"center", gap:5, fontSize:12, color:"#1E3A5F", fontWeight:600, textDecoration:"none" },
-  emailLink: { display:"inline-flex", alignItems:"center", gap:5, marginTop:4, fontSize:12, color:"#0F2544", fontWeight:600, textDecoration:"none" },
-  igNotFound: { fontSize:11, color:"#9FB3C8", marginTop:4 },
-  addToListBtn: { width:"100%", padding:"9px 12px", border:"1.5px solid #E85D3D", borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.2s", background:"transparent", color:"#E85D3D" },
-  addToListBtnSuccess: { background:"#E8F8F5", color:"#1A6B5A", borderColor:"#A8E6E0", fontWeight:600 },
+  imgFallback: { position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg, var(--color-ground-sand) 0%, var(--color-border) 100%)" },
+  imgGradient: { position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent, rgba(43,39,34,0.2))", pointerEvents:"none" },
+  pricePill: { position:"absolute", top:10, right:10, background:"rgba(43,39,34,0.7)", color:"var(--color-ground-page)", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:"var(--radius-pill)", backdropFilter:"blur(4px)" },
+  cardBody: { padding:"14px 16px" },
+  hotelName: { fontSize:15, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:3, lineHeight:1.25 },
+  address: { fontSize:12, color:"var(--color-ink-muted)", marginBottom:8, lineHeight:1.4 },
+  desc: { fontSize:12, color:"var(--color-ink-mid)", lineHeight:1.6, marginBottom:10 },
+  cardFooter: { paddingTop:10, borderTop:"1px solid rgba(43,39,34,0.07)", marginBottom:8 },
+  ratingText: { fontSize:11.5, color:"var(--color-ink-muted)", marginLeft:4 },
+  websiteLink: { display:"inline-block", fontSize:12, color:"var(--color-accent-amber-deep)", fontWeight:600, textDecoration:"none", marginBottom:2 },
+  igLink: { display:"inline-flex", alignItems:"center", gap:5, fontSize:12, color:"var(--brand-instagram)", fontWeight:600, textDecoration:"none" },
+  emailLink: { display:"inline-flex", alignItems:"center", gap:5, marginTop:4, fontSize:12, color:"var(--color-ink-primary)", fontWeight:600, textDecoration:"none" },
+  igNotFound: { fontSize:11, color:"var(--color-ink-muted)", marginTop:4 },
+  addToListBtn: { width:"100%", padding:"9px 0", border:"1.5px solid var(--color-action-forest)", borderRadius:"var(--radius-md)", fontSize:12.5, fontWeight:700, cursor:"pointer", transition:"all 0.2s", background:"transparent", color:"var(--color-action-forest)", fontFamily:"var(--font-display)" },
+  addToListBtnSuccess: { background:"var(--status-success-bg)", color:"var(--status-success-ink)", borderColor:"transparent" },
   emptyState: { textAlign:"center", padding:"80px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 },
-  emptyText: { color:"#4A6A8A", fontSize:15, maxWidth:300, lineHeight:1.6 },
-  searchAreaBtn: { position:"absolute", top:12, left:"50%", transform:"translateX(-50%)", zIndex:10, display:"flex", alignItems:"center", gap:7, padding:"9px 20px", background:"#0F2544", color:"#fff", border:"none", borderRadius:24, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", boxShadow:"0 2px 12px rgba(15,37,68,0.25)", whiteSpace:"nowrap" },
-  searchAreaSpinner: { display:"inline-block", width:12, height:12, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
-  mapWrap: { position:"relative", height:580, borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(15,37,68,0.08)", border:"1px solid rgba(15,37,68,0.06)" },
+  emptyText: { color:"var(--color-ink-mid)", fontSize:15, maxWidth:300, lineHeight:1.6 },
+  searchAreaBtn: { position:"absolute", top:12, left:"50%", transform:"translateX(-50%)", zIndex:10, display:"flex", alignItems:"center", gap:7, padding:"9px 20px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-pill)", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)", boxShadow:"var(--shadow-ambient)", whiteSpace:"nowrap" },
+  searchAreaSpinner: { display:"inline-block", width:12, height:12, border:"2px solid rgba(251,245,234,0.3)", borderTopColor:"var(--color-ground-page)", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  mapWrap: { position:"relative", height:580, borderRadius:"var(--radius-card)", overflow:"hidden", boxShadow:"var(--shadow-low)", border:"1px solid var(--color-border)" },
   mapEl: { width:"100%", height:"100%" },
-  mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"#fff", borderRadius:14, boxShadow:"0 8px 32px rgba(15,37,68,0.16)", overflow:"hidden", zIndex:20 },
-  popupClose: { position:"absolute", top:8, right:8, background:"rgba(15,37,68,0.5)", border:"none", color:"#fff", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
+  mapPopup: { position:"absolute", bottom:16, left:16, width:260, background:"var(--color-ground-card)", borderRadius:"var(--radius-card)", boxShadow:"var(--shadow-popup)", overflow:"hidden", zIndex:20 },
+  popupClose: { position:"absolute", top:8, right:8, background:"rgba(43,39,34,0.5)", border:"none", color:"var(--color-ground-page)", borderRadius:"50%", width:24, height:24, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", zIndex:1 },
   popupImg: { width:"100%", height:130, objectFit:"cover", display:"block" },
   popupBody: { padding:"12px 14px 14px" },
-  popupName: { fontSize:15, fontWeight:700, color:"#0F2544", marginBottom:3, letterSpacing:"-0.2px" },
-  popupAddr: { fontSize:11, color:"#4A6A8A", lineHeight:1.4, marginBottom:6 },
-  popupLink: { display:"inline-block", fontSize:12, color:"#E85D3D", fontWeight:600, textDecoration:"none" },
+  popupName: { fontFamily:"var(--font-display)", fontSize:15, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:3 },
+  popupAddr: { fontSize:11, color:"var(--color-ink-muted)", lineHeight:1.4, marginBottom:6 },
+  popupLink: { display:"inline-block", fontSize:12, color:"var(--color-accent-amber-deep)", fontWeight:600, textDecoration:"none" },
 };
