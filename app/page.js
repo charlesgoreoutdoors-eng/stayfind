@@ -395,11 +395,12 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
 const EMPTY_TAB_STATE = { hotels: [], loading: false, searched: false };
 
 // Root route: logged-out visitors see the Dapples waitlist landing,
-// logged-in users get the search app. AuthGuard already resolves loading
-// before rendering the root, so `user` is definitive here.
+// logged-in users get the search app. AuthGuard owns the loading state and
+// only renders the root once auth has resolved (or its safety timeout fired),
+// so don't gate on `loading` here — doing so blanks the page in the timeout
+// case, where AuthGuard hands us through while loading is still true.
 export default function Home() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
+  const { user } = useAuth();
   if (!user) return <Waitlist />;
   return <SearchApp />;
 }

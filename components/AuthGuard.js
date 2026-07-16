@@ -27,8 +27,12 @@ export default function AuthGuard({ children }) {
     if (loading && !timedOut) return;
 
     if (isPublic || isRoot) {
-      // Bounce logged-in users off the login screen into the app.
-      if (user && pathname === "/login") router.replace("/");
+      // Bounce logged-in users off the login screen into the app. This must
+      // match where login/page.js and the OAuth callback send people
+      // (/dashboard) — sending them to "/" instead raced with those pushes and
+      // stranded them on the waitlist, since "/" renders the landing whenever
+      // `user` hasn't resolved yet and nothing redirects away from root.
+      if (user && pathname === "/login") router.replace("/dashboard");
       return;
     }
 
