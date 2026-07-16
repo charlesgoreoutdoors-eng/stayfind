@@ -408,10 +408,11 @@ export default function ListsPage() {
           position: { lat: h.lat, lng: h.lng },
           map,
           title: h.name,
-          icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#1E3A5F", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+          // Literal hex: the Maps API can't resolve CSS vars. Mirrors the tokens.
+          icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#C96E3C", fillOpacity: 1, strokeColor: "#FFFCF4", strokeWeight: 2 },
         });
         marker.addListener("click", () => {
-          infoWindow.setContent(`<div style="font-family:sans-serif;font-size:13px;font-weight:600;color:#0F2544;max-width:180px">${h.name}${h.address ? `<div style="font-weight:400;color:#9FB3C8;font-size:11px;margin-top:3px">${h.address}</div>` : ""}</div>`);
+          infoWindow.setContent(`<div style="font-family:sans-serif;font-size:13px;font-weight:600;color:var(--color-ink-primary);max-width:180px">${h.name}${h.address ? `<div style="font-weight:400;color:var(--color-ink-muted);font-size:11px;margin-top:3px">${h.address}</div>` : ""}</div>`);
           infoWindow.open(map, marker);
         });
       });
@@ -444,15 +445,15 @@ export default function ListsPage() {
           {!loading && lists.length > 0 && (
             <div style={{ position:"relative" }} ref={dropdownRef}>
               <button style={s.listSelector} onClick={() => setShowListDropdown(v => !v)}>
-                <span style={{ fontWeight:600, color: activeList ? "#0F2544" : "#9FB3C8", fontSize:14, flex:1, textAlign:"left", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                <span style={{ fontWeight:600, color: activeList ? "var(--color-ink-primary)" : "var(--color-ink-muted)", fontSize:14, flex:1, textAlign:"left", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {activeList ? activeList.name : "Select a list..."}
                 </span>
                 {activeList && (
-                  <span style={{ fontSize:11, color:"#F5A882", fontWeight:500, flexShrink:0, marginLeft:6 }}>
+                  <span style={{ fontSize:11, color:"var(--color-accent-amber)", fontWeight:500, flexShrink:0, marginLeft:6 }}>
                     {hotelCounts[activeList.id] || 0} hotels
                   </span>
                 )}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="2.5" style={{ flexShrink:0, marginLeft:6, transform: showListDropdown ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2.5" style={{ flexShrink:0, marginLeft:6, transform: showListDropdown ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -464,19 +465,19 @@ export default function ListsPage() {
                       onClick={() => { openList(list); setShowListDropdown(false); }}
                     >
                       <div style={{ flex:1, minWidth:0 }}>
-                        <p style={{ fontSize:13, fontWeight:600, color: activeList?.id === list.id ? "#E85D3D" : "#0F2544", marginBottom:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{list.name}</p>
-                        <p style={{ fontSize:11, color:"#9FB3C8" }}>{hotelCounts[list.id] || 0} hotels</p>
+                        <p style={{ fontSize:13, fontWeight:600, color: activeList?.id === list.id ? "var(--color-accent-terracotta)" : "var(--color-ink-primary)", marginBottom:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{list.name}</p>
+                        <p style={{ fontSize:11, color:"var(--color-ink-muted)" }}>{hotelCounts[list.id] || 0} hotels</p>
                       </div>
                       <div style={{ display:"flex", gap:5, flexShrink:0 }} onClick={e => e.stopPropagation()}>
                         <Link href={`/compose?list=${list.id}`}>
                           <button style={s.iconBtn} title="Compose outreach">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E85D3D" strokeWidth="2.5">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="2.5">
                               <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                             </svg>
                           </button>
                         </Link>
-                        <button style={{ ...s.iconBtn, borderColor:"#fee2e2" }} onClick={() => { setDeleteConfirm(list.id); setShowListDropdown(false); }} title="Delete list">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
+                        <button style={{ ...s.iconBtn, borderColor:"var(--status-error-bg)" }} onClick={() => { setDeleteConfirm(list.id); setShowListDropdown(false); }} title="Delete list">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
                             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
                           </svg>
                         </button>
@@ -530,7 +531,7 @@ export default function ListsPage() {
           {!activeList ? (
             <div style={s.empty}>
               <span style={{ fontSize:36 }}>📋</span>
-              <p style={{ fontWeight:600, color:"#1E3A5F" }}>{lists.length === 0 ? "No lists yet" : "Select a list above"}</p>
+              <p style={{ fontWeight:600, color:"var(--color-ink-primary)" }}>{lists.length === 0 ? "No lists yet" : "Select a list above"}</p>
               <p style={{ fontSize:13 }}>{lists.length === 0 ? "Create a list to start organising hotels from your searches." : "Use the dropdown in the header to pick a list."}</p>
               {lists.length === 0 && <button style={s.saveBtn} onClick={() => setShowNew(true)}>+ Create your first list</button>}
             </div>
@@ -624,9 +625,9 @@ export default function ListsPage() {
               ) : listHotels.length === 0 ? (
                 <div style={s.empty}>
                   <span style={{ fontSize:36 }}>🏨</span>
-                  <p style={{ fontWeight:600, color:"#1E3A5F" }}>No hotels yet</p>
+                  <p style={{ fontWeight:600, color:"var(--color-ink-primary)" }}>No hotels yet</p>
                   <p style={{ fontSize:13 }}>Search for hotels and use the "+ Add to List" button to add them here.</p>
-                  <Link href="/" style={{ color:"#E85D3D", fontWeight:600, fontSize:13 }}>Go to Search</Link>
+                  <Link href="/" style={{ color:"var(--color-accent-amber-deep)", fontWeight:600, fontSize:13 }}>Go to Search</Link>
                 </div>
               ) : (
                 <div style={s.tableWrap}>
@@ -666,18 +667,18 @@ export default function ListsPage() {
                         ) : hotel.contact_email ? (
                           <div style={{ marginBottom: hotel.email ? 6 : 0 }}>
                             {(hotel.contact_name || hotel.contact_title) && (
-                              <p style={{ fontSize:11, color:"#6B7280", marginBottom:2 }}>
+                              <p style={{ fontSize:11, color:"var(--color-ink-mid)", marginBottom:2 }}>
                                 {[hotel.contact_name, hotel.contact_title].filter(Boolean).join(" — ")}
                               </p>
                             )}
                             <div style={{ display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
                               <p style={{ ...s.emailText, wordBreak:"break-all", margin:0 }}>✉ {hotel.contact_email}</p>
-                              <span style={{ fontSize:10, fontWeight:700, background:"#EEF2FF", color:"#4338ca", padding:"2px 7px", borderRadius:20, flexShrink:0 }}>Direct</span>
+                              <span style={{ fontSize:10, fontWeight:700, background:"var(--status-sent-bg)", color:"var(--status-sent-ink)", padding:"2px 7px", borderRadius:20, flexShrink:0 }}>Direct</span>
                             </div>
                           </div>
                         ) : null}
                         {hotel.email
-                          ? <p style={{ ...s.emailText, wordBreak:"break-all", ...((hotel.hunter_contacts?.length > 0 || hotel.contact_email) ? { fontSize:11, color:"#9FB3C8" } : {}) }}>✉ {hotel.email}</p>
+                          ? <p style={{ ...s.emailText, wordBreak:"break-all", ...((hotel.hunter_contacts?.length > 0 || hotel.contact_email) ? { fontSize:11, color:"var(--color-ink-muted)" } : {}) }}>✉ {hotel.email}</p>
                           : !hotel.hunter_contacts?.length && !hotel.contact_email ? <p style={s.noEmailText}>No email</p> : null}
                         {hotel.phone && <p style={s.phoneText}>{hotel.phone}</p>}
                         {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
@@ -745,7 +746,7 @@ export default function ListsPage() {
                       {/* Instagram Contacted */}
                       <div style={{ minWidth:0 }}>
                         <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-                          <span style={{ fontSize:12, fontWeight:500, color: hotel.ig_contacted ? "#C13584" : "#9FB3C8" }}>
+                          <span style={{ fontSize:12, fontWeight:500, color: hotel.ig_contacted ? "#C13584" : "var(--color-ink-muted)" }}>
                             {hotel.ig_contacted ? "DM Sent" : "Not Sent"}
                           </span>
                           <button
@@ -754,7 +755,7 @@ export default function ListsPage() {
                             title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}
                           >
                             {hotel.ig_contacted && (
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--color-ground-page)" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
                             )}
                           </button>
                         </div>
@@ -766,7 +767,7 @@ export default function ListsPage() {
                       <div style={{ minWidth:0 }}>
                         {hotel.notes ? (
                           <div style={{ display:"flex", alignItems:"flex-start", gap:6 }}>
-                            <p style={{ fontSize:12, color:"#1E3A5F", lineHeight:1.45, flex:1, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", margin:0 }}>
+                            <p style={{ fontSize:12, color:"var(--color-ink-primary)", lineHeight:1.45, flex:1, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", margin:0 }}>
                               {hotel.notes}
                             </p>
                             <button
@@ -790,7 +791,7 @@ export default function ListsPage() {
                       {/* Remove */}
                       <div style={{ width:40, display:"flex", alignItems:"center", justifyContent:"center" }}>
                         <button style={s.removeBtn} onClick={() => removeHotel(hotel.id)} title="Remove from list">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.5">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-border)" strokeWidth="2.5">
                             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                           </svg>
                         </button>
@@ -811,8 +812,8 @@ export default function ListsPage() {
             <div style={s.notesModal} onClick={e => e.stopPropagation()}>
               <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:16 }}>
                 <div>
-                  <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", margin:0 }}>Notes</h3>
-                  {hotel && <p style={{ fontSize:12, color:"#9FB3C8", marginTop:4 }}>{hotel.name}</p>}
+                  <h3 style={{ fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", margin:0 }}>Notes</h3>
+                  {hotel && <p style={{ fontSize:12, color:"var(--color-ink-muted)", marginTop:4 }}>{hotel.name}</p>}
                 </div>
                 <button style={s.mapCloseBtn} onClick={() => setEditingNote(null)}>✕</button>
               </div>
@@ -839,8 +840,8 @@ export default function ListsPage() {
           <div style={s.mapModal} onClick={e => e.stopPropagation()}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
               <div>
-                <h3 style={{ fontSize:17, fontWeight:700, color:"#0F2544", margin:0 }}>{activeList?.name}</h3>
-                <p style={{ fontSize:12, color:"#9FB3C8", marginTop:3 }}>
+                <h3 style={{ fontSize:17, fontWeight:700, color:"var(--color-ink-primary)", margin:0 }}>{activeList?.name}</h3>
+                <p style={{ fontSize:12, color:"var(--color-ink-muted)", marginTop:3 }}>
                   {listHotels.filter(h => h.lat && h.lng).length} of {listHotels.length} hotels mapped
                 </p>
               </div>
@@ -861,15 +862,15 @@ export default function ListsPage() {
       {igModal && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h3 style={{ fontSize:18, fontWeight:700, color:"#0F2544", marginBottom:4 }}>
+            <h3 style={{ fontSize:18, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:4 }}>
               Send Instagram DM
             </h3>
-            <p style={{ fontSize:13, color:"#9FB3C8", marginBottom:16 }}>
+            <p style={{ fontSize:13, color:"var(--color-ink-muted)", marginBottom:16 }}>
               to {igModal.instagram} — {igModal.name}
             </p>
 
             <div style={s.igWarning}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-amber-deeper)" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               <span>Use sparingly — Instagram may restrict accounts that send too many DMs. We recommend max 20-30 per day.</span>
             </div>
 
@@ -896,7 +897,7 @@ export default function ListsPage() {
                 onChange={e => setIgMessage(e.target.value)}
                 placeholder="Write your Instagram DM here..."
               />
-              <p style={{ fontSize:11, color: igMessage.length > 1000 ? "#ef4444" : "#9FB3C8", textAlign:"right", marginTop:4 }}>
+              <p style={{ fontSize:11, color: igMessage.length > 1000 ? "var(--color-error)" : "var(--color-ink-muted)", textAlign:"right", marginTop:4 }}>
                 {igMessage.length}/1000 characters
               </p>
             </div>
@@ -924,8 +925,8 @@ export default function ListsPage() {
       {deleteConfirm && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h3 style={{ fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:18, marginBottom:8, color:"#0F2544" }}>Delete this list?</h3>
-            <p style={{ fontSize:14, color:"#4A6A8A", marginBottom:20 }}>All hotels in this list will also be removed. This cannot be undone.</p>
+            <h3 style={{ fontFamily:"var(--font-display)", fontSize:18, marginBottom:8, color:"var(--color-ink-primary)" }}>Delete this list?</h3>
+            <p style={{ fontSize:14, color:"var(--color-ink-mid)", marginBottom:20 }}>All hotels in this list will also be removed. This cannot be undone.</p>
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
               <button style={s.cancelBtn} onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button style={s.deleteBtn} onClick={() => deleteList(deleteConfirm)}>Delete List</button>
@@ -940,10 +941,10 @@ export default function ListsPage() {
           <div style={{ ...s.modal, maxWidth:480, width:"90%" }} onClick={e => e.stopPropagation()}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
               <div>
-                <h3 style={{ fontSize:16, fontWeight:700, color:"#0F2544", marginBottom:2 }}>{contactsModal.name}</h3>
-                <p style={{ fontSize:12, color:"#9FB3C8" }}>Select contacts to include in sequences</p>
+                <h3 style={{ fontSize:16, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:2 }}>{contactsModal.name}</h3>
+                <p style={{ fontSize:12, color:"var(--color-ink-muted)" }}>Select contacts to include in sequences</p>
               </div>
-              <button onClick={() => setContactsModal(null)} style={{ background:"#F0EBE5", border:"none", borderRadius:"50%", width:30, height:30, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"#4A6A8A", flexShrink:0 }}>
+              <button onClick={() => setContactsModal(null)} style={{ background:"var(--color-ground-sand)", border:"none", borderRadius:"50%", width:30, height:30, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--color-ink-mid)", flexShrink:0 }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
@@ -954,13 +955,13 @@ export default function ListsPage() {
                     type="checkbox"
                     checked={contact.selected || false}
                     onChange={() => toggleContactSelection(contactsModal, idx)}
-                    style={{ accentColor:"#E85D3D", width:16, height:16, flexShrink:0, cursor:"pointer" }}
+                    style={{ accentColor:"var(--color-accent-terracotta)", width:16, height:16, flexShrink:0, cursor:"pointer" }}
                   />
                   <div style={{ minWidth:0 }}>
-                    {contact.name && <p style={{ fontSize:13, fontWeight:600, color:"#0F2544", marginBottom:1 }}>{contact.name}</p>}
-                    {contact.position && <p style={{ fontSize:11, color:"#4A6A8A", marginBottom:3 }}>{contact.position}</p>}
-                    <p style={{ fontSize:12, color:"#E85D3D", wordBreak:"break-all" }}>✉ {contact.value}</p>
-                    {contact.confidence && <p style={{ fontSize:10, color:"#9FB3C8", marginTop:2 }}>{contact.confidence}% confidence</p>}
+                    {contact.name && <p style={{ fontSize:13, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:1 }}>{contact.name}</p>}
+                    {contact.position && <p style={{ fontSize:11, color:"var(--color-ink-mid)", marginBottom:3 }}>{contact.position}</p>}
+                    <p style={{ fontSize:12, color:"var(--color-accent-amber-deep)", wordBreak:"break-all" }}>✉ {contact.value}</p>
+                    {contact.confidence && <p style={{ fontSize:10, color:"var(--color-ink-muted)", marginTop:2 }}>{contact.confidence}% confidence</p>}
                   </div>
                 </label>
               ))}
@@ -979,87 +980,87 @@ export default function ListsPage() {
 const s = {
   root: { padding:"24px 16px 80px" },
   header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12, flexWrap:"wrap", padding:"0 0 4px" },
-  title: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:26, fontWeight:700, color:"#0F2544", marginBottom:4 },
-  subtitle: { fontSize:14, color:"#9FB3C8" },
-  newBtn: { background:"#0F2544", color:"#fff", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", flexShrink:0 },
-  listSelector: { display:"flex", alignItems:"center", gap:4, padding:"9px 14px", background:"#fff", border:"1.5px solid #DDD5CC", borderRadius:10, cursor:"pointer", fontFamily:"inherit", minWidth:200, maxWidth:340 },
-  listDropdown: { position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:200, background:"#fff", border:"1.5px solid #DDD5CC", borderRadius:12, boxShadow:"0 8px 24px rgba(15,37,68,0.12)", minWidth:280, maxHeight:320, overflowY:"auto" },
-  listDropdownItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", cursor:"pointer", borderBottom:"1px solid #F8F6F4", transition:"background 0.12s" },
-  listDropdownItemActive: { background:"#FEF0EC" },
-  errorBox: { background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"12px 16px", color:"#dc2626", fontSize:13, marginBottom:16 },
-  newForm: { background:"#fff", border:"1.5px solid #e2e8f0", borderRadius:14, padding:"20px", marginBottom:20, display:"flex", flexDirection:"column", gap:10, maxWidth:500 },
-  newFormTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:16, fontWeight:700, color:"#0F2544" },
-  input: { border:"1.5px solid #e2e8f0", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", color:"#0F2544", outline:"none" },
-  saveBtn: { background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  cancelBtn: { background:"#fff", color:"#4A6A8A", border:"1.5px solid #e2e8f0", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  iconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid #e2e8f0", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
-  detailPanel: { background:"#fff", borderRadius:16, border:"1.5px solid #e2e8f0", overflow:"hidden", minHeight:300 },
-  detailHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid #f1f5f9", gap:12, flexWrap:"wrap" },
-  detailTitle: { fontFamily:"Plus Jakarta Sans, system-ui, sans-serif", fontSize:20, fontWeight:700, color:"#0F2544" },
-  detailSub: { fontSize:13, color:"#9FB3C8", marginTop:2 },
-  composeBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
+  title: { fontFamily:"var(--font-display)", fontSize:26, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:4 },
+  subtitle: { fontSize:14, color:"var(--color-ink-muted)" },
+  newBtn: { background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)", flexShrink:0 },
+  listSelector: { display:"flex", alignItems:"center", gap:4, padding:"9px 14px", background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:10, cursor:"pointer", fontFamily:"inherit", minWidth:200, maxWidth:340 },
+  listDropdown: { position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:200, background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:12, boxShadow:"0 8px 24px rgba(43,39,34,0.12)", minWidth:280, maxHeight:320, overflowY:"auto" },
+  listDropdownItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", cursor:"pointer", borderBottom:"1px solid var(--color-ground-sand)", transition:"background 0.12s" },
+  listDropdownItemActive: { background:"var(--color-amber-tint)" },
+  errorBox: { background:"var(--status-error-bg)", border:"1px solid rgba(180,67,46,0.3)", borderRadius:10, padding:"12px 16px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
+  newForm: { background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:14, padding:"20px", marginBottom:20, display:"flex", flexDirection:"column", gap:10, maxWidth:500 },
+  newFormTitle: { fontFamily:"var(--font-display)", fontSize:16, fontWeight:700, color:"var(--color-ink-primary)" },
+  input: { border:"1.5px solid var(--color-border)", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none" },
+  saveBtn: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
+  cancelBtn: { background:"var(--color-ground-card)", color:"var(--color-ink-mid)", border:"1.5px solid var(--color-border)", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"var(--font-display)" },
+  iconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--color-border)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
+  detailPanel: { background:"var(--color-ground-card)", borderRadius:16, border:"1.5px solid var(--color-border)", overflow:"hidden", minHeight:300 },
+  detailHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid rgba(43,39,34,0.07)", gap:12, flexWrap:"wrap" },
+  detailTitle: { fontFamily:"var(--font-display)", fontSize:20, fontWeight:700, color:"var(--color-ink-primary)" },
+  detailSub: { fontSize:13, color:"var(--color-ink-muted)", marginTop:2 },
+  composeBtn: { display:"flex", alignItems:"center", gap:8, background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
   tableWrap: { overflowX:"auto" },
   tableGrid: { display:"grid", gridTemplateColumns:"2.5fr 1.5fr 1.4fr 120px 1.6fr 40px", alignItems:"center", gap:"0 16px" },
-  tableHead: { padding:"10px 20px", background:"#FAF8F5", borderBottom:"1px solid #f1f5f9" },
-  tableRow: { padding:"14px 20px", borderBottom:"1px solid #f8fafc" },
-  colHd: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase" },
+  tableHead: { padding:"10px 20px", background:"var(--color-ground-sand)", borderBottom:"1px solid rgba(43,39,34,0.07)" },
+  tableRow: { padding:"14px 20px", borderBottom:"1px solid var(--color-ground-sand)" },
+  colHd: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"0.5px", textTransform:"uppercase" },
   thumb: { width:44, height:44, borderRadius:8, objectFit:"cover", flexShrink:0 },
-  thumbFallback: { width:44, height:44, borderRadius:8, background:"#F0EBE5", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 },
-  hotelName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:2 },
-  hotelAddr: { fontSize:11, color:"#9FB3C8", lineHeight:1.3 },
-  hotelRating: { fontSize:11, color:"#f59e0b", marginTop:2 },
-  emailText: { fontSize:12, color:"#E85D3D", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
-  noEmailText: { fontSize:12, color:"#cbd5e1", marginBottom:2 },
-  contactCountBadge: { display:"inline-flex", alignItems:"center", gap:6, padding:"5px 10px", background:"#EEF2FF", border:"1.5px solid #C7D2FE", borderRadius:20, fontSize:11, fontWeight:700, color:"#4338CA", cursor:"pointer", marginBottom:4, fontFamily:"inherit" },
-  selectedCount: { background:"#E85D3D", color:"#fff", fontSize:10, fontWeight:700, padding:"1px 7px", borderRadius:10 },
-  contactRow: { display:"flex", alignItems:"flex-start", gap:12, padding:"12px", borderRadius:10, border:"1.5px solid #F0EBE5", cursor:"pointer", transition:"all 0.15s" },
-  contactRowSelected: { border:"1.5px solid #E85D3D", background:"#FEF0EC" },
-  phoneText: { fontSize:11, color:"#4A6A8A", marginBottom:2 },
-  websiteLink: { fontSize:11, color:"#E85D3D", textDecoration:"none" },
-  statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  contacted: { background:"#dcfce7", color:"#166534" },
-  pending: { background:"#F0EBE5", color:"#4A6A8A" },
-  contactedDate: { fontSize:10, color:"#9FB3C8", marginTop:4 },
+  thumbFallback: { width:44, height:44, borderRadius:8, background:"var(--color-ground-sand)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 },
+  hotelName: { fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:2 },
+  hotelAddr: { fontSize:11, color:"var(--color-ink-muted)", lineHeight:1.3 },
+  hotelRating: { fontSize:11, color:"var(--color-accent-amber)", marginTop:2 },
+  emailText: { fontSize:12, color:"var(--color-ink-primary)", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
+  noEmailText: { fontSize:12, color:"var(--color-border)", marginBottom:2 },
+  contactCountBadge: { display:"inline-flex", alignItems:"center", gap:6, padding:"5px 10px", background:"var(--status-sent-bg)", border:"1.5px solid rgba(67,56,202,0.3)", borderRadius:20, fontSize:11, fontWeight:700, color:"var(--status-sent-ink)", cursor:"pointer", marginBottom:4, fontFamily:"inherit" },
+  selectedCount: { background:"var(--color-accent-terracotta)", color:"var(--color-ground-page)", fontSize:10, fontWeight:700, padding:"1px 7px", borderRadius:10 },
+  contactRow: { display:"flex", alignItems:"flex-start", gap:12, padding:"12px", borderRadius:10, border:"1.5px solid var(--color-ground-sand)", cursor:"pointer", transition:"all 0.15s" },
+  contactRowSelected: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--status-error-bg)" },
+  phoneText: { fontSize:11, color:"var(--color-ink-mid)", marginBottom:2 },
+  websiteLink: { fontSize:11, color:"var(--color-accent-amber-deep)", textDecoration:"none" },
+  statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"var(--font-display)" },
+  contacted: { background:"var(--status-success-bg)", color:"var(--status-success-ink)" },
+  pending: { background:"var(--color-ground-sand)", color:"var(--color-ink-mid)" },
+  contactedDate: { fontSize:10, color:"var(--color-ink-muted)", marginTop:4 },
   removeBtn: { background:"none", border:"none", cursor:"pointer", padding:4, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" },
-  empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"48px 24px", color:"#9FB3C8", fontSize:14, textAlign:"center" },
-  loadingSpinner: { width:24, height:24, border:"2.5px solid #e2e8f0", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
-  overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
-  modal: { background:"#fff", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
+  empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"48px 24px", color:"var(--color-ink-muted)", fontSize:14, textAlign:"center" },
+  loadingSpinner: { width:24, height:24, border:"2.5px solid var(--color-border)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
+  overlay: { position:"fixed", inset:0, background:"rgba(43,39,34,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+  modal: { background:"var(--color-ground-card)", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
   modalActions: { display:"flex", gap:10, justifyContent:"flex-end" },
   igHandle: { fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
-  igDmBtn: { display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#C13584", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
-  igWarning: { display:"flex", alignItems:"flex-start", gap:8, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:10, padding:"10px 12px", marginBottom:16, fontSize:12, color:"#92400e", lineHeight:1.5 },
-  igLabel: { display:"block", fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
-  igSelect: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", background:"#fff", cursor:"pointer", marginBottom:0 },
-  igTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7 },
-  igNote: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
-  igScrapeBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#C13584", fontFamily:"inherit" },
-  emailScrapeBtn: { background:"#FEF0EC", border:"1px solid #f5c4b4", color:"#E85D3D" },
+  igDmBtn: { display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#C13584", background:"rgba(193,53,132,0.08)", border:"1px solid rgba(193,53,132,0.3)", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
+  igWarning: { display:"flex", alignItems:"flex-start", gap:8, background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:10, padding:"10px 12px", marginBottom:16, fontSize:12, color:"var(--color-accent-amber-deeper)", lineHeight:1.5 },
+  igLabel: { display:"block", fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
+  igSelect: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", background:"var(--color-ground-card)", cursor:"pointer", marginBottom:0 },
+  igTextarea: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"vertical", lineHeight:1.7 },
+  igNote: { fontSize:12, color:"var(--color-ink-muted)", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
+  igScrapeBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"rgba(193,53,132,0.08)", border:"1px solid rgba(193,53,132,0.3)", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#C13584", fontFamily:"inherit" },
+  emailScrapeBtn: { background:"var(--status-error-bg)", border:"1px solid rgba(180,67,46,0.3)", color:"var(--color-error)" },
   igScrapeBtnDisabled: { opacity:0.45, cursor:"not-allowed" },
-  igScrapeProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"#FDF0F8", border:"1px solid #e8b4d8", borderRadius:9, fontSize:12, color:"#C13584", fontWeight:500 },
-  igScrapeSpinner: { width:12, height:12, border:"2px solid #e8b4d8", borderTopColor:"#C13584", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
-  hunterBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#0F2544", border:"none", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#fff", fontFamily:"inherit" },
-  hunterProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"#EEF2FF", border:"1px solid #c7d2fe", borderRadius:9, fontSize:12, color:"#4338ca", fontWeight:500 },
-  hunterSpinner: { width:12, height:12, border:"2px solid #c7d2fe", borderTopColor:"#4338ca", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
-  igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
-  igSentBadge: { fontSize:10, fontWeight:700, background:"#FDF0F8", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid #e8b4d8" },
-  igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid #e8b4d8", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
+  igScrapeProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"rgba(193,53,132,0.08)", border:"1px solid rgba(193,53,132,0.3)", borderRadius:9, fontSize:12, color:"#C13584", fontWeight:500 },
+  igScrapeSpinner: { width:12, height:12, border:"2px solid rgba(193,53,132,0.3)", borderTopColor:"#C13584", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
+  hunterBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"var(--color-ink-primary)", border:"none", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"var(--color-ground-page)", fontFamily:"inherit" },
+  hunterProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"var(--status-sent-bg)", border:"1px solid rgba(67,56,202,0.3)", borderRadius:9, fontSize:12, color:"var(--status-sent-ink)", fontWeight:500 },
+  hunterSpinner: { width:12, height:12, border:"2px solid rgba(67,56,202,0.3)", borderTopColor:"var(--status-sent-ink)", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
+  igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, var(--brand-instagram), var(--color-accent-amber))", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  igSentBadge: { fontSize:10, fontWeight:700, background:"rgba(193,53,132,0.08)", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid rgba(193,53,132,0.3)" },
+  igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid rgba(193,53,132,0.3)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
   igCheckboxChecked: { background:"#C13584", border:"1.5px solid #C13584" },
-  igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, #C13584, #E85D3D)", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
-  noteBtn: { display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:600, color:"#9FB3C8", background:"#F8FAFC", border:"1px dashed #DDD5CC", borderRadius:7, padding:"5px 10px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
-  noteBtnFilled: { color:"#0F2544", background:"#F0EBE5", border:"1px solid #DDD5CC" },
-  noteAddBtn: { fontSize:11, fontWeight:600, color:"#9FB3C8", background:"none", border:"1px dashed #DDD5CC", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
-  noteEditIcon: { background:"none", border:"none", cursor:"pointer", padding:2, color:"#9FB3C8", display:"flex", alignItems:"center", flexShrink:0 },
-  notesModal: { background:"#fff", borderRadius:16, padding:"24px", width:"90vw", maxWidth:480 },
-  notesModalTextarea: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:10, padding:"12px 14px", fontSize:14, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"vertical", lineHeight:1.7, boxSizing:"border-box" },
-  mapBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"#EEF4FF", border:"1px solid #c3d4f5", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#3B6FD4", fontFamily:"inherit" },
-  mapModal: { background:"#fff", borderRadius:16, padding:"24px", width:"90vw", maxWidth:780, maxHeight:"90vh", display:"flex", flexDirection:"column" },
-  mapContainer: { width:"100%", height:480, borderRadius:12, overflow:"hidden", border:"1.5px solid #e2e8f0" },
-  mapCloseBtn: { background:"none", border:"none", fontSize:16, color:"#9FB3C8", cursor:"pointer", padding:4, lineHeight:1 },
-  deleteBtn: { background:"#ef4444", color:"#fff", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans, system-ui, sans-serif" },
-  followUpBadge: { display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, color:"#92400e", background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:20, padding:"2px 8px" },
-  igReplyBtn: { fontSize:10, fontWeight:700, color:"#4A6A8A", background:"#f1f5f9", border:"1px solid #e2e8f0", borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
-  igReplyBtnActive: { color:"#166534", background:"#dcfce7", border:"1px solid #86efac" },
-  igAddBtn: { fontSize:12, color:"#C13584", background:"none", border:"1px dashed #e8b4d8", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
-  igManualInput: { width:"100%", border:"1.5px solid #e8b4d8", borderRadius:7, padding:"5px 8px", fontSize:12, fontFamily:"inherit", color:"#1E3A5F", outline:"none" },
+  igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, var(--brand-instagram), var(--color-accent-amber))", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  noteBtn: { display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"var(--color-ground-sand)", border:"1px dashed var(--color-border)", borderRadius:7, padding:"5px 10px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
+  noteBtnFilled: { color:"var(--color-ink-primary)", background:"var(--color-ground-sand)", border:"1px solid var(--color-border)" },
+  noteAddBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"1px dashed var(--color-border)", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
+  noteEditIcon: { background:"none", border:"none", cursor:"pointer", padding:2, color:"var(--color-ink-muted)", display:"flex", alignItems:"center", flexShrink:0 },
+  notesModal: { background:"var(--color-ground-card)", borderRadius:16, padding:"24px", width:"90vw", maxWidth:480 },
+  notesModalTextarea: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"12px 14px", fontSize:14, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"vertical", lineHeight:1.7, boxSizing:"border-box" },
+  mapBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"var(--status-sent-bg)", border:"1px solid rgba(67,56,202,0.3)", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"var(--status-sent-ink)", fontFamily:"inherit" },
+  mapModal: { background:"var(--color-ground-card)", borderRadius:16, padding:"24px", width:"90vw", maxWidth:780, maxHeight:"90vh", display:"flex", flexDirection:"column" },
+  mapContainer: { width:"100%", height:480, borderRadius:12, overflow:"hidden", border:"1.5px solid var(--color-border)" },
+  mapCloseBtn: { background:"none", border:"none", fontSize:16, color:"var(--color-ink-muted)", cursor:"pointer", padding:4, lineHeight:1 },
+  deleteBtn: { background:"var(--color-error)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
+  followUpBadge: { display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, color:"var(--color-accent-amber-deeper)", background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:20, padding:"2px 8px" },
+  igReplyBtn: { fontSize:10, fontWeight:700, color:"var(--color-ink-mid)", background:"rgba(43,39,34,0.07)", border:"1px solid var(--color-border)", borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
+  igReplyBtnActive: { color:"var(--status-success-ink)", background:"var(--status-success-bg)", border:"1px solid rgba(22,101,52,0.3)" },
+  igAddBtn: { fontSize:12, color:"#C13584", background:"none", border:"1px dashed rgba(193,53,132,0.3)", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
+  igManualInput: { width:"100%", border:"1.5px solid rgba(193,53,132,0.3)", borderRadius:7, padding:"5px 8px", fontSize:12, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none" },
 };
