@@ -41,6 +41,19 @@ colors:
   dapple-sand-dot: "#ECD9B8"
   dapple-url-grey: "#C8C2B2"
   dapple-error: "#B4432E"
+  dapple-olive-deep: "#5B6B47"
+  dapple-amber-tint: "#FCF1DA"
+  dapple-terracotta-hover: "#A85A30"
+  dapple-stone: "#EFEAE0"
+  dapple-mist: "#F8F4F0"
+  # ── Semantic status (deliberately outside the golden-hour palette) ──
+  status-success-bg: "#DCFCE7"
+  status-success-ink: "#166534"
+  status-sent-bg: "#EEF2FF"
+  status-sent-ink: "#4338CA"
+  status-error-bg: "#FEF2F2"
+  # ── External brand ──
+  brand-instagram: "#C13584"
 typography:
   display:
     fontFamily: "Manrope, system-ui, sans-serif"
@@ -213,6 +226,26 @@ The go-forward brand for public-facing and new surfaces (`dapples.io`, the waitl
 
 **Golden-hour glow (decorative only)**
 - **Glow Gold** (`#F4C97A`), **Honey** (`#F0B979`), **Amber** (`#E5A04A`), **Pale** (`#FDEBBE`), **Ember** (`#EBA94E`): blurred light orbs behind heroes and the wordmark. Never text or fills. Plus **Sand Dot** (`#ECD9B8`) and **URL Grey** (`#C8C2B2`) for the browser-mockup chrome.
+
+**Golden-hour extensions**
+- **Dapple Olive Deep** (`#5B6B47`): the dark end of the olive ramp — positive/complete icons and chip text on an `rgba(139,154,106,.16)` tint. Passes AA where Olive Mid does not.
+- **Dapple Amber Tint** (`#FCF1DA`): the lightest amber surface — highlighted rows and selected cards.
+- **Dapple Terracotta Hover** (`#A85A30`): hover for terracotta actions.
+- **Dapple Stone** (`#EFEAE0`) / **Dapple Mist** (`#F8F4F0`): neutral warm surfaces for de-emphasised panels.
+
+### Semantic Status (outside the golden-hour palette, by design)
+
+Status colors carry meaning that the brand ramp cannot: a warm amber "sent" and a warm olive "replied" read as decoration, not state. These five are the **only** sanctioned non-brand colors.
+
+- **Success / Replied** — bg `#DCFCE7`, ink `#166534`.
+- **Sent** — bg `#EEF2FF`, ink `#4338CA`.
+- **Error** — bg `#FEF2F2`, ink `{colors.dapple-error}`.
+
+### External Brand
+
+- **Instagram** (`#C13584`): Instagram handles, IG pills and DM indicators only, on an `rgba(193,53,132,.12)` tint. It is Instagram's brand, not ours.
+
+**The Status-Only Rule.** `status-*` and `brand-instagram` are reserved for state and third-party identity — a status green never becomes a decorative accent, and Instagram magenta never appears on anything that isn't Instagram. Everything else on a Dapples surface comes from the golden-hour palette.
 
 **The Two-Brand Rule.** StayFind (navy/coral) dresses the logged-in app; Dapples (cream/forest/amber) dresses marketing and new public surfaces. A single page picks one brand and commits — never blend the two palettes.
 

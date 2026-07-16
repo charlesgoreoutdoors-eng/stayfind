@@ -31,8 +31,25 @@
   --color-accent-terracotta:   #C96E3C;
 
   /* Colors — Cool counterpoint */
-  --color-cool-olive:     #C9D1A8;
-  --color-cool-olive-mid: #8B9A6A;
+  --color-cool-olive:      #C9D1A8;
+  --color-cool-olive-mid:  #8B9A6A;
+  --color-cool-olive-deep: #5B6B47;
+
+  /* Colors — Warm surface tints */
+  --color-amber-tint:       #FCF1DA;
+  --color-terracotta-hover: #A85A30;
+  --color-stone:            #EFEAE0;
+  --color-mist:             #F8F4F0;
+
+  /* Semantic status — the only sanctioned non-brand colors (see DESIGN.md) */
+  --status-success-bg:  #DCFCE7;
+  --status-success-ink: #166534;
+  --status-sent-bg:     #EEF2FF;
+  --status-sent-ink:    #4338CA;
+  --status-error-bg:    #FEF2F2;
+
+  /* External brand — Instagram identity only */
+  --brand-instagram: #C13584;
 
   /* Colors — Glow orbs (decorative blur only, never text/fill) */
   --color-glow-1: #F4C97A;

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-16T01:42:51Z",
+  "generatedAt": "2026-07-16T09:27:46Z",
   "title": "Design System: StayFind",
   "extensions": {
     "colorMeta": {
@@ -467,6 +467,171 @@
           "#eab7ae",
           "#f5dbd6",
           "#fbf1ef"
+        ]
+      },
+      "dapple-olive-deep": {
+        "role": "tertiary",
+        "displayName": "Dapple olive Deep",
+        "canonical": "#5B6B47",
+        "tonalRamp": [
+          "#2f3725",
+          "#4e5c3d",
+          "#6e8155",
+          "#8fa375",
+          "#afbe9d",
+          "#cdd6c2",
+          "#e6ebe0",
+          "#f5f7f3"
+        ]
+      },
+      "dapple-amber-tint": {
+        "role": "secondary",
+        "displayName": "Dapple amber Tint",
+        "canonical": "#FCF1DA",
+        "tonalRamp": [
+          "#553c07",
+          "#8e630b",
+          "#c68b10",
+          "#eeaf2b",
+          "#f3c668",
+          "#f7dba1",
+          "#fbedd0",
+          "#fdf8ec"
+        ]
+      },
+      "dapple-terracotta-hover": {
+        "role": "secondary",
+        "displayName": "Dapple terracotta Hover",
+        "canonical": "#A85A30",
+        "tonalRamp": [
+          "#472614",
+          "#774022",
+          "#a75930",
+          "#cc794d",
+          "#dba080",
+          "#e8c4b0",
+          "#f4e1d7",
+          "#faf3ef"
+        ]
+      },
+      "dapple-stone": {
+        "role": "neutral",
+        "displayName": "Dapple stone",
+        "canonical": "#EFEAE0",
+        "tonalRamp": [
+          "#3d331f",
+          "#655534",
+          "#8d7649",
+          "#b19868",
+          "#c7b693",
+          "#dcd1bc",
+          "#eee8dd",
+          "#f8f6f2"
+        ]
+      },
+      "dapple-mist": {
+        "role": "neutral",
+        "displayName": "Dapple mist",
+        "canonical": "#F8F4F0",
+        "tonalRamp": [
+          "#3f2e1d",
+          "#684d31",
+          "#926b44",
+          "#b68c63",
+          "#cbad90",
+          "#dfccb9",
+          "#efe6dc",
+          "#f9f5f1"
+        ]
+      },
+      "status-success-bg": {
+        "role": "neutral",
+        "displayName": "Status success Bg",
+        "canonical": "#DCFCE7",
+        "tonalRamp": [
+          "#075522",
+          "#0c8d38",
+          "#11c54f",
+          "#2ced6e",
+          "#69f298",
+          "#a1f7bf",
+          "#d0fbdf",
+          "#ecfdf2"
+        ]
+      },
+      "status-success-ink": {
+        "role": "neutral",
+        "displayName": "Status success Ink",
+        "canonical": "#166534",
+        "tonalRamp": [
+          "#104b27",
+          "#1b7e41",
+          "#26b05b",
+          "#43d67b",
+          "#79e2a1",
+          "#abedc4",
+          "#d5f6e2",
+          "#eefbf3"
+        ]
+      },
+      "status-sent-bg": {
+        "role": "neutral",
+        "displayName": "Status sent Bg",
+        "canonical": "#EEF2FF",
+        "tonalRamp": [
+          "#00165c",
+          "#002499",
+          "#0032d6",
+          "#1a4fff",
+          "#5c82ff",
+          "#99b1ff",
+          "#ccd8ff",
+          "#ebefff"
+        ]
+      },
+      "status-sent-ink": {
+        "role": "neutral",
+        "displayName": "Status sent Ink",
+        "canonical": "#4338CA",
+        "tonalRamp": [
+          "#171348",
+          "#272079",
+          "#362da9",
+          "#544acf",
+          "#857edd",
+          "#b3aeea",
+          "#d9d7f4",
+          "#f0effb"
+        ]
+      },
+      "status-error-bg": {
+        "role": "neutral",
+        "displayName": "Status error Bg",
+        "canonical": "#FEF2F2",
+        "tonalRamp": [
+          "#550707",
+          "#8e0b0b",
+          "#c70f0f",
+          "#ef2a2a",
+          "#f36767",
+          "#f8a0a0",
+          "#fbd0d0",
+          "#feecec"
+        ]
+      },
+      "brand-instagram": {
+        "role": "neutral",
+        "displayName": "Brand instagram",
+        "canonical": "#C13584",
+        "tonalRamp": [
+          "#481431",
+          "#782152",
+          "#a82e73",
+          "#ce4b95",
+          "#dc7fb3",
+          "#e9afd0",
+          "#f4d7e7",
+          "#fbeff6"
         ]
       }
     },
