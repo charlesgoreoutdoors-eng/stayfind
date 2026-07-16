@@ -124,7 +124,7 @@ export default function Waitlist() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 2 }}>
-                <div style={s.formRow}>
+                <div className="dpl-formrow" style={s.formRow}>
                   <input
                     className="dpl-in" type="email" required placeholder="you@studio.com"
                     value={email} onChange={(e) => setEmail(e.target.value)}
@@ -177,7 +177,7 @@ export default function Waitlist() {
       </section>
 
       {/* ── Why Dapples? comparison ── */}
-      <section className="dpl-pad" style={{ position: "relative", overflow: "hidden", padding: "52px 0" }}>
+      <section className="dpl-pad" style={{ position: "relative", overflow: "hidden", paddingTop: 52, paddingBottom: 52 }}>
         <span style={{ ...glow, top: -30, right: "2%", width: 220, height: 220, background: "#F4C97A", opacity: 0.32, filter: "blur(70px)" }} />
         <div style={{ textAlign: "center", marginBottom: 32, position: "relative" }}>
           <div style={{ fontFamily: HEAD, fontSize: "clamp(26px, 4vw, 32px)", fontWeight: 700, letterSpacing: "-0.01em", color: "#2B2722" }}>Why Dapples?</div>
@@ -234,10 +234,10 @@ const s = {
   nav: { position: "relative", overflow: "hidden", background: "#FBF0DA", borderBottom: "1px solid rgba(43,39,34,0.10)" },
   navGlow: { position: "absolute", inset: 0, pointerEvents: "none" },
 
-  hero: { position: "relative", maxWidth: 1120, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44, padding: "60px 0", alignItems: "center" },
+  hero: { position: "relative", maxWidth: 1120, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44, paddingTop: 60, paddingBottom: 60, alignItems: "center" },
   h1: { fontFamily: HEAD, fontSize: "clamp(32px, 5vw, 46px)", fontWeight: 600, lineHeight: 1.08, letterSpacing: "-0.02em", color: "#2B2722" },
   h1sub: { fontSize: 17, lineHeight: 1.6, color: "#6B6258", maxWidth: "46ch", marginTop: 14 },
-  formRow: { display: "flex", gap: 11, flexWrap: "wrap" },
+  formRow: { display: "flex", gap: 11, flexWrap: "wrap", alignItems: "stretch" },
   input: { flex: 1, minWidth: 200, background: "#FFFCF4", border: "1.5px solid #DDD0B8", borderRadius: 14, padding: "15px 17px", fontSize: 15, color: "#2B2722", fontFamily: BODY, outline: "none" },
   primaryBtn: { background: "#44503A", color: "#FBF5EA", border: "none", borderRadius: 14, padding: "15px 24px", fontSize: 15, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontFamily: HEAD },
   founding: { fontSize: 15, lineHeight: 1.5, color: "#6B6258", fontWeight: 700 },
@@ -249,11 +249,11 @@ const s = {
   browserDot: { width: 10, height: 10, borderRadius: "50%" },
   browserImg: { width: "100%", display: "block", aspectRatio: "985 / 640", objectFit: "cover", objectPosition: "top" },
 
-  painWrap: { maxWidth: 1120, margin: "0 auto", padding: "56px 0 44px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
+  painWrap: { maxWidth: 1120, margin: "0 auto", paddingTop: 56, paddingBottom: 44, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
   painH: { fontFamily: HEAD, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 600, lineHeight: 1.2, letterSpacing: "-0.01em", maxWidth: "40ch", color: "#2B2722" },
   painSub: { fontSize: 18, lineHeight: 1.6, color: "#6B6258", maxWidth: "54ch" },
 
-  steps: { background: "#F3E7CF", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, padding: "52px 0", marginLeft: 0 },
+  steps: { background: "#F3E7CF", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, paddingTop: 52, paddingBottom: 52 },
   stepCard: { background: "#FFFCF4", border: "1px solid rgba(43,39,34,0.07)", borderRadius: 20, padding: 24, display: "flex", flexDirection: "column", gap: 9, boxShadow: "0 18px 40px -36px rgba(120,80,30,0.55)" },
   stepNum: { width: 38, height: 38, borderRadius: 12, background: "rgba(224,149,74,0.16)", color: "#C96E3C", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: HEAD, fontWeight: 700, fontSize: 16 },
 
@@ -265,10 +265,10 @@ const s = {
   cellManual: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, padding: "16px 4px" },
   cellDapples: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, padding: "16px 4px" },
 
-  founder: { maxWidth: 1120, margin: "0 auto", padding: "56px 0", display: "flex", gap: 26, alignItems: "flex-start" },
+  founder: { maxWidth: 1120, margin: "0 auto", paddingTop: 56, paddingBottom: 56, display: "flex", gap: 26, alignItems: "flex-start" },
   founderAvatar: { width: 82, height: 82, flex: "none", borderRadius: "50%", background: "linear-gradient(160deg,#F4C97A,#E5A04A)", color: "#FBF5EA", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: HEAD, fontSize: 34, fontWeight: 700 },
 
-  footer: { maxWidth: 1120, margin: "0 auto", padding: "24px 0", borderTop: "1px solid rgba(43,39,34,0.10)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 },
+  footer: { maxWidth: 1120, margin: "0 auto", paddingTop: 24, paddingBottom: 24, borderTop: "1px solid rgba(43,39,34,0.10)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 },
 };
 
 const css = `
@@ -279,10 +279,12 @@ const css = `
   .dpl-in:focus { border-color: #B5702E !important; }
   .dpl-in::placeholder { color: #B6AD9C; }
   @media (max-width: 900px) {
-    .dpl-hero { grid-template-columns: 1fr !important; gap: 36px !important; padding: 44px 0 !important; }
+    .dpl-hero { grid-template-columns: 1fr !important; gap: 34px !important; padding-top: 40px !important; padding-bottom: 40px !important; }
     .dpl-steps { grid-template-columns: 1fr 1fr !important; }
   }
   @media (max-width: 560px) {
     .dpl-steps { grid-template-columns: 1fr !important; }
+    .dpl-formrow { flex-direction: column; }
+    .dpl-formrow .dpl-in, .dpl-formrow .dpl-primary { width: 100%; }
   }
 `;
