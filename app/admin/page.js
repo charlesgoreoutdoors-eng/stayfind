@@ -188,7 +188,7 @@ export default function AdminPage() {
           { label: "Emails Sent",        value: data?.stats.emailsSent },
         ].map((c, i) => (
           <div key={i} style={s.statCard}>
-            <p style={{ ...s.statValue, color: c.accent ? "#E85D3D" : "#0F2544" }}>
+            <p style={{ ...s.statValue, color: c.accent ? "var(--color-accent-terracotta)" : "var(--color-ink-primary)" }}>
               {loading || data == null ? "—" : (c.value ?? 0).toLocaleString()}
             </p>
             <p style={s.statLabel}>{c.label}</p>
@@ -224,7 +224,7 @@ export default function AdminPage() {
                 return (
                   <tr key={u.id} style={s.tr}>
                     <td style={s.td}>{u.email}</td>
-                    <td style={{ ...s.td, color: u.name ? "#1E3A5F" : "#9FB3C8" }}>{u.name || "—"}</td>
+                    <td style={{ ...s.td, color: u.name ? "var(--color-ink-primary)" : "var(--color-ink-muted)" }}>{u.name || "—"}</td>
                     <td style={s.td}>
                       <select
                         style={s.planSelect}
@@ -234,7 +234,7 @@ export default function AdminPage() {
                         {PLANS.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </td>
-                    <td style={{ ...s.td, color: "#64748b" }}>
+                    <td style={{ ...s.td, color: "var(--color-ink-mid)" }}>
                       {u.joined ? new Date(u.joined).toLocaleDateString() : "—"}
                     </td>
                     <td style={{ ...s.td, textAlign: "right" }}>{u.lists}</td>
@@ -250,7 +250,7 @@ export default function AdminPage() {
                 );
               })}
               {!loading && pageUsers.length === 0 && (
-                <tr><td colSpan={7} style={{ ...s.td, textAlign: "center", color: "#9FB3C8", padding: 32 }}>No users found.</td></tr>
+                <tr><td colSpan={7} style={{ ...s.td, textAlign: "center", color: "var(--color-ink-muted)", padding: 32 }}>No users found.</td></tr>
               )}
             </tbody>
           </table>
@@ -298,14 +298,14 @@ export default function AdminPage() {
             {cacheProgress.map((p, i) => (
               <div key={i} style={s.progressRow}>
                 <span style={s.progressIcon}>
-                  {p.status === "done" ? <span style={{ color: "#16a34a" }}>✓</span>
-                    : p.status === "error" ? <span style={{ color: "#ef4444" }}>✕</span>
+                  {p.status === "done" ? <span style={{ color: "var(--status-success-ink)" }}>✓</span>
+                    : p.status === "error" ? <span style={{ color: "var(--color-error)" }}>✕</span>
                     : p.status === "active" ? <span style={s.miniSpinner} />
-                    : <span style={{ color: "#9FB3C8" }}>•</span>}
+                    : <span style={{ color: "var(--color-ink-muted)" }}>•</span>}
                 </span>
                 <span style={s.progressCity}>{p.city}</span>
                 {p.status === "done" && <span style={s.progressCount}>{p.count} cached</span>}
-                {p.status === "error" && <span style={{ ...s.progressCount, color: "#ef4444" }}>failed</span>}
+                {p.status === "error" && <span style={{ ...s.progressCount, color: "var(--color-error)" }}>failed</span>}
               </div>
             ))}
           </div>
@@ -355,7 +355,7 @@ export default function AdminPage() {
                 {loading || data == null ? "—" : (c.value ?? 0).toLocaleString?.() ?? c.value ?? 0}
               </p>
               <p style={s.statLabel}>{c.label}</p>
-              {c.note && <p style={{ fontSize:10, color:"#C4C4C4", marginTop:2 }}>{c.note}</p>}
+              {c.note && <p style={{ fontSize:10, color:"var(--color-border)", marginTop:2 }}>{c.note}</p>}
             </div>
           ))}
         </div>
@@ -377,13 +377,13 @@ export default function AdminPage() {
                     <td style={s.td}>{row.domain}</td>
                     <td style={s.td}>
                       {row.cache_hit
-                        ? <span style={{ fontSize:11, fontWeight:700, background:"#dcfce7", color:"#166534", padding:"2px 9px", borderRadius:20 }}>Cached</span>
-                        : <span style={{ fontSize:11, fontWeight:700, background:"#dbeafe", color:"#1d4ed8", padding:"2px 9px", borderRadius:20 }}>API Call</span>
+                        ? <span style={{ fontSize:11, fontWeight:700, background:"var(--status-success-bg)", color:"var(--status-success-ink)", padding:"2px 9px", borderRadius:20 }}>Cached</span>
+                        : <span style={{ fontSize:11, fontWeight:700, background:"var(--status-sent-bg)", color:"var(--status-sent-ink)", padding:"2px 9px", borderRadius:20 }}>API Call</span>
                       }
                     </td>
                     <td style={s.td}>{row.contacts_found ?? 0}</td>
-                    <td style={{ ...s.td, fontSize:12, color:"#9FB3C8" }}>{row.user_email}</td>
-                    <td style={{ ...s.td, fontSize:12, color:"#9FB3C8" }}>{row.searched_at ? new Date(row.searched_at).toLocaleString() : "—"}</td>
+                    <td style={{ ...s.td, fontSize:12, color:"var(--color-ink-muted)" }}>{row.user_email}</td>
+                    <td style={{ ...s.td, fontSize:12, color:"var(--color-ink-muted)" }}>{row.searched_at ? new Date(row.searched_at).toLocaleString() : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -414,59 +414,59 @@ export default function AdminPage() {
 const s = {
   root: { padding: "32px 24px 80px", maxWidth: 1100, margin: "0 auto" },
   center: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "70vh" },
-  spinner: { width: 28, height: 28, border: "3px solid #F0EBE5", borderTopColor: "#E85D3D", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  miniSpinner: { display: "inline-block", width: 12, height: 12, border: "2px solid #F0EBE5", borderTopColor: "#E85D3D", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
+  spinner: { width: 28, height: 28, border: "3px solid var(--color-ground-sand)", borderTopColor:"var(--color-accent-amber)", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
+  miniSpinner: { display: "inline-block", width: 12, height: 12, border: "2px solid var(--color-ground-sand)", borderTopColor:"var(--color-accent-amber)", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
 
   headerRow: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 },
-  h1: { fontSize: 24, fontWeight: 700, color: "#0F2544", letterSpacing: "-0.4px" },
-  refreshBtn: { padding: "8px 16px", background: "#fff", border: "1px solid #DDD5CC", borderRadius: 9, fontSize: 13, fontWeight: 600, color: "#4A6A8A", cursor: "pointer" },
-  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c", padding: "12px 16px", borderRadius: 10, fontSize: 13, marginBottom: 20 },
+  h1: { fontSize: 24, fontWeight: 700, color: "var(--color-ink-primary)", letterSpacing: "-0.4px" },
+  refreshBtn: { padding: "8px 16px", background:"var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: 9, fontSize: 13, fontWeight: 600, color: "var(--color-ink-mid)", cursor: "pointer" },
+  errorBox: { background: "var(--status-error-bg)", border: "1px solid rgba(180,67,46,0.3)", color: "var(--color-error)", padding: "12px 16px", borderRadius: 10, fontSize: 13, marginBottom: 20 },
 
   statsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, marginBottom: 32 },
-  statCard: { background: "#fff", borderRadius: 14, border: "1px solid #DDD5CC", padding: "18px 20px" },
-  statValue: { fontSize: 28, fontWeight: 700, color: "#0F2544", letterSpacing: "-0.5px", marginBottom: 4 },
-  statLabel: { fontSize: 12, color: "#9FB3C8", fontWeight: 500 },
+  statCard: { background:"var(--color-ground-card)", borderRadius: 14, border: "1px solid var(--color-border)", padding: "18px 20px" },
+  statValue: { fontSize: 28, fontWeight: 700, color: "var(--color-ink-primary)", letterSpacing: "-0.5px", marginBottom: 4 },
+  statLabel: { fontSize: 12, color: "var(--color-ink-muted)", fontWeight: 500 },
 
-  section: { background: "#fff", borderRadius: 16, border: "1px solid #DDD5CC", padding: "22px 24px", marginBottom: 28 },
+  section: { background:"var(--color-ground-card)", borderRadius: 16, border: "1px solid var(--color-border)", padding: "22px 24px", marginBottom: 28 },
   sectionHead: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 18, flexWrap: "wrap" },
-  h2: { fontSize: 16, fontWeight: 700, color: "#0F2544", display: "flex", alignItems: "center", gap: 8 },
-  countPill: { fontSize: 12, fontWeight: 600, background: "#F0EBE5", color: "#4A6A8A", padding: "2px 9px", borderRadius: 20 },
-  searchInput: { padding: "9px 14px", border: "1px solid #DDD5CC", borderRadius: 9, fontSize: 13, color: "#1E3A5F", width: 260, maxWidth: "100%" },
+  h2: { fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)", display: "flex", alignItems: "center", gap: 8 },
+  countPill: { fontSize: 12, fontWeight: 600, background: "var(--color-ground-sand)", color: "var(--color-ink-mid)", padding: "2px 9px", borderRadius: 20 },
+  searchInput: { padding: "9px 14px", border: "1px solid var(--color-border)", borderRadius: 9, fontSize: 13, color: "var(--color-ink-primary)", width: 260, maxWidth: "100%" },
 
   tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "collapse", minWidth: 720 },
-  th: { fontSize: 11, fontWeight: 700, color: "#9FB3C8", letterSpacing: "0.4px", textTransform: "uppercase", padding: "0 12px 10px", borderBottom: "1px solid #F0EBE5" },
-  tr: { borderBottom: "1px solid #F8F4F0" },
-  td: { fontSize: 13, color: "#1E3A5F", padding: "12px", verticalAlign: "middle" },
-  planSelect: { padding: "5px 8px", border: "1px solid #DDD5CC", borderRadius: 7, fontSize: 12, color: "#1E3A5F", textTransform: "capitalize", cursor: "pointer", background: "#fff" },
-  saveBtn: { padding: "5px 12px", background: "#E85D3D", color: "#fff", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  th: { fontSize: 11, fontWeight: 700, color: "var(--color-ink-muted)", letterSpacing: "0.4px", textTransform: "uppercase", padding: "0 12px 10px", borderBottom: "1px solid var(--color-ground-sand)" },
+  tr: { borderBottom: "1px solid var(--color-mist)" },
+  td: { fontSize: 13, color: "var(--color-ink-primary)", padding: "12px", verticalAlign: "middle" },
+  planSelect: { padding: "5px 8px", border: "1px solid var(--color-border)", borderRadius: 7, fontSize: 12, color: "var(--color-ink-primary)", textTransform: "capitalize", cursor: "pointer", background:"var(--color-ground-card)" },
+  saveBtn: { padding: "5px 12px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" },
 
   pagination: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 18 },
-  pageBtn: { padding: "7px 16px", background: "#fff", border: "1px solid #DDD5CC", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#4A6A8A", cursor: "pointer" },
-  pageInfo: { fontSize: 13, color: "#64748b", fontWeight: 500 },
+  pageBtn: { padding: "7px 16px", background:"var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "var(--color-ink-mid)", cursor: "pointer" },
+  pageInfo: { fontSize: 13, color: "var(--color-ink-mid)", fontWeight: 500 },
 
-  helpText: { fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 16 },
+  helpText: { fontSize: 13, color: "var(--color-ink-mid)", lineHeight: 1.6, marginBottom: 16 },
   cacheControls: { display: "flex", gap: 16, flexWrap: "wrap" },
-  textarea: { flex: "1 1 320px", minHeight: 150, padding: "12px 14px", border: "1px solid #DDD5CC", borderRadius: 10, fontSize: 13, color: "#1E3A5F", resize: "vertical", lineHeight: 1.7, fontFamily: "inherit" },
+  textarea: { flex: "1 1 320px", minHeight: 150, padding: "12px 14px", border: "1px solid var(--color-border)", borderRadius: 10, fontSize: 13, color: "var(--color-ink-primary)", resize: "vertical", lineHeight: 1.7, fontFamily: "inherit" },
   cacheSide: { display: "flex", flexDirection: "column", gap: 10, width: 220 },
-  label: { fontSize: 12, fontWeight: 600, color: "#1E3A5F" },
-  fullSelect: { padding: "9px 12px", border: "1px solid #DDD5CC", borderRadius: 9, fontSize: 13, color: "#1E3A5F", background: "#fff", cursor: "pointer" },
-  primaryBtn: { padding: "11px 16px", background: "#E85D3D", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  progressText: { fontSize: 12, color: "#9FB3C8", textAlign: "center" },
+  label: { fontSize: 12, fontWeight: 600, color: "var(--color-ink-primary)" },
+  fullSelect: { padding: "9px 12px", border: "1px solid var(--color-border)", borderRadius: 9, fontSize: 13, color: "var(--color-ink-primary)", background:"var(--color-ground-card)", cursor: "pointer" },
+  primaryBtn: { padding: "11px 16px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  progressText: { fontSize: 12, color: "var(--color-ink-muted)", textAlign: "center" },
 
-  progressList: { marginTop: 20, borderTop: "1px solid #F0EBE5", paddingTop: 14, display: "flex", flexDirection: "column", gap: 2 },
+  progressList: { marginTop: 20, borderTop: "1px solid var(--color-ground-sand)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 2 },
   progressRow: { display: "flex", alignItems: "center", gap: 10, padding: "7px 0" },
   progressIcon: { width: 16, display: "flex", justifyContent: "center", fontSize: 13, fontWeight: 700 },
-  progressCity: { fontSize: 13, color: "#1E3A5F", fontWeight: 500, flex: 1 },
-  progressCount: { fontSize: 12, color: "#16a34a", fontWeight: 600 },
+  progressCity: { fontSize: 13, color: "var(--color-ink-primary)", fontWeight: 500, flex: 1 },
+  progressCount: { fontSize: 12, color: "var(--status-success-ink)", fontWeight: 600 },
 
   cacheStatsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 },
 
-  overlay: { position: "fixed", inset: 0, background: "rgba(15,37,68,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
-  modal: { background: "#fff", borderRadius: 16, padding: 28, maxWidth: 400, width: "100%" },
-  modalTitle: { fontSize: 17, fontWeight: 700, color: "#0F2544", marginBottom: 8 },
-  modalText: { fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 },
+  overlay: { position: "fixed", inset: 0, background: "rgba(43,39,34,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
+  modal: { background:"var(--color-ground-card)", borderRadius: 16, padding: 28, maxWidth: 400, width: "100%" },
+  modalTitle: { fontSize: 17, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 8 },
+  modalText: { fontSize: 13, color: "var(--color-ink-mid)", lineHeight: 1.6, marginBottom: 20 },
   modalActions: { display: "flex", gap: 10, justifyContent: "flex-end" },
-  cancelBtn: { padding: "10px 18px", border: "1.5px solid #DDD5CC", borderRadius: 9, background: "#fff", fontSize: 13, fontWeight: 500, color: "#4A6A8A", cursor: "pointer" },
-  dangerBtn: { padding: "10px 18px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  cancelBtn: { padding: "10px 18px", border: "1.5px solid var(--color-border)", borderRadius: 9, background:"var(--color-ground-card)", fontSize: 13, fontWeight: 500, color: "var(--color-ink-mid)", cursor: "pointer" },
+  dangerBtn: { padding: "10px 18px", background: "var(--color-error)", color:"var(--color-ground-page)", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" },
 };

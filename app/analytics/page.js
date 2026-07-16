@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 
-function StatCard({ label, value, sub, color = "#0F2544", icon }) {
+function StatCard({ label, value, sub, color = "var(--color-ink-primary)", icon }) {
   return (
     <div style={s.statCard}>
       <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between" }}>
@@ -155,7 +155,7 @@ export default function AnalyticsPage() {
       <div style={{ padding:"28px 20px" }}>
         <h1 style={s.title}>Analytics</h1>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"80px 0" }}>
-          <div style={{ width:32, height:32, border:"3px solid #DDD5CC", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+          <div style={{ width:32, height:32, border:"3px solid var(--color-border)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -179,24 +179,24 @@ export default function AnalyticsPage() {
 
       {/* Top stats */}
       <div style={s.statsGrid}>
-        <StatCard label="Total Hotels" value={stats.totalHotels} sub={`across ${stats.totalLists} lists`} color="#0F2544"
+        <StatCard label="Total Hotels" value={stats.totalHotels} sub={`across ${stats.totalLists} lists`} color="var(--color-ink-primary)"
           icon="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <StatCard label="Emails Found" value={`${stats.emailFoundRate}%`} sub={`${stats.hotelsWithEmail} hotels`} color="#2A9D8F"
+        <StatCard label="Emails Found" value={`${stats.emailFoundRate}%`} sub={`${stats.hotelsWithEmail} hotels`} color="var(--status-success-ink)"
           icon="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9" />
-        <StatCard label="Contacted via Email" value={stats.hotelsContacted} sub={`${stats.contactRate}% of emails found`} color="#E85D3D"
+        <StatCard label="Contacted via Email" value={stats.hotelsContacted} sub={`${stats.contactRate}% of emails found`} color="var(--color-accent-terracotta)"
           icon="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-        <StatCard label="Contacted via Instagram" value={stats.hotelsIgContacted} sub={`of ${stats.hotelsWithIg} with IG handle`} color="#C13584"
+        <StatCard label="Contacted via Instagram" value={stats.hotelsIgContacted} sub={`of ${stats.hotelsWithIg} with IG handle`} color="var(--brand-instagram)"
           icon="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z" />
-        <StatCard label="Replies Received" value={stats.hotelsReplied} sub={`${stats.replyRate}% reply rate`} color="#1E3A5F"
+        <StatCard label="Replies Received" value={stats.hotelsReplied} sub={`${stats.replyRate}% reply rate`} color="var(--color-ink-primary)"
           icon="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </div>
 
       <div style={s.secondaryGrid}>
-        <StatCard label="Active Sequences" value={stats.activeJobs} sub={`${stats.completedJobs} completed`} color="#1E3A5F"
+        <StatCard label="Active Sequences" value={stats.activeJobs} sub={`${stats.completedJobs} completed`} color="var(--color-ink-primary)"
           icon="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9" />
-        <StatCard label="Templates" value={stats.totalTemplates} color="#4A6A8A"
+        <StatCard label="Templates" value={stats.totalTemplates} color="var(--color-ink-mid)"
           icon="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6" />
-        <StatCard label="Sequences Built" value={stats.totalSequences} color="#6B7280"
+        <StatCard label="Sequences Built" value={stats.totalSequences} color="var(--color-ink-mid)"
           icon="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
       </div>
 
@@ -217,8 +217,8 @@ export default function AnalyticsPage() {
             ))}
           </div>
           <div style={s.chartLegend}>
-            <div style={s.legendItem}><div style={{ ...s.legendDot, background:"#E85D3D" }} /><span>Hotels Added</span></div>
-            <div style={s.legendItem}><div style={{ ...s.legendDot, background:"#2A9D8F" }} /><span>Contacted</span></div>
+            <div style={s.legendItem}><div style={{ ...s.legendDot, background:"var(--color-action-forest)" }} /><span>Hotels Added</span></div>
+            <div style={s.legendItem}><div style={{ ...s.legendDot, background:"var(--status-success-ink)" }} /><span>Contacted</span></div>
           </div>
         </div>
 
@@ -232,21 +232,21 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div style={{ marginTop:16 }}>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 48px 64px 72px", gap:"0 8px", padding:"0 0 6px", borderBottom:"1px solid #F0EBE5", marginBottom:4 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 48px 64px 72px", gap:"0 8px", padding:"0 0 6px", borderBottom:"1px solid var(--color-ground-sand)", marginBottom:4 }}>
                 <span style={s.breakdownHd}>List</span>
                 <span style={{ ...s.breakdownHd, textAlign:"center" }}>Hotels</span>
-                <span style={{ ...s.breakdownHd, textAlign:"center", color:"#C13584" }}>IG DMs</span>
-                <span style={{ ...s.breakdownHd, textAlign:"center", color:"#E85D3D" }}>Emails Sent</span>
+                <span style={{ ...s.breakdownHd, textAlign:"center", color:"var(--brand-instagram)" }}>IG DMs</span>
+                <span style={{ ...s.breakdownHd, textAlign:"center", color:"var(--color-accent-terracotta)" }}>Emails Sent</span>
               </div>
               {stats.listBreakdown.map((list, i) => (
                 <div key={i} style={{ ...s.listRow, display:"grid", gridTemplateColumns:"1fr 48px 64px 72px", gap:"0 8px" }}>
                   <div style={{ minWidth:0 }}>
                     <p style={s.listName}>{list.name}</p>
-                    <p style={{ fontSize:11, color:"#9FB3C8", marginTop:1 }}>{list.withEmail} with email</p>
+                    <p style={{ fontSize:11, color:"var(--color-ink-muted)", marginTop:1 }}>{list.withEmail} with email</p>
                   </div>
-                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"#0F2544", alignSelf:"center" }}>{list.total}</div>
-                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"#C13584", alignSelf:"center" }}>{list.igDms}</div>
-                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"#E85D3D", alignSelf:"center" }}>{list.emailsSent}</div>
+                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--color-ink-primary)", alignSelf:"center" }}>{list.total}</div>
+                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--brand-instagram)", alignSelf:"center" }}>{list.igDms}</div>
+                  <div style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--color-accent-terracotta)", alignSelf:"center" }}>{list.emailsSent}</div>
                 </div>
               ))}
             </div>
@@ -262,26 +262,26 @@ export default function AnalyticsPage() {
           {/* Email track */}
           <div>
             <div style={s.funnelTrackHead}>
-              <div style={{ ...s.funnelTrackDot, background:"#E85D3D" }} />
+              <div style={{ ...s.funnelTrackDot, background:"var(--color-action-forest)" }} />
               <span style={s.funnelTrackLabel}>Email Outreach</span>
             </div>
             <div style={{ marginTop:14 }}>
-              <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="#0F2544" />
-              <SimpleBar label="Email Found" value={stats.hotelsWithEmail} max={stats.totalHotels} color="#2A9D8F" />
-              <SimpleBar label="Email Sent" value={stats.hotelsContacted} max={stats.totalHotels} color="#E85D3D" />
-              <SimpleBar label="Replied" value={stats.hotelsReplied} max={stats.totalHotels} color="#1E3A5F" />
+              <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="var(--color-ink-primary)" />
+              <SimpleBar label="Email Found" value={stats.hotelsWithEmail} max={stats.totalHotels} color="var(--status-success-ink)" />
+              <SimpleBar label="Email Sent" value={stats.hotelsContacted} max={stats.totalHotels} color="var(--color-accent-terracotta)" />
+              <SimpleBar label="Replied" value={stats.hotelsReplied} max={stats.totalHotels} color="var(--color-ink-primary)" />
             </div>
           </div>
           {/* Instagram track */}
           <div>
             <div style={s.funnelTrackHead}>
-              <div style={{ ...s.funnelTrackDot, background:"#C13584" }} />
+              <div style={{ ...s.funnelTrackDot, background:"var(--brand-instagram)" }} />
               <span style={s.funnelTrackLabel}>Instagram Outreach</span>
             </div>
             <div style={{ marginTop:14 }}>
-              <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="#0F2544" />
-              <SimpleBar label="IG Handle Found" value={stats.hotelsWithIg} max={stats.totalHotels} color="#4A6A8A" />
-              <SimpleBar label="DM Sent" value={stats.hotelsIgContacted} max={stats.totalHotels} color="#C13584" />
+              <SimpleBar label="Hotels Saved" value={stats.totalHotels} max={stats.totalHotels} color="var(--color-ink-primary)" />
+              <SimpleBar label="IG Handle Found" value={stats.hotelsWithIg} max={stats.totalHotels} color="var(--color-ink-mid)" />
+              <SimpleBar label="DM Sent" value={stats.hotelsIgContacted} max={stats.totalHotels} color="var(--brand-instagram)" />
             </div>
           </div>
         </div>
@@ -293,43 +293,43 @@ export default function AnalyticsPage() {
 const s = {
   root: { padding:"28px 20px 80px", maxWidth:1100, margin:"0 auto" },
   header: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:28, flexWrap:"wrap", gap:12 },
-  title: { fontSize:26, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px", marginBottom:4 },
-  subtitle: { fontSize:14, color:"#9FB3C8" },
-  refreshBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 16px", background:"#fff", border:"1.5px solid #DDD5CC", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:"#4A6A8A", fontFamily:"inherit" },
+  title: { fontSize:26, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.3px", marginBottom:4 },
+  subtitle: { fontSize:14, color:"var(--color-ink-muted)" },
+  refreshBtn: { display:"flex", alignItems:"center", gap:7, padding:"9px 16px", background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:"var(--color-ink-mid)", fontFamily:"inherit" },
   statsGrid: { display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:16, marginBottom:16 },
   secondaryGrid: { display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:16, marginBottom:28 },
-  statCard: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", padding:"18px 20px" },
-  statLabel: { fontSize:11, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.5px", textTransform:"uppercase", marginBottom:8 },
+  statCard: { background:"var(--color-ground-card)", borderRadius:14, border:"1px solid var(--color-border)", padding:"18px 20px" },
+  statLabel: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"0.5px", textTransform:"uppercase", marginBottom:8 },
   statValue: { fontSize:30, fontWeight:700, letterSpacing:"-0.5px", lineHeight:1, marginBottom:4 },
-  statSub: { fontSize:12, color:"#9FB3C8", marginTop:4 },
+  statSub: { fontSize:12, color:"var(--color-ink-muted)", marginTop:4 },
   statIcon: { width:40, height:40, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
   twoCol: { display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:20, marginBottom:20 },
-  card: { background:"#fff", borderRadius:14, border:"1px solid #DDD5CC", padding:"20px 22px" },
-  cardTitle: { fontSize:16, fontWeight:700, color:"#0F2544", marginBottom:3 },
-  cardSub: { fontSize:12, color:"#9FB3C8" },
-  emptyCard: { padding:"32px 0", textAlign:"center", color:"#9FB3C8", fontSize:13 },
+  card: { background:"var(--color-ground-card)", borderRadius:14, border:"1px solid var(--color-border)", padding:"20px 22px" },
+  cardTitle: { fontSize:16, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:3 },
+  cardSub: { fontSize:12, color:"var(--color-ink-muted)" },
+  emptyCard: { padding:"32px 0", textAlign:"center", color:"var(--color-ink-muted)", fontSize:13 },
   chartWrap: { display:"flex", alignItems:"flex-end", gap:4, height:120, marginTop:20, marginBottom:8 },
   chartCol: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, height:"100%" },
   chartBars: { flex:1, width:"100%", display:"flex", alignItems:"flex-end", gap:1 },
-  chartBarHotels: { flex:1, background:"#E85D3D", borderRadius:"3px 3px 0 0", transition:"height 0.3s", minHeight: 2 },
-  chartBarContacted: { flex:1, background:"#2A9D8F", borderRadius:"3px 3px 0 0", transition:"height 0.3s", minHeight: 0 },
-  chartLabel: { fontSize:9, color:"#CBD5E1", textAlign:"center" },
+  chartBarHotels: { flex:1, background:"var(--color-action-forest)", borderRadius:"3px 3px 0 0", transition:"height 0.3s", minHeight: 2 },
+  chartBarContacted: { flex:1, background:"var(--status-success-ink)", borderRadius:"3px 3px 0 0", transition:"height 0.3s", minHeight: 0 },
+  chartLabel: { fontSize:9, color:"var(--color-border)", textAlign:"center" },
   chartLegend: { display:"flex", gap:16, marginTop:8 },
-  legendItem: { display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#9FB3C8" },
+  legendItem: { display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--color-ink-muted)" },
   legendDot: { width:10, height:10, borderRadius:"50%", flexShrink:0 },
-  listRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid #F7F3EF" },
-  listName: { fontSize:13, fontWeight:600, color:"#1E3A5F", marginBottom:3 },
+  listRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid var(--color-ground-page)" },
+  listName: { fontSize:13, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:3 },
   listMini: { display:"flex", alignItems:"center", gap:4, flexWrap:"wrap" },
-  miniStat: { fontSize:11, color:"#9FB3C8" },
-  miniDot: { fontSize:11, color:"#DDD5CC" },
-  listPct: { fontSize:14, fontWeight:700, color:"#E85D3D", flexShrink:0 },
+  miniStat: { fontSize:11, color:"var(--color-ink-muted)" },
+  miniDot: { fontSize:11, color:"var(--color-border)" },
+  listPct: { fontSize:14, fontWeight:700, color:"var(--color-accent-terracotta)", flexShrink:0 },
   barRow: { display:"flex", alignItems:"center", gap:12, marginBottom:14 },
-  barLabel: { fontSize:13, color:"#1E3A5F", fontWeight:500, minWidth:120 },
-  barTrack: { flex:1, height:10, background:"#F0EBE5", borderRadius:6, overflow:"hidden" },
+  barLabel: { fontSize:13, color:"var(--color-ink-primary)", fontWeight:500, minWidth:120 },
+  barTrack: { flex:1, height:10, background:"var(--color-ground-sand)", borderRadius:6, overflow:"hidden" },
   barFill: { height:"100%", borderRadius:6, transition:"width 0.5s ease" },
-  barValue: { fontSize:13, fontWeight:600, color:"#0F2544", minWidth:32, textAlign:"right" },
-  breakdownHd: { fontSize:10, fontWeight:700, color:"#9FB3C8", letterSpacing:"0.06em", textTransform:"uppercase" },
-  funnelTrackHead: { display:"flex", alignItems:"center", gap:8, paddingBottom:10, borderBottom:"1px solid #F0EBE5" },
+  barValue: { fontSize:13, fontWeight:600, color:"var(--color-ink-primary)", minWidth:32, textAlign:"right" },
+  breakdownHd: { fontSize:10, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"0.06em", textTransform:"uppercase" },
+  funnelTrackHead: { display:"flex", alignItems:"center", gap:8, paddingBottom:10, borderBottom:"1px solid var(--color-ground-sand)" },
   funnelTrackDot: { width:8, height:8, borderRadius:"50%", flexShrink:0 },
-  funnelTrackLabel: { fontSize:13, fontWeight:700, color:"#1E3A5F" },
+  funnelTrackLabel: { fontSize:13, fontWeight:700, color:"var(--color-ink-primary)" },
 };

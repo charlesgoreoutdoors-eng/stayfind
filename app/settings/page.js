@@ -150,7 +150,7 @@ export default function SettingsPage() {
     const text = rest.join(":");
     const ok = kind === "ok";
     return (
-      <p style={{ fontSize:12, marginTop:10, lineHeight:1.5, color: ok ? "#16a34a" : "#b91c1c" }}>{text}</p>
+      <p style={{ fontSize:12, marginTop:10, lineHeight:1.5, color: ok ? "var(--status-success-ink)" : "var(--color-error)" }}>{text}</p>
     );
   };
 
@@ -241,7 +241,7 @@ export default function SettingsPage() {
         <h3 style={s.sectionTitle}>Gmail Connection</h3>
         <div style={s.planRow}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ ...s.statusDot, background: gmailConnected ? "#16a34a" : "#9FB3C8" }} />
+            <span style={{ ...s.statusDot, background: gmailConnected ? "var(--status-success-ink)" : "var(--color-ink-muted)" }} />
             <div>
               <p style={s.planName}>{gmailConnected ? "Connected" : "Not connected"}</p>
               <p style={s.planDesc}>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
 
         <div style={s.field}>
           <label style={s.label}>Your timezone</label>
-          <p style={s.hint} >StayFind sends emails between 8am and 6pm in your local time.</p>
+          <p style={s.hint} >Dapples sends emails between 8am and 6pm in your local time.</p>
           <div style={{ ...s.inlineRow, marginTop:8 }}>
             <select
               style={{ ...s.input, cursor:"pointer" }}
@@ -293,7 +293,7 @@ export default function SettingsPage() {
         <div style={s.field}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
             <label style={s.label}>Daily email limit</label>
-            <span style={{ ...s.limitBadge, background: limit > 30 ? "#fffbeb" : "#F0EBE5", color: limit > 30 ? "#92400e" : "#4A6A8A" }}>
+            <span style={{ ...s.limitBadge, background: limit > 30 ? "var(--color-amber-tint)" : "var(--color-ground-sand)", color: limit > 30 ? "var(--color-accent-amber-deeper)" : "var(--color-ink-mid)" }}>
               {limit} / day
             </span>
           </div>
@@ -301,16 +301,16 @@ export default function SettingsPage() {
           <div style={s.sliderTicks}><span>5</span><span>25</span><span>50</span></div>
           {limit > 30 && (
             <div style={s.warnBox}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-amber-deeper)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
-              <p style={{ fontSize:12, color:"#92400e", lineHeight:1.6 }}>
+              <p style={{ fontSize:12, color:"var(--color-accent-amber-deeper)", lineHeight:1.6 }}>
                 Sending more than 30 emails per day increases the risk of Gmail flagging your account as spam. We recommend staying at or below 30.
               </p>
             </div>
           )}
-          <p style={s.hint}>StayFind spaces your emails randomly throughout the day with 30–90 minute gaps. This limit applies across all active sequences combined.</p>
+          <p style={s.hint}>Dapples spaces your emails randomly throughout the day with 30–90 minute gaps. This limit applies across all active sequences combined.</p>
         </div>
         <button onClick={saveLimit} disabled={savingLimit || loading} style={{ ...s.saveBtn, opacity: savingLimit || loading ? 0.6 : 1 }}>
           {savingLimit ? "Saving…" : limitSaved ? "Saved ✓" : "Save Changes"}
@@ -322,26 +322,26 @@ export default function SettingsPage() {
 
 const s = {
   root: { padding:"32px 24px 80px", maxWidth:580 },
-  heading: { fontSize:22, fontWeight:700, color:"#0F2544", letterSpacing:"-0.4px", marginBottom:28 },
-  section: { background:"#fff", borderRadius:16, border:"1px solid #DDD5CC", padding:"24px 24px 22px", marginBottom:20 },
-  sectionTitle: { fontSize:14, fontWeight:700, color:"#0F2544", marginBottom:20 },
+  heading: { fontSize:22, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.4px", marginBottom:28 },
+  section: { background:"var(--color-ground-card)", borderRadius:16, border:"1px solid var(--color-border)", padding:"24px 24px 22px", marginBottom:20 },
+  sectionTitle: { fontSize:14, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:20 },
   field: { marginBottom:18 },
-  label: { display:"block", fontSize:13, fontWeight:600, color:"#1E3A5F", marginBottom:7 },
-  input: { flex:1, width:"100%", padding:"10px 13px", border:"1px solid #DDD5CC", borderRadius:9, fontSize:14, color:"#1E3A5F", background:"#fff" },
+  label: { display:"block", fontSize:13, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:7 },
+  input: { flex:1, width:"100%", padding:"10px 13px", border:"1px solid var(--color-border)", borderRadius:9, fontSize:14, color:"var(--color-ink-primary)", background:"var(--color-ground-card)" },
   inlineRow: { display:"flex", gap:10, alignItems:"center" },
-  saveBtn: { padding:"10px 18px", background:"#E85D3D", color:"#fff", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap", transition:"opacity 0.15s" },
-  secondaryBtn: { padding:"10px 18px", background:"#fff", color:"#4A6A8A", border:"1px solid #DDD5CC", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
-  hint: { fontSize:12, color:"#9FB3C8", lineHeight:1.6, marginTop:10 },
+  saveBtn: { padding:"10px 18px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap", transition:"opacity 0.15s" },
+  secondaryBtn: { padding:"10px 18px", background:"var(--color-ground-card)", color:"var(--color-ink-mid)", border:"1px solid var(--color-border)", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
+  hint: { fontSize:12, color:"var(--color-ink-muted)", lineHeight:1.6, marginTop:10 },
 
   planRow: { display:"flex", alignItems:"center", justifyContent:"space-between", gap:16 },
-  planName: { fontSize:14, fontWeight:600, color:"#0F2544", marginBottom:3 },
-  planDesc: { fontSize:12, color:"#9FB3C8", lineHeight:1.5 },
-  planBadge: { fontSize:11, fontWeight:700, background:"#F0EBE5", color:"#4A6A8A", padding:"4px 11px", borderRadius:20, letterSpacing:"0.4px", flexShrink:0 },
-  upgradeBtn: { display:"inline-block", marginTop:18, padding:"10px 20px", background:"#0F2544", color:"#F7F3EF", borderRadius:9, fontSize:13, fontWeight:600, textDecoration:"none" },
+  planName: { fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:3 },
+  planDesc: { fontSize:12, color:"var(--color-ink-muted)", lineHeight:1.5 },
+  planBadge: { fontSize:11, fontWeight:700, background:"var(--color-ground-sand)", color:"var(--color-ink-mid)", padding:"4px 11px", borderRadius:20, letterSpacing:"0.4px", flexShrink:0 },
+  upgradeBtn: { display:"inline-block", marginTop:18, padding:"10px 20px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", borderRadius:9, fontSize:13, fontWeight:600, textDecoration:"none" },
   statusDot: { width:10, height:10, borderRadius:"50%", flexShrink:0 },
 
   limitBadge: { fontSize:13, fontWeight:700, padding:"3px 10px", borderRadius:20 },
-  slider: { width:"100%", accentColor:"#E85D3D", cursor:"pointer", marginTop:4 },
-  sliderTicks: { display:"flex", justifyContent:"space-between", fontSize:11, color:"#9FB3C8", marginTop:4, paddingInline:2 },
-  warnBox: { display:"flex", alignItems:"flex-start", gap:8, background:"#fffbeb", border:"1px solid #fcd34d", borderRadius:10, padding:"10px 12px", marginTop:12 },
+  slider: { width:"100%", accentColor:"var(--color-accent-terracotta)", cursor:"pointer", marginTop:4 },
+  sliderTicks: { display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--color-ink-muted)", marginTop:4, paddingInline:2 },
+  warnBox: { display:"flex", alignItems:"flex-start", gap:8, background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:10, padding:"10px 12px", marginTop:12 },
 };

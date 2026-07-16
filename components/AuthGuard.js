@@ -48,16 +48,16 @@ export default function AuthGuard({ children }) {
     return (
       <div style={{
         minHeight:"100vh", display:"flex", alignItems:"center",
-        justifyContent:"center", background:"#F7F3EF",
-        fontFamily:"Plus Jakarta Sans, system-ui, sans-serif"
+        justifyContent:"center", background:"var(--color-ground-page)",
+        fontFamily:"var(--font-display)"
       }}>
         <div style={{ textAlign:"center" }}>
           <div style={{
-            width:36, height:36, border:"3px solid #DDD5CC",
-            borderTopColor:"#E85D3D", borderRadius:"50%",
+            width:36, height:36, border:"3px solid var(--color-border)",
+            borderTopColor:"var(--color-accent-amber)", borderRadius:"50%",
             animation:"spin 0.8s linear infinite", margin:"0 auto 16px"
           }} />
-          <p style={{ fontSize:14, color:"#9FB3C8" }}>Loading StayFind...</p>
+          <p style={{ fontSize:14, color:"var(--color-ink-muted)" }}>Loading Dapples...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>

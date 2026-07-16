@@ -55,17 +55,17 @@ export default function AuthCallbackPage() {
   return (
     <div style={{
       minHeight:"100vh", display:"flex", alignItems:"center",
-      justifyContent:"center", background:"#F7F3EF",
-      fontFamily:"Plus Jakarta Sans, system-ui, sans-serif"
+      justifyContent:"center", background:"var(--color-ground-page)",
+      fontFamily:"var(--font-display)"
     }}>
       <div style={{ textAlign:"center" }}>
         <div style={{
-          width:40, height:40, border:"3px solid #DDD5CC",
-          borderTopColor:"#E85D3D", borderRadius:"50%",
+          width:40, height:40, border:"3px solid var(--color-border)",
+          borderTopColor:"var(--color-accent-amber)", borderRadius:"50%",
           animation:"spin 0.8s linear infinite", margin:"0 auto 16px"
         }} />
-        <p style={{ fontSize:15, fontWeight:600, color:"#0F2544", marginBottom:4 }}>StayFind</p>
-        <p style={{ fontSize:13, color:"#9FB3C8" }}>{status}</p>
+        <p style={{ fontSize:15, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:4 }}>Dapples</p>
+        <p style={{ fontSize:13, color:"var(--color-ink-muted)" }}>{status}</p>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>

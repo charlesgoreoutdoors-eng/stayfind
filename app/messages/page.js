@@ -200,7 +200,7 @@ export default function MessagesPage() {
       {!gmailToken ? (
         <div style={s.connectPrompt}>
           <div style={s.connectIcon}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9FB3C8" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <h2 style={s.connectTitle}>Connect Gmail to see replies</h2>
           <p style={s.connectDesc}>When hotels reply to your outreach emails, their messages will appear here grouped by list.</p>
@@ -234,8 +234,8 @@ export default function MessagesPage() {
               </div>
             ) : filteredThreads.length === 0 ? (
               <div style={s.emptyThreads}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <p style={{ fontSize:14, color:"#9FB3C8", marginTop:12, textAlign:"center" }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-border)" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <p style={{ fontSize:14, color:"var(--color-ink-muted)", marginTop:12, textAlign:"center" }}>
                   {selectedList === "all" ? "No replies yet. Hotels that reply to your outreach will appear here." : "No replies from this list yet."}
                 </p>
               </div>
@@ -270,7 +270,7 @@ export default function MessagesPage() {
           <div style={{ ...s.conversationPanel, display: isMobile && mobileView === "list" ? "none" : "flex", flexDirection: "column" }}>
             {!activeThread ? (
               <div style={s.noThread}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DDD5CC" strokeWidth="1.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-border)" strokeWidth="1.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 <p style={s.noThreadText}>Select a conversation to read it</p>
               </div>
             ) : (
@@ -279,7 +279,7 @@ export default function MessagesPage() {
                 <div style={s.threadHeader}>
                   <div style={s.threadHeaderLeft}>
                   {isMobile && (
-                    <button onClick={() => setMobileView("list")} style={{ background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", padding:"0 8px 0 0", display:"flex", alignItems:"center" }}>
+                    <button onClick={() => setMobileView("list")} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--color-ink-muted)", padding:"0 8px 0 0", display:"flex", alignItems:"center" }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                     </button>
                   )}
@@ -312,7 +312,7 @@ export default function MessagesPage() {
                         )}
                         <div style={{ maxWidth:"72%" }}>
                           <div style={{ ...s.bubble, ...(mine ? s.bubbleMine : s.bubbleTheirs) }}>
-                            <pre style={{ ...s.bubbleText, color: mine ? "#fff" : "#1E3A5F" }}>{msg.body || msg.snippet}</pre>
+                            <pre style={{ ...s.bubbleText, color: mine ? "var(--color-ground-page)" : "var(--color-ink-primary)" }}>{msg.body || msg.snippet}</pre>
                           </div>
                           <p style={{ ...s.bubbleTime, textAlign: mine ? "right" : "left" }}>{formatDate(msg.timestamp)}</p>
                         </div>
@@ -364,67 +364,67 @@ const s = {
   header: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 },
   headerLeft: { display:"flex", alignItems:"center", gap:12 },
   headerRight: { display:"flex", alignItems:"center", gap:10 },
-  title: { fontSize:24, fontWeight:700, color:"#0F2544", letterSpacing:"-0.3px" },
-  unreadBadge: { background:"#E85D3D", color:"#fff", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20 },
-  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"#0F2544", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"#F7F3EF" },
-  gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"#F0EBE5", border:"1px solid #DDD5CC", borderRadius:10, padding:"7px 14px" },
-  gmailDot: { width:8, height:8, borderRadius:"50%", background:"#2A9D8F", flexShrink:0 },
-  gmailText: { fontSize:12, color:"#1E3A5F", fontWeight:500 },
-  refreshBtn: { background:"none", border:"none", cursor:"pointer", color:"#9FB3C8", display:"flex", alignItems:"center", padding:4 },
-  disconnectBtn: { fontSize:11, color:"#9FB3C8", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
-  errorBox: { background:"#FEF0EC", border:"1px solid #F5A882", borderRadius:10, padding:"12px 16px", color:"#B83A22", fontSize:13, marginBottom:16 },
+  title: { fontSize:24, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.3px" },
+  unreadBadge: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20 },
+  gmailBtn: { display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"var(--color-ink-primary)", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"var(--color-ground-page)" },
+  gmailConnected: { display:"flex", alignItems:"center", gap:8, background:"var(--color-ground-sand)", border:"1px solid var(--color-border)", borderRadius:10, padding:"7px 14px" },
+  gmailDot: { width:8, height:8, borderRadius:"50%", background:"var(--status-success-ink)", flexShrink:0 },
+  gmailText: { fontSize:12, color:"var(--color-ink-primary)", fontWeight:500 },
+  refreshBtn: { background:"none", border:"none", cursor:"pointer", color:"var(--color-ink-muted)", display:"flex", alignItems:"center", padding:4 },
+  disconnectBtn: { fontSize:11, color:"var(--color-ink-muted)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" },
+  errorBox: { background:"var(--status-error-bg)", border:"1px solid var(--color-accent-amber)", borderRadius:10, padding:"12px 16px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
   connectPrompt: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 24px", textAlign:"center" },
-  connectIcon: { width:72, height:72, background:"#F0EBE5", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20 },
-  connectTitle: { fontSize:20, fontWeight:700, color:"#0F2544", marginBottom:8 },
-  connectDesc: { fontSize:14, color:"#9FB3C8", maxWidth:360, lineHeight:1.7, marginBottom:24 },
-  connectBtn: { background:"#0F2544", color:"#F7F3EF", border:"none", borderRadius:12, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer" },
-  layout: { flex:1, display:"grid", gridTemplateColumns:"320px 1fr", gap:0, minHeight:0, borderRadius:"14px 14px 0 0", overflow:"hidden", border:"1px solid #DDD5CC" },
-  threadPanel: { background:"#fff", borderRight:"1px solid #F0EBE5", display:"flex", flexDirection:"column", overflow:"hidden" },
-  filterRow: { display:"flex", gap:4, padding:"12px 12px 8px", borderBottom:"1px solid #F0EBE5", flexWrap:"wrap" },
-  filterBtn: { padding:"5px 10px", border:"1px solid #DDD5CC", borderRadius:20, fontSize:11, fontWeight:600, cursor:"pointer", color:"#9FB3C8", background:"#fff", display:"flex", alignItems:"center", gap:5, transition:"all 0.15s" },
-  filterBtnActive: { background:"#0F2544", color:"#F7F3EF", border:"1px solid #0F2544" },
+  connectIcon: { width:72, height:72, background:"var(--color-ground-sand)", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20 },
+  connectTitle: { fontSize:20, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:8 },
+  connectDesc: { fontSize:14, color:"var(--color-ink-muted)", maxWidth:360, lineHeight:1.7, marginBottom:24 },
+  connectBtn: { background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:12, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer" },
+  layout: { flex:1, display:"grid", gridTemplateColumns:"320px 1fr", gap:0, minHeight:0, borderRadius:"14px 14px 0 0", overflow:"hidden", border:"1px solid var(--color-border)" },
+  threadPanel: { background:"var(--color-ground-card)", borderRight:"1px solid var(--color-ground-sand)", display:"flex", flexDirection:"column", overflow:"hidden" },
+  filterRow: { display:"flex", gap:4, padding:"12px 12px 8px", borderBottom:"1px solid var(--color-ground-sand)", flexWrap:"wrap" },
+  filterBtn: { padding:"5px 10px", border:"1px solid var(--color-border)", borderRadius:20, fontSize:11, fontWeight:600, cursor:"pointer", color:"var(--color-ink-muted)", background:"var(--color-ground-card)", display:"flex", alignItems:"center", gap:5, transition:"all 0.15s" },
+  filterBtnActive: { background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"1px solid var(--color-ink-primary)" },
   filterCount: { fontSize:10, background:"rgba(255,255,255,0.2)", padding:"1px 5px", borderRadius:10 },
   loadingBox: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12 },
-  spinner: { width:24, height:24, border:"2.5px solid #F0EBE5", borderTopColor:"#E85D3D", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
-  loadingText: { fontSize:13, color:"#9FB3C8" },
+  spinner: { width:24, height:24, border:"2.5px solid var(--color-ground-sand)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
+  loadingText: { fontSize:13, color:"var(--color-ink-muted)" },
   emptyThreads: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px" },
-  threadItem: { display:"flex", alignItems:"flex-start", gap:10, padding:"14px 14px", borderBottom:"1px solid #F7F3EF", cursor:"pointer", transition:"background 0.12s", position:"relative" },
-  threadItemActive: { background:"#FEF0EC" },
-  threadItemUnread: { background:"#FAF7F4" },
-  avatar: { width:40, height:40, borderRadius:"50%", background:"#F0EBE5", flexShrink:0, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center" },
+  threadItem: { display:"flex", alignItems:"flex-start", gap:10, padding:"14px 14px", borderBottom:"1px solid var(--color-ground-page)", cursor:"pointer", transition:"background 0.12s", position:"relative" },
+  threadItemActive: { background:"var(--status-error-bg)" },
+  threadItemUnread: { background:"var(--color-ground-sand)" },
+  avatar: { width:40, height:40, borderRadius:"50%", background:"var(--color-ground-sand)", flexShrink:0, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center" },
   avatarImg: { width:"100%", height:"100%", objectFit:"cover" },
-  avatarInitial: { fontSize:16, fontWeight:700, color:"#E85D3D" },
+  avatarInitial: { fontSize:16, fontWeight:700, color:"var(--color-accent-terracotta)" },
   threadInfo: { flex:1, minWidth:0 },
   threadTop: { display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:2 },
-  threadHotelName: { fontSize:13, fontWeight:700, color:"#0F2544", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  threadTime: { fontSize:11, color:"#9FB3C8", flexShrink:0, marginLeft:8 },
-  threadList: { fontSize:10, color:"#E85D3D", fontWeight:600, background:"#FEF0EC", padding:"1px 7px", borderRadius:10, display:"inline-block", marginBottom:3 },
-  threadUnlinked: { fontSize:10, color:"#9FB3C8", fontWeight:600, background:"#F0EBE5", padding:"1px 7px", borderRadius:10, display:"inline-block", marginBottom:3 },
-  threadSnippet: { fontSize:12, color:"#9FB3C8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", lineHeight:1.4 },
-  unreadDot: { position:"absolute", top:18, right:12, width:8, height:8, borderRadius:"50%", background:"#E85D3D", flexShrink:0 },
-  conversationPanel: { background:"#FAF7F4", display:"flex", flexDirection:"column", minHeight:0 },
+  threadHotelName: { fontSize:13, fontWeight:700, color:"var(--color-ink-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  threadTime: { fontSize:11, color:"var(--color-ink-muted)", flexShrink:0, marginLeft:8 },
+  threadList: { fontSize:10, color:"var(--color-accent-terracotta)", fontWeight:600, background:"var(--status-error-bg)", padding:"1px 7px", borderRadius:10, display:"inline-block", marginBottom:3 },
+  threadUnlinked: { fontSize:10, color:"var(--color-ink-muted)", fontWeight:600, background:"var(--color-ground-sand)", padding:"1px 7px", borderRadius:10, display:"inline-block", marginBottom:3 },
+  threadSnippet: { fontSize:12, color:"var(--color-ink-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", lineHeight:1.4 },
+  unreadDot: { position:"absolute", top:18, right:12, width:8, height:8, borderRadius:"50%", background:"var(--color-action-forest)", flexShrink:0 },
+  conversationPanel: { background:"var(--color-ground-sand)", display:"flex", flexDirection:"column", minHeight:0 },
   noThread: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 },
-  noThreadText: { fontSize:14, color:"#9FB3C8", textAlign:"center" },
-  threadHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", background:"#fff", borderBottom:"1px solid #F0EBE5" },
+  noThreadText: { fontSize:14, color:"var(--color-ink-muted)", textAlign:"center" },
+  threadHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", background:"var(--color-ground-card)", borderBottom:"1px solid var(--color-ground-sand)" },
   threadHeaderLeft: { display:"flex", alignItems:"center", gap:12 },
-  headerAvatar: { width:44, height:44, borderRadius:"50%", background:"#F0EBE5", overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-  threadHeaderName: { fontSize:15, fontWeight:700, color:"#0F2544", marginBottom:2 },
-  threadHeaderMeta: { fontSize:12, color:"#9FB3C8", display:"flex", alignItems:"center", gap:8 },
-  headerListTag: { background:"#FEF0EC", color:"#E85D3D", fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10, marginLeft:6 },
-  msgCount: { fontSize:12, color:"#9FB3C8" },
+  headerAvatar: { width:44, height:44, borderRadius:"50%", background:"var(--color-ground-sand)", overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
+  threadHeaderName: { fontSize:15, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:2 },
+  threadHeaderMeta: { fontSize:12, color:"var(--color-ink-muted)", display:"flex", alignItems:"center", gap:8 },
+  headerListTag: { background:"var(--status-error-bg)", color:"var(--color-accent-terracotta)", fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10, marginLeft:6 },
+  msgCount: { fontSize:12, color:"var(--color-ink-muted)" },
   messageList: { flex:1, overflowY:"auto", padding:"20px 20px", display:"flex", flexDirection:"column", gap:16 },
   messageBubbleWrap: { display:"flex", alignItems:"flex-end", gap:8 },
-  bubbleAvatar: { width:28, height:28, borderRadius:"50%", background:"#E85D3D", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginBottom:18 },
-  bubbleAvatarText: { fontSize:12, fontWeight:700, color:"#fff" },
+  bubbleAvatar: { width:28, height:28, borderRadius:"50%", background:"var(--color-action-forest)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginBottom:18 },
+  bubbleAvatarText: { fontSize:12, fontWeight:700, color:"var(--color-ground-page)" },
   bubble: { padding:"12px 16px", borderRadius:18, maxWidth:"100%" },
-  bubbleMine: { background:"#0F2544", borderBottomRightRadius:4 },
-  bubbleTheirs: { background:"#fff", borderBottomLeftRadius:4, border:"1px solid #F0EBE5" },
+  bubbleMine: { background:"var(--color-ink-primary)", borderBottomRightRadius:4 },
+  bubbleTheirs: { background:"var(--color-ground-card)", borderBottomLeftRadius:4, border:"1px solid var(--color-ground-sand)" },
   bubbleText: { fontSize:13, lineHeight:1.7, whiteSpace:"pre-wrap", fontFamily:"inherit", margin:0 },
-  bubbleTime: { fontSize:10, color:"#9FB3C8", marginTop:4, paddingX:4 },
-  replyBox: { padding:"12px 16px 16px", background:"#fff", borderTop:"1px solid #F0EBE5" },
-  replyInput: { width:"100%", border:"1.5px solid #DDD5CC", borderRadius:12, padding:"12px 14px", fontSize:13, fontFamily:"inherit", color:"#1E3A5F", outline:"none", resize:"none", lineHeight:1.6 },
+  bubbleTime: { fontSize:10, color:"var(--color-ink-muted)", marginTop:4, paddingX:4 },
+  replyBox: { padding:"12px 16px 16px", background:"var(--color-ground-card)", borderTop:"1px solid var(--color-ground-sand)" },
+  replyInput: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:12, padding:"12px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"none", lineHeight:1.6 },
   replyFooter: { display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:8 },
-  replyHint: { fontSize:11, color:"#9FB3C8" },
-  sendBtn: { display:"flex", alignItems:"center", gap:8, background:"#E85D3D", color:"#fff", border:"none", borderRadius:10, padding:"9px 18px", fontSize:13, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s" },
-  spinnerWhite: { display:"inline-block", width:14, height:14, border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  replyHint: { fontSize:11, color:"var(--color-ink-muted)" },
+  sendBtn: { display:"flex", alignItems:"center", gap:8, background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:10, padding:"9px 18px", fontSize:13, fontWeight:600, cursor:"pointer", transition:"opacity 0.2s" },
+  spinnerWhite: { display:"inline-block", width:14, height:14, border:"2px solid rgba(255,255,255,0.3)", borderTopcolor:"var(--color-ground-page)", borderRadius:"50%", animation:"spin 0.7s linear infinite" },
 };
