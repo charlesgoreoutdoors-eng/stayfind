@@ -476,7 +476,7 @@ export default function ListsPage() {
                             </svg>
                           </button>
                         </Link>
-                        <button style={{ ...s.iconBtn, borderColor:"var(--status-error-bg)" }} onClick={() => { setDeleteConfirm(list.id); setShowListDropdown(false); }} title="Delete list">
+                        <button style={{ ...s.iconBtn, borderColor:"var(--color-error)" }} onClick={() => { setDeleteConfirm(list.id); setShowListDropdown(false); }} title="Delete list">
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
                             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
                           </svg>
@@ -1014,7 +1014,7 @@ const s = {
   contactCountBadge: { display:"inline-flex", alignItems:"center", gap:6, padding:"5px 10px", background:"var(--status-sent-bg)", border:"1.5px solid rgba(67,56,202,0.3)", borderRadius:20, fontSize:11, fontWeight:700, color:"var(--status-sent-ink)", cursor:"pointer", marginBottom:4, fontFamily:"inherit" },
   selectedCount: { background:"var(--color-accent-terracotta)", color:"var(--color-ground-page)", fontSize:10, fontWeight:700, padding:"1px 7px", borderRadius:10 },
   contactRow: { display:"flex", alignItems:"flex-start", gap:12, padding:"12px", borderRadius:10, border:"1.5px solid var(--color-ground-sand)", cursor:"pointer", transition:"all 0.15s" },
-  contactRowSelected: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--status-error-bg)" },
+  contactRowSelected: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--color-amber-tint)" },
   phoneText: { fontSize:11, color:"var(--color-ink-mid)", marginBottom:2 },
   websiteLink: { fontSize:11, color:"var(--color-accent-amber-deep)", textDecoration:"none" },
   statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"var(--font-display)" },
@@ -1035,7 +1035,7 @@ const s = {
   igTextarea: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"vertical", lineHeight:1.7 },
   igNote: { fontSize:12, color:"var(--color-ink-muted)", lineHeight:1.6, marginBottom:16, fontStyle:"italic" },
   igScrapeBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"rgba(193,53,132,0.08)", border:"1px solid rgba(193,53,132,0.3)", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"#C13584", fontFamily:"inherit" },
-  emailScrapeBtn: { background:"var(--status-error-bg)", border:"1px solid rgba(180,67,46,0.3)", color:"var(--color-error)" },
+  emailScrapeBtn: { background:"rgba(139,154,106,0.16)", border:"1px solid rgba(139,154,106,0.3)", color:"var(--color-cool-olive-deep)" },
   igScrapeBtnDisabled: { opacity:0.45, cursor:"not-allowed" },
   igScrapeProgress: { display:"flex", alignItems:"center", gap:8, padding:"8px 14px", background:"rgba(193,53,132,0.08)", border:"1px solid rgba(193,53,132,0.3)", borderRadius:9, fontSize:12, color:"#C13584", fontWeight:500 },
   igScrapeSpinner: { width:12, height:12, border:"2px solid rgba(193,53,132,0.3)", borderTopColor:"#C13584", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },

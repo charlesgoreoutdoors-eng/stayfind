@@ -16,7 +16,7 @@ export default function GmailButton({ gmailToken, gmailEmail, gmailLoading, toke
   if (!gmailToken) {
     return (
       <button
-        style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"var(--color-ink-primary)", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"var(--color-ground-page)", opacity: gmailLoading ? 0.7 : 1 }}
+        style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 16px", background:"var(--color-action-forest)", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", color:"var(--color-ground-page)", opacity: gmailLoading ? 0.7 : 1 }}
         onClick={onConnect}
         disabled={gmailLoading}
       >
