@@ -1,99 +1,9 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-16T09:27:46Z",
-  "title": "Design System: StayFind",
+  "generatedAt": "2026-07-16T20:14:33Z",
+  "title": "Design System: Dapples",
   "extensions": {
     "colorMeta": {
-      "deep-harbour": {
-        "role": "primary",
-        "displayName": "Deep Harbour",
-        "canonical": "#0F2544",
-        "tonalRamp": [
-          "#040d17",
-          "#081626",
-          "#0F2544",
-          "#1a3760",
-          "#264e82",
-          "#3d6aa0",
-          "#6089b8",
-          "#a0b8d4"
-        ]
-      },
-      "deep-harbour-mid": {
-        "role": "primary",
-        "displayName": "Deep Harbour Mid",
-        "canonical": "#1E3A5F",
-        "tonalRamp": [
-          "#091526",
-          "#122238",
-          "#1E3A5F",
-          "#2a5080",
-          "#3d6fa5",
-          "#6491c0",
-          "#9ab4d5",
-          "#d0dded"
-        ]
-      },
-      "coral-spark": {
-        "role": "secondary",
-        "displayName": "Coral Spark",
-        "canonical": "#E85D3D",
-        "tonalRamp": [
-          "#5a1b0a",
-          "#8c2c15",
-          "#b83a22",
-          "#e85d3d",
-          "#f07e65",
-          "#f5a882",
-          "#facbb8",
-          "#fdeee9"
-        ]
-      },
-      "warm-canvas": {
-        "role": "neutral",
-        "displayName": "Warm Canvas",
-        "canonical": "#F7F3EF",
-        "tonalRamp": [
-          "#c4b9ad",
-          "#d4cbc1",
-          "#e0d8d0",
-          "#ece5dd",
-          "#f2ede7",
-          "#f7f3ef",
-          "#fbf9f7",
-          "#fefdfb"
-        ]
-      },
-      "slate-mist": {
-        "role": "neutral",
-        "displayName": "Slate Mist",
-        "canonical": "#9FB3C8",
-        "tonalRamp": [
-          "#253645",
-          "#34506a",
-          "#4a6a8a",
-          "#6a8dac",
-          "#9fb3c8",
-          "#c0cfdc",
-          "#dce5ee",
-          "#f0f4f8"
-        ]
-      },
-      "warm-divider": {
-        "role": "neutral",
-        "displayName": "Warm Divider",
-        "canonical": "#DDD5CC",
-        "tonalRamp": [
-          "#8a7f74",
-          "#a39891",
-          "#b8afa8",
-          "#cec8c2",
-          "#ddd5cc",
-          "#e8e3dd",
-          "#f1eeea",
-          "#f9f7f5"
-        ]
-      },
       "dapple-ink": {
         "role": "neutral",
         "displayName": "Dapple Ink",
@@ -659,14 +569,6 @@
       "caption": {
         "displayName": "Caption",
         "purpose": "Chip counts, status tags, timestamp dates. Use sparingly."
-      },
-      "dapple-display": {
-        "displayName": "Dapple Display",
-        "purpose": "Quicksand — Dapples wordmark, hero and section headings on marketing/new surfaces."
-      },
-      "dapple-body": {
-        "displayName": "Dapple Body",
-        "purpose": "Nunito Sans — body copy on Dapples marketing/new surfaces."
       }
     },
     "shadows": [
@@ -799,7 +701,7 @@
     }
   ],
   "narrative": {
-    "northStar": "The Boutique Concierge",
+    "northStar": "Golden Hour",
     "overview": "StayFind carries the feeling of a great hotel front desk: quietly confident, warm before you even ask, never flustered. The interface knows what you need and has it ready. It does not announce itself — it recedes, and the creator's work comes forward.\n\nThe color strategy is restrained: Deep Harbour navy grounds the system with authority, Coral Spark activates the things that matter, and a warm off-white canvas keeps everything breathable. Nothing on this tool fights for attention.\n\nNotion is the reference for editorial calm. This is not generic SaaS blue, not creator-pink softness, not a consumer travel booking engine. It is a tool a creator reaches for between trips — purposeful, premium, and invisible.",
     "keyCharacteristics": [
       "Dark navy sidebar anchors authority without aggression",
