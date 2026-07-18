@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
-import { useIsMobile } from "../../../lib/useIsMobile";
 
 // Rich text editor: toolbar sits inside the same bordered container as the editor.
 // forwardRef exposes the DOM node so the parent can call insertHTML into it.
@@ -90,7 +89,6 @@ export default function TemplatesPage() {
   const editorRef = useRef(null);
   const sigRef = useRef(null);
   const { user } = useAuth();
-  const isMobile = useIsMobile();
 
   useEffect(() => { if (user) { fetchTemplates(); fetchSignature(); } }, [user]);
 
@@ -193,6 +191,10 @@ export default function TemplatesPage() {
 
   return (
     <div style={s.root}>
+      <style>{`
+        @media (max-width: 900px) { .dp-tpl-body { grid-template-columns: 1fr !important; } }
+      `}</style>
+
       <div style={s.header}>
         <div>
           <h1 style={s.title}>Email Templates</h1>
@@ -201,19 +203,20 @@ export default function TemplatesPage() {
         <button style={s.newBtn} onClick={newTemplate}>+ New Template</button>
       </div>
 
-      <div style={{ ...s.body, gridTemplateColumns: isMobile ? "1fr" : "280px 1fr" }}>
-        {/* Type filter */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
-          {["all", "email", "instagram"].map(t => (
-            <button key={t} style={{ ...s.filterTab, ...(typeFilter === t ? s.filterTabActive : {}) }}
-              onClick={() => setTypeFilter(t)}>
-              {t === "all" ? "All" : t === "email" ? "📧 Email" : "📸 Instagram"}
-            </button>
-          ))}
-        </div>
+      <div className="dp-tpl-body" style={s.body}>
+        {/* Left column — filter pills above the template list */}
+        <div style={s.leftCol}>
+          <div style={s.filterRow}>
+            {["all", "email", "instagram"].map(t => (
+              <button key={t} style={{ ...s.filterTab, ...(typeFilter === t ? s.filterTabActive : {}) }}
+                onClick={() => setTypeFilter(t)}>
+                {t === "all" ? "All" : t === "email" ? "📧 Email" : "📸 Instagram"}
+              </button>
+            ))}
+          </div>
 
-        {/* List */}
-        <div style={s.listPanel}>
+          {/* List */}
+          <div style={s.listPanel}>
           {loading ? <p style={s.empty}>Loading...</p> :
             templates.length === 0 && !isNew ? (
               <div style={s.emptyState}>
@@ -244,6 +247,7 @@ export default function TemplatesPage() {
                 </div>
               ))
             )}
+          </div>
         </div>
 
         {/* Editor panel */}
@@ -390,16 +394,18 @@ const s = {
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 },
   title: { fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 4 },
   subtitle: { fontSize: 14, color: "var(--color-ink-muted)" },
-  newBtn: { background: "var(--color-ink-primary)", color:"var(--color-ground-page)", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
-  body: { display: "grid", gridTemplateColumns: "280px 1fr", gap: 20, alignItems: "start" },
+  newBtn: { background: "var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: "var(--radius-lg)", padding: "11px 22px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
+  body: { display: "grid", gridTemplateColumns: "330px 1fr", gap: 24, alignItems: "start" },
+  leftCol: { display: "flex", flexDirection: "column", gap: 14 },
+  filterRow: { display: "flex", gap: 8, flexWrap: "wrap" },
   listPanel: { display: "flex", flexDirection: "column", gap: 8 },
   templateItem: { padding: "14px", borderRadius: 12, border: "1.5px solid var(--color-border)", cursor: "pointer", background:"var(--color-ground-card)", transition: "all 0.15s", display: "flex", alignItems: "flex-start", gap: 10 },
-  templateItemActive: { border:"1.5px solid var(--color-accent-terracotta)", background: "var(--color-ground-card)" },
+  templateItemActive: { border:"1.5px solid var(--color-accent-amber)", background: "var(--color-amber-tint)" },
   templateName: { fontSize: 14, fontWeight: 600, color: "var(--color-ink-primary)", marginBottom: 2 },
   templateSubject: { fontSize: 12, color: "var(--color-accent-terracotta)", marginBottom: 3 },
   templatePreview: { fontSize: 11, color: "var(--color-ink-muted)", lineHeight: 1.5 },
   deleteBtn: { background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 },
-  editor: { background:"var(--color-ground-card)", borderRadius: 16, border: "1.5px solid var(--color-border)", padding: "24px" },
+  editor: { background:"var(--color-ground-card)", borderRadius: "var(--radius-card)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-low)", padding: "26px" },
   editorHeader: { marginBottom: 20 },
   editorTitle: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--color-ink-primary)" },
   field: { marginBottom: 20 },
@@ -413,7 +419,7 @@ const s = {
   toolbar: { display: "flex", gap: 2, padding: "8px 10px", alignItems: "center", background: "var(--color-ground-sand)", flexWrap: "wrap" },
   toolBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "5px 10px", border: "none", borderRadius: 6, background: "transparent", fontSize: 13, cursor: "pointer", fontFamily: "inherit", color: "var(--color-ink-primary)", lineHeight: 1, minWidth: 32 },
   toolSep: { width: 1, height: 18, background: "var(--color-border)", margin: "0 4px" },
-  charCount: { fontSize: 11, color: "var(--color-border)", marginTop: 6, textAlign: "right" },
+  charCount: { fontSize: 11.5, color: "var(--color-ink-faint)", marginTop: 6, textAlign: "right" },
   // Signature
   sigSection: { marginTop: 4, marginBottom: 20, background: "var(--color-ground-sand)", borderRadius: 12, border: "1.5px solid var(--color-border)", padding: "16px" },
   sigBox: { border: "1.5px solid var(--color-border)", borderRadius: 8, background:"var(--color-ground-card)", padding: "10px 14px", marginBottom: 10 },
@@ -422,10 +428,10 @@ const s = {
   sigSaveBtn: { padding: "8px 16px", background: "var(--color-ink-primary)", color:"var(--color-ground-page)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   sigInsertBtn: { padding: "8px 16px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   saveRow: { marginTop: 8 },
-  saveBtn: { width: "100%", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: 10, padding: "13px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.2s" },
+  saveBtn: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", border: "none", borderRadius: "var(--radius-lg)", padding: "13px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)", transition: "opacity 0.2s" },
   emptyState: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", color: "var(--color-ink-muted)", fontSize: 14, textAlign: "center" },
   filterTab: { padding: "5px 12px", border: "1px solid var(--color-border)", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", color: "var(--color-ink-muted)", background:"var(--color-ground-card)", fontFamily: "inherit", transition: "all 0.15s" },
-  filterTabActive: { background: "var(--color-ink-primary)", color: "var(--color-ground-page)", border: "1px solid var(--color-ink-primary)" },
+  filterTabActive: { background: "var(--color-action-forest)", color: "var(--color-ground-page)", border: "1px solid var(--color-action-forest)", fontWeight: 700 },
   typePickerBtn: { display: "flex", alignItems: "center", gap: 14, padding: "16px", border: "1.5px solid var(--color-border)", borderRadius: 12, background:"var(--color-ground-card)", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", width: "100%" },
   typePickerIcon: { width: 48, height: 48, borderRadius: 12, background: "rgba(224,149,74,0.16)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   typePill: { fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: "var(--color-amber-tint)", color:"var(--color-accent-amber-deep)" },
