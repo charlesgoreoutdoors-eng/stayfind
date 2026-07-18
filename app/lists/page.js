@@ -438,6 +438,10 @@ export default function ListsPage() {
 
   return (
     <div style={s.root}>
+      <style>{`
+        @media (max-width: 900px) { .dp-list-grid { grid-template-columns: 1fr !important; } }
+      `}</style>
+
       {/* Header */}
       <div style={s.header}>
         <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", flex:1, minWidth:0 }}>
@@ -537,11 +541,7 @@ export default function ListsPage() {
             </div>
           ) : (
             <>
-              <div style={s.detailHeader}>
-                <div>
-                  <h2 style={s.detailTitle}>{activeList.name}</h2>
-                  <p style={s.detailSub}>{listHotels.length} hotel{listHotels.length !== 1 ? "s" : ""}</p>
-                </div>
+              <div style={s.toolbar}>
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
                   {igScraping ? (
                     <div style={s.igScrapeProgress}>
@@ -609,15 +609,17 @@ export default function ListsPage() {
                     </svg>
                     View Map
                   </button>
-                  <Link href={`/compose?list=${activeList.id}`}>
-                    <button style={s.composeBtn}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                      </svg>
-                      Compose Emails
-                    </button>
-                  </Link>
                 </div>
+                {/* Compose is right-aligned per the design. Points at Flows —
+                    the standalone /compose page was removed with the rebrand. */}
+                <Link href={`/sequences/builder?list=${activeList.id}`} style={{ marginLeft:"auto" }}>
+                  <button style={s.composeBtn}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    Compose Emails
+                  </button>
+                </Link>
               </div>
 
               {hotelsLoading ? (
@@ -630,174 +632,129 @@ export default function ListsPage() {
                   <Link href="/" style={{ color:"var(--color-accent-amber-deep)", fontWeight:600, fontSize:13 }}>Go to Search</Link>
                 </div>
               ) : (
-                <div style={s.tableWrap}>
-                  <div style={{ ...s.tableHead, ...s.tableGrid }}>
-                    <div style={s.colHd}>Hotel</div>
-                    <div style={s.colHd}>Email</div>
-                    <div style={s.colHd}>Instagram</div>
-                    <div style={s.colHd}>Instagram Contacted</div>
-                    <div style={s.colHd}>Notes</div>
-                    <div style={{ width:40 }} />
-                  </div>
-                  {listHotels.map(hotel => (
-                    <div key={hotel.id} style={{ ...s.tableRow, ...s.tableGrid }}>
-                      {/* Hotel info */}
-                      <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
-                        {hotel.photo_url ? (
-                          <img src={hotel.photo_url} alt={hotel.name} style={s.thumb} onError={e => { e.target.style.display="none"; }} />
-                        ) : (
-                          <div style={s.thumbFallback}>🏨</div>
-                        )}
-                        <div style={{ minWidth:0 }}>
-                          <p style={s.hotelName}>{hotel.name}</p>
-                          <p style={s.hotelAddr}>{hotel.address}</p>
-                          {hotel.rating && <p style={s.hotelRating}>{"★".repeat(Math.round(hotel.rating))} {hotel.rating}</p>}
+                <div className="dp-list-grid" style={s.cardGrid}>
+                  {listHotels.map(hotel => {
+                    const replied   = igReplied.includes(hotel.id) || hotel.ig_replied;
+                    const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;
+                    const status = replied
+                      ? { label: "\u2713 REPLIED", ...s.pillReplied }
+                      : contacted
+                        ? { label: "DM SENT", ...s.pillDm }
+                        : { label: "NOT SENT", ...s.pillNone };
+                    const { label: statusLabel, ...statusStyle } = status;
+                    return (
+                      <div key={hotel.id} style={s.hotelCard}>
+                        {/* Photo */}
+                        <div style={s.cardThumbWrap}>
+                          {hotel.photo_url
+                            ? <img src={hotel.photo_url} alt={hotel.name} style={s.cardThumb} onError={e => { e.target.style.display = "none"; }} />
+                            : <div style={s.cardThumbFallback}>🏨</div>}
                         </div>
-                      </div>
-                      {/* Email */}
-                      <div style={{ minWidth:0 }}>
-                        {hotel.hunter_contacts?.length > 0 ? (
-                          <button style={s.contactCountBadge} onClick={() => setContactsModal(hotel)}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            {hotel.hunter_contacts.length} contact{hotel.hunter_contacts.length !== 1 ? "s" : ""} found
-                            {hotel.hunter_contacts.some(c => c.selected) && (
-                              <span style={s.selectedCount}>{hotel.hunter_contacts.filter(c => c.selected).length} selected</span>
-                            )}
-                          </button>
-                        ) : hotel.contact_email ? (
-                          <div style={{ marginBottom: hotel.email ? 6 : 0 }}>
-                            {(hotel.contact_name || hotel.contact_title) && (
-                              <p style={{ fontSize:11, color:"var(--color-ink-mid)", marginBottom:2 }}>
-                                {[hotel.contact_name, hotel.contact_title].filter(Boolean).join(" — ")}
-                              </p>
-                            )}
-                            <div style={{ display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
-                              <p style={{ ...s.emailText, wordBreak:"break-all", margin:0 }}>✉ {hotel.contact_email}</p>
-                              <span style={{ fontSize:10, fontWeight:700, background:"var(--status-sent-bg)", color:"var(--status-sent-ink)", padding:"2px 7px", borderRadius:20, flexShrink:0 }}>Direct</span>
-                            </div>
+
+                        {/* Body */}
+                        <div style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", gap:5 }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
+                            <p style={s.cardName}>{hotel.name}</p>
+                            <span style={{ ...s.pillBase, ...statusStyle }}>{statusLabel}</span>
                           </div>
-                        ) : null}
-                        {hotel.email
-                          ? <p style={{ ...s.emailText, wordBreak:"break-all", ...((hotel.hunter_contacts?.length > 0 || hotel.contact_email) ? { fontSize:11, color:"var(--color-ink-muted)" } : {}) }}>✉ {hotel.email}</p>
-                          : !hotel.hunter_contacts?.length && !hotel.contact_email ? <p style={s.noEmailText}>No email</p> : null}
-                        {hotel.phone && <p style={s.phoneText}>{hotel.phone}</p>}
-                        {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
-                      </div>
-                      {/* Instagram */}
-                      <div style={{ minWidth:0 }}>
-                        {hotel.instagram ? (
-                          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-                            <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igHandle}>
-                              {hotel.instagram}
-                            </a>
-                            {isFollowUpNeeded(hotel) && (
-                              <div style={s.followUpBadge} title="No reply after 3+ days">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                Follow up
-                              </div>
-                            )}
+
+                          <p style={s.cardMeta}>
+                            {hotel.address}
+                            {hotel.rating ? ` \u00b7 \u2605 ${hotel.rating}` : ""}
+                          </p>
+
+                          {/* Email — Hunter contacts take priority, then direct, then scraped */}
+                          {hotel.hunter_contacts?.length > 0 ? (
+                            <button style={s.contactCountBadge} onClick={() => setContactsModal(hotel)}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                              {hotel.hunter_contacts.length} contact{hotel.hunter_contacts.length !== 1 ? "s" : ""} found
+                              {hotel.hunter_contacts.some(c => c.selected) && (
+                                <span style={s.selectedCount}>{hotel.hunter_contacts.filter(c => c.selected).length} selected</span>
+                              )}
+                            </button>
+                          ) : hotel.contact_email ? (
                             <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                              <button style={s.igDmBtn} onClick={() => openIgDm(hotel)}>
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                                  <circle cx="12" cy="12" r="4"/>
-                                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                                </svg>
-                                Send DM
-                              </button>
-                              {(igContacted.includes(hotel.id) || hotel.ig_contacted) && (
-                                <button
-                                  title={igReplied.includes(hotel.id) || hotel.ig_replied ? "Mark as not replied" : "Mark as replied"}
-                                  style={{ ...s.igReplyBtn, ...(igReplied.includes(hotel.id) || hotel.ig_replied ? s.igReplyBtnActive : {}) }}
-                                  onClick={() => markIgReplied(hotel, !(igReplied.includes(hotel.id) || hotel.ig_replied))}
-                                >
-                                  {igReplied.includes(hotel.id) || hotel.ig_replied ? "✓ Replied" : "Replied?"}
-                                </button>
+                              <p style={s.cardEmail}>{hotel.contact_email}</p>
+                              <span style={s.directTag}>Direct</span>
+                            </div>
+                          ) : hotel.email ? (
+                            <p style={s.cardEmail}>{hotel.email}</p>
+                          ) : (
+                            <p style={s.cardNoEmail}>No email yet</p>
+                          )}
+
+                          {/* Instagram */}
+                          {hotel.instagram ? (
+                            <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                              <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
+                                {hotel.instagram}
+                              </a>
+                              {isFollowUpNeeded(hotel) && (
+                                <span style={s.followUpBadge} title="No reply after 3+ days">Follow up</span>
                               )}
                             </div>
-                          </div>
-                        ) : editingIg === hotel.id ? (
-                          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-                            <input
-                              style={s.igManualInput}
-                              value={igInputText}
-                              onChange={e => setIgInputText(e.target.value)}
-                              placeholder="@handle"
-                              autoFocus
-                              onKeyDown={e => {
-                                if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
-                                if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
-                              }}
-                            />
-                            <div style={{ display:"flex", gap:5 }}>
+                          ) : editingIg === hotel.id ? (
+                            <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                              <input
+                                style={s.igManualInput}
+                                value={igInputText}
+                                onChange={e => setIgInputText(e.target.value)}
+                                placeholder="@handle"
+                                autoFocus
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
+                                  if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
+                                }}
+                              />
                               <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
                               <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
                             </div>
-                          </div>
-                        ) : (
-                          <button
-                            style={s.igAddBtn}
-                            onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}
-                          >
-                            + Add handle
-                          </button>
-                        )}
-                      </div>
-                      {/* Instagram Contacted */}
-                      <div style={{ minWidth:0 }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-                          <span style={{ fontSize:12, fontWeight:500, color: hotel.ig_contacted ? "#C13584" : "var(--color-ink-muted)" }}>
-                            {hotel.ig_contacted ? "DM Sent" : "Not Sent"}
-                          </span>
-                          <button
-                            style={{ ...s.igCheckbox, ...(hotel.ig_contacted ? s.igCheckboxChecked : {}) }}
-                            onClick={() => toggleContacted(hotel)}
-                            title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}
-                          >
-                            {hotel.ig_contacted && (
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--color-ground-page)" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          ) : (
+                            <button style={s.igAddBtn} onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}>
+                              + Add handle
+                            </button>
+                          )}
+
+                          {/* Note preview */}
+                          {hotel.notes && (
+                            <p style={s.cardNote}>&ldquo;{hotel.notes}&rdquo;</p>
+                          )}
+
+                          {/* Actions */}
+                          <div style={s.cardActions}>
+                            {hotel.instagram && (
+                              <button style={s.cardActionBtn} onClick={() => openIgDm(hotel)}>Send DM</button>
                             )}
-                          </button>
-                        </div>
-                        {hotel.ig_contacted_at && (
-                          <p style={s.contactedDate}>{new Date(hotel.ig_contacted_at).toLocaleDateString()}</p>
-                        )}
-                      </div>
-                      {/* Notes */}
-                      <div style={{ minWidth:0 }}>
-                        {hotel.notes ? (
-                          <div style={{ display:"flex", alignItems:"flex-start", gap:6 }}>
-                            <p style={{ fontSize:12, color:"var(--color-ink-primary)", lineHeight:1.45, flex:1, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", margin:0 }}>
-                              {hotel.notes}
-                            </p>
+                            {contacted && (
+                              <button
+                                style={{ ...s.cardActionBtn, ...(replied ? s.cardActionActive : {}) }}
+                                onClick={() => markIgReplied(hotel, !replied)}
+                                title={replied ? "Mark as not replied" : "Mark as replied"}
+                              >
+                                {replied ? "\u2713 Replied" : "Replied?"}
+                              </button>
+                            )}
                             <button
-                              style={s.noteEditIcon}
-                              onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
-                              title="Edit note"
+                              style={s.cardActionBtn}
+                              onClick={() => toggleContacted(hotel)}
+                              title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}
                             >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              {hotel.ig_contacted ? "Undo sent" : "Mark sent"}
+                            </button>
+                            <button
+                              style={s.cardActionBtn}
+                              onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
+                            >
+                              {hotel.notes ? "Edit note" : "+ Note"}
+                            </button>
+                            <button style={s.cardRemoveBtn} onClick={() => removeHotel(hotel.id)} title="Remove from list">
+                              Remove
                             </button>
                           </div>
-                        ) : (
-                          <button
-                            style={s.noteAddBtn}
-                            onClick={() => { setEditingNote(hotel.id); setNoteText(""); }}
-                          >
-                            + Add note
-                          </button>
-                        )}
+                        </div>
                       </div>
-
-                      {/* Remove */}
-                      <div style={{ width:40, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                        <button style={s.removeBtn} onClick={() => removeHotel(hotel.id)} title="Remove from list">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-border)" strokeWidth="2.5">
-                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -994,21 +951,35 @@ const s = {
   saveBtn: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
   cancelBtn: { background:"var(--color-ground-card)", color:"var(--color-ink-mid)", border:"1.5px solid var(--color-border)", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"var(--font-display)" },
   iconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--color-border)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
-  detailPanel: { background:"var(--color-ground-card)", borderRadius:16, border:"1.5px solid var(--color-border)", overflow:"hidden", minHeight:300 },
-  detailHeader: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"18px 20px", borderBottom:"1px solid rgba(43,39,34,0.07)", gap:12, flexWrap:"wrap" },
-  detailTitle: { fontFamily:"var(--font-display)", fontSize:20, fontWeight:700, color:"var(--color-ink-primary)" },
-  detailSub: { fontSize:13, color:"var(--color-ink-muted)", marginTop:2 },
+  // Layout is a plain grid on the page ground — the old bordered detail panel
+  // wrapper is gone, per the design.
+  detailPanel: { minHeight:300 },
+  toolbar: { display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:18 },
+
+  cardGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, alignItems:"start" },
+  hotelCard: { display:"flex", gap:14, padding:16, background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-card)", boxShadow:"var(--shadow-low)" },
+  cardThumbWrap: { width:76, height:76, flex:"none", borderRadius:12, overflow:"hidden", background:"var(--color-ground-sand)", display:"flex", alignItems:"center", justifyContent:"center" },
+  cardThumb: { width:"100%", height:"100%", objectFit:"cover", display:"block" },
+  cardThumbFallback: { fontSize:26 },
+  cardName: { fontSize:15, fontWeight:700, color:"var(--color-ink-primary)", lineHeight:1.25, minWidth:0, overflow:"hidden", textOverflow:"ellipsis" },
+  cardMeta: { fontSize:11.5, color:"var(--color-ink-muted)" },
+  cardEmail: { fontSize:12, color:"var(--color-ink-primary)", wordBreak:"break-all", margin:0 },
+  cardNoEmail: { fontSize:12, color:"var(--color-ink-muted)" },
+  cardHandle: { fontSize:12, color:"var(--color-accent-amber-deep)", fontWeight:600, textDecoration:"none" },
+  cardNote: { fontSize:11.5, color:"var(--color-ink-mid)", fontStyle:"italic", lineHeight:1.45, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" },
+  directTag: { fontSize:10, fontWeight:700, background:"var(--status-sent-bg)", color:"var(--status-sent-ink)", padding:"2px 7px", borderRadius:"var(--radius-pill)", flexShrink:0 },
+
+  // Status pill — top-right of each card
+  pillBase: { fontSize:10, fontWeight:700, letterSpacing:"0.04em", padding:"3px 9px", borderRadius:"var(--radius-pill)", whiteSpace:"nowrap", flexShrink:0 },
+  pillDm: { background:"rgba(193,53,132,0.12)", color:"var(--brand-instagram)" },
+  pillReplied: { background:"var(--status-success-bg)", color:"var(--status-success-ink)" },
+  pillNone: { background:"var(--color-ground-sand)", color:"var(--color-ink-muted)" },
+
+  cardActions: { display:"flex", gap:6, flexWrap:"wrap", marginTop:2 },
+  cardActionBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-mid)", background:"none", border:"1px solid var(--color-border)", borderRadius:"var(--radius-sm)", padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
+  cardActionActive: { background:"var(--status-success-bg)", color:"var(--status-success-ink)", borderColor:"transparent" },
+  cardRemoveBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"none", borderRadius:"var(--radius-sm)", padding:"4px 6px", cursor:"pointer", fontFamily:"inherit", marginLeft:"auto" },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
-  tableWrap: { overflowX:"auto" },
-  tableGrid: { display:"grid", gridTemplateColumns:"2.5fr 1.5fr 1.4fr 120px 1.6fr 40px", alignItems:"center", gap:"0 16px" },
-  tableHead: { padding:"10px 20px", background:"var(--color-ground-sand)", borderBottom:"1px solid rgba(43,39,34,0.07)" },
-  tableRow: { padding:"14px 20px", borderBottom:"1px solid var(--color-ground-sand)" },
-  colHd: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"0.5px", textTransform:"uppercase" },
-  thumb: { width:44, height:44, borderRadius:8, objectFit:"cover", flexShrink:0 },
-  thumbFallback: { width:44, height:44, borderRadius:8, background:"var(--color-ground-sand)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 },
-  hotelName: { fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:2 },
-  hotelAddr: { fontSize:11, color:"var(--color-ink-muted)", lineHeight:1.3 },
-  hotelRating: { fontSize:11, color:"var(--color-accent-amber)", marginTop:2 },
   emailText: { fontSize:12, color:"var(--color-ink-primary)", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
   noEmailText: { fontSize:12, color:"var(--color-border)", marginBottom:2 },
   contactCountBadge: { display:"inline-flex", alignItems:"center", gap:6, padding:"5px 10px", background:"var(--status-sent-bg)", border:"1.5px solid rgba(67,56,202,0.3)", borderRadius:20, fontSize:11, fontWeight:700, color:"var(--status-sent-ink)", cursor:"pointer", marginBottom:4, fontFamily:"inherit" },
@@ -1020,15 +991,12 @@ const s = {
   statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"var(--font-display)" },
   contacted: { background:"var(--status-success-bg)", color:"var(--status-success-ink)" },
   pending: { background:"var(--color-ground-sand)", color:"var(--color-ink-mid)" },
-  contactedDate: { fontSize:10, color:"var(--color-ink-muted)", marginTop:4 },
-  removeBtn: { background:"none", border:"none", cursor:"pointer", padding:4, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"48px 24px", color:"var(--color-ink-muted)", fontSize:14, textAlign:"center" },
   loadingSpinner: { width:24, height:24, border:"2.5px solid var(--color-border)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
   overlay: { position:"fixed", inset:0, background:"rgba(43,39,34,0.5)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
   modal: { background:"var(--color-ground-card)", borderRadius:16, padding:"28px", maxWidth:400, width:"100%" },
   modalActions: { display:"flex", gap:10, justifyContent:"flex-end" },
   igHandle: { fontSize:12, color:"#C13584", fontWeight:600, textDecoration:"none" },
-  igDmBtn: { display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"#C13584", background:"rgba(193,53,132,0.08)", border:"1px solid rgba(193,53,132,0.3)", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
   igWarning: { display:"flex", alignItems:"flex-start", gap:8, background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:10, padding:"10px 12px", marginBottom:16, fontSize:12, color:"var(--color-accent-amber-deeper)", lineHeight:1.5 },
   igLabel: { display:"block", fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:6 },
   igSelect: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", background:"var(--color-ground-card)", cursor:"pointer", marginBottom:0 },
@@ -1044,13 +1012,9 @@ const s = {
   hunterSpinner: { width:12, height:12, border:"2px solid rgba(67,56,202,0.3)", borderTopColor:"var(--status-sent-ink)", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 },
   igBulkBtn: { display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg, var(--brand-instagram), var(--color-accent-amber))", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"9px 14px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   igSentBadge: { fontSize:10, fontWeight:700, background:"rgba(193,53,132,0.08)", color:"#C13584", padding:"2px 7px", borderRadius:20, border:"1px solid rgba(193,53,132,0.3)" },
-  igCheckbox: { width:18, height:18, borderRadius:4, border:"1.5px solid rgba(193,53,132,0.3)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" },
-  igCheckboxChecked: { background:"#C13584", border:"1.5px solid #C13584" },
   igSendBtn: { display:"flex", alignItems:"center", gap:8, background:"linear-gradient(135deg, var(--brand-instagram), var(--color-accent-amber))", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   noteBtn: { display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"var(--color-ground-sand)", border:"1px dashed var(--color-border)", borderRadius:7, padding:"5px 10px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
   noteBtnFilled: { color:"var(--color-ink-primary)", background:"var(--color-ground-sand)", border:"1px solid var(--color-border)" },
-  noteAddBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"1px dashed var(--color-border)", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
-  noteEditIcon: { background:"none", border:"none", cursor:"pointer", padding:2, color:"var(--color-ink-muted)", display:"flex", alignItems:"center", flexShrink:0 },
   notesModal: { background:"var(--color-ground-card)", borderRadius:16, padding:"24px", width:"90vw", maxWidth:480 },
   notesModalTextarea: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"12px 14px", fontSize:14, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"vertical", lineHeight:1.7, boxSizing:"border-box" },
   mapBtn: { display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:"var(--status-sent-bg)", border:"1px solid rgba(67,56,202,0.3)", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", color:"var(--status-sent-ink)", fontFamily:"inherit" },
@@ -1059,8 +1023,6 @@ const s = {
   mapCloseBtn: { background:"none", border:"none", fontSize:16, color:"var(--color-ink-muted)", cursor:"pointer", padding:4, lineHeight:1 },
   deleteBtn: { background:"var(--color-error)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
   followUpBadge: { display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, color:"var(--color-accent-amber-deeper)", background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:20, padding:"2px 8px" },
-  igReplyBtn: { fontSize:10, fontWeight:700, color:"var(--color-ink-mid)", background:"rgba(43,39,34,0.07)", border:"1px solid var(--color-border)", borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
-  igReplyBtnActive: { color:"var(--status-success-ink)", background:"var(--status-success-bg)", border:"1px solid rgba(22,101,52,0.3)" },
   igAddBtn: { fontSize:12, color:"#C13584", background:"none", border:"1px dashed rgba(193,53,132,0.3)", borderRadius:6, padding:"4px 9px", cursor:"pointer", fontFamily:"inherit", fontWeight:600 },
   igManualInput: { width:"100%", border:"1.5px solid rgba(193,53,132,0.3)", borderRadius:7, padding:"5px 8px", fontSize:12, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none" },
 };
