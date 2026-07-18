@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
-import { useIsMobile } from "../../../lib/useIsMobile";
 import { useGmail } from "../../../lib/useGmail";
 
 const DELAY_OPTIONS = [
@@ -232,7 +231,17 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
 
 export default function SequenceBuilderPage() {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const [activeStep, setActiveStep] = useState(0);
+  const [showFlowDropdown, setShowFlowDropdown] = useState(false);
+  const flowDropdownRef = useRef(null);
+
+  // Close the flow selector on outside click
+  useEffect(() => {
+    if (!showFlowDropdown) return;
+    const handler = (e) => { if (flowDropdownRef.current && !flowDropdownRef.current.contains(e.target)) setShowFlowDropdown(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showFlowDropdown]);
   const [sequences, setSequences]   = useState([]);
   const [templates, setTemplates]   = useState([]);
   const [lists, setLists]           = useState([]);
@@ -398,72 +407,118 @@ export default function SequenceBuilderPage() {
       {error && <div style={s.errorBox}>{error}</div>}
       {success && <div style={s.successBox}>{success}</div>}
 
-      <div style={{ ...s.layout, gridTemplateColumns: isMobile ? "1fr" : "260px 1fr" }}>
-        {/* Left panel */}
-        <div style={s.listPanel}>
-          <button style={s.newBtn} onClick={newSequence}>+ New Flow</button>
-          {loading ? (
-            <div style={s.empty}><div style={s.spinner} /></div>
-          ) : sequences.length === 0 && !isNew ? (
-            <div style={s.empty}>
-              <span style={{ fontSize:32 }}>✉️</span>
-              <p style={{ fontSize:13, color:"var(--color-ink-muted)", textAlign:"center", marginTop:8 }}>No flows yet. Create one to automate your outreach.</p>
-            </div>
-          ) : (
-            sequences.map(seq => (
-              <div key={seq.id}
-                style={{ ...s.seqItem, ...(activeSeq?.id === seq.id && !isNew ? s.seqItemActive : {}) }}
-                onClick={() => selectSequence(seq)}
-              >
-                <div style={{ flex:1, minWidth:0 }}>
-                  <p style={s.seqName}>{seq.name}</p>
-                  <p style={s.seqMeta}>{seq.steps.length} step{seq.steps.length !== 1 ? "s" : ""}</p>
-                </div>
-                <div style={{ display:"flex", gap:6 }} onClick={e => e.stopPropagation()}>
-                  <button style={s.launchIconBtn} onClick={() => setLaunchModal(seq)} title="Launch sequence">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="2.5">
-                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                  </button>
-                  <button style={s.deleteIconBtn} onClick={() => setDeleteConfirm(seq.id)} title="Delete">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-                    </svg>
-                  </button>
-                </div>
+      {/* Header — flow title, selector, actions */}
+      <div style={s.flowHeader}>
+        <h1 style={s.flowTitle}>{isNew ? "New Flow" : (activeSeq?.name || "Flows")}</h1>
+
+        {sequences.length > 0 && (
+          <div style={{ position:"relative" }} ref={flowDropdownRef}>
+            <button style={s.flowSelector} onClick={() => setShowFlowDropdown(v => !v)}>
+              <span style={s.flowSelectorName}>{activeSeq?.name || "Select a flow…"}</span>
+              {activeSeq && <span style={s.flowSelectorMeta}>{(activeSeq.steps?.length || 0)} steps</span>}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2.5"
+                style={{ flexShrink:0, transform: showFlowDropdown ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            {showFlowDropdown && (
+              <div style={s.flowDropdown}>
+                {sequences.map(seq => (
+                  <div key={seq.id}
+                    style={{ ...s.flowDropdownItem, ...(activeSeq?.id === seq.id && !isNew ? s.flowDropdownItemActive : {}) }}
+                    onClick={() => { selectSequence(seq); setActiveStep(0); setShowFlowDropdown(false); }}
+                  >
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={s.seqName}>{seq.name}</p>
+                      <p style={s.seqMeta}>{seq.steps.length} step{seq.steps.length !== 1 ? "s" : ""}</p>
+                    </div>
+                    <div style={{ display:"flex", gap:6, flexShrink:0 }} onClick={e => e.stopPropagation()}>
+                      <button style={s.launchIconBtn} onClick={() => { setLaunchModal(seq); setShowFlowDropdown(false); }} title="Launch flow">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="2.5">
+                          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                      </button>
+                      <button style={s.deleteIconBtn} onClick={() => { setDeleteConfirm(seq.id); setShowFlowDropdown(false); }} title="Delete">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))
+            )}
+          </div>
+        )}
+
+        <div style={s.flowActions}>
+          <button style={s.newBtn} onClick={() => { newSequence(); setActiveStep(0); }}>+ New Flow</button>
+          {(activeSeq || isNew) && (
+            <button style={{ ...s.saveBtn, opacity: saving ? 0.45 : 1 }} onClick={save} disabled={saving}>
+              {saving ? "Saving…" : isNew ? "Create" : "Save"}
+            </button>
+          )}
+          {activeSeq && !isNew && (
+            <button style={s.launchBtn} onClick={() => setLaunchModal(activeSeq)}>Launch →</button>
           )}
         </div>
+      </div>
 
-        {/* Right: editor */}
-        <div style={s.editor}>
-          {!activeSeq && !isNew ? (
-            <div style={s.empty}>
-              <span style={{ fontSize:36 }}>📧</span>
-              <p style={{ fontSize:14, color:"var(--color-ink-muted)", marginTop:12 }}>Select a flow to edit or create a new one</p>
+      {loading ? (
+        <div style={s.empty}><div style={s.spinner} /></div>
+      ) : !activeSeq && !isNew ? (
+        <div style={s.empty}>
+          <span style={{ fontSize:36 }}>📧</span>
+          <p style={{ fontSize:14, color:"var(--color-ink-muted)", marginTop:12 }}>
+            {sequences.length === 0 ? "No flows yet. Create one to automate your outreach." : "Select a flow above, or create a new one."}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* New flows need a name before saving */}
+          {isNew && (
+            <div style={{ marginBottom:16 }}>
+              <input style={s.nameInput} placeholder="Flow name e.g. Hotel Outreach Summer 2025"
+                value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
-          ) : (
-            <>
-              <div style={s.editorHeader}>
-                <input style={s.nameInput} placeholder="Flow name e.g. Hotel Outreach Summer 2025"
-                  value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-              </div>
+          )}
 
-              {form.steps.map((step, i) => (
-                <StepCard key={i} step={step} number={i + 1} templates={templates}
-                  onChange={updated => updateStep(i, updated)}
-                  onRemove={() => removeStep(i)}
-                  canRemove={form.steps.length > 1 && i > 0}
-                  signature={signature} />
-              ))}
-
-              {form.steps.length < 3 && (
-                <button style={s.addStepBtn} onClick={addStep}>
-                  + Add Follow-up Email
+          {/* Step tabs — horizontal row */}
+          <div className="dp-step-tabs" style={s.stepTabs}>
+            {form.steps.map((step, i) => {
+              const label  = i === 0 ? "Email 1" : i === 1 ? "Follow-up 1" : "Follow-up 2";
+              const timing = i === 0 ? "Immediate" : `+${step.delayDays} days`;
+              return (
+                <button key={i}
+                  style={{ ...s.stepTab, ...(activeStep === i ? s.stepTabActive : {}) }}
+                  onClick={() => setActiveStep(i)}
+                >
+                  <div style={s.stepTabTop}>
+                    <span style={{ ...s.stepBadge, ...(activeStep === i ? s.stepBadgeActive : {}) }}>{label}</span>
+                    <span style={s.stepTabTiming}>{timing}</span>
+                  </div>
+                  <p style={s.stepTabSubject}>{step.subject?.trim() || "No subject yet"}</p>
                 </button>
-              )}
+              );
+            })}
+            {form.steps.length < 3 && (
+              <button style={s.addStepTab} onClick={addStep}>+ Add follow-up</button>
+            )}
+          </div>
 
+          {/* Focused editor — selected step only */}
+          {form.steps[activeStep] && (
+            <StepCard
+              key={activeStep}
+              step={form.steps[activeStep]}
+              number={activeStep + 1}
+              templates={templates}
+              onChange={updated => updateStep(activeStep, updated)}
+              onRemove={() => { removeStep(activeStep); setActiveStep(0); }}
+              canRemove={form.steps.length > 1 && activeStep > 0}
+              signature={signature}
+            />
+          )}
               {/* Signature section */}
               <div style={{ background:"var(--color-ground-sand)", borderRadius:14, border:"1px solid var(--color-ground-sand)", padding:"18px 20px", marginBottom:16 }}>
                 <p style={{ fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:8 }}>Email Signature</p>
@@ -487,24 +542,8 @@ export default function SequenceBuilderPage() {
                 </div>
               </div>
 
-              <div style={s.saveRow}>
-                <button style={{ ...s.saveBtn, opacity: saving ? 0.45 : 1 }}
-                  onClick={save} disabled={saving}>
-                  {saving ? "Saving..." : isNew ? "Create Flow" : "Save Changes"}
-                </button>
-                {activeSeq && (
-                  <button style={s.launchBtn} onClick={() => setLaunchModal(activeSeq)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                    Launch Sequence
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+        </>
+      )}
 
       {launchModal && (
         <LaunchModal
@@ -533,17 +572,28 @@ export default function SequenceBuilderPage() {
 }
 
 const s = {
-  layout: { display:"grid", gridTemplateColumns:"260px 1fr", gap:20, alignItems:"start" },
-  listPanel: { display:"flex", flexDirection:"column", gap:8 },
-  newBtn: { width:"100%", padding:"10px 16px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", marginBottom:4 },
-  seqItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", borderRadius:12, border:"1.5px solid var(--color-border)", cursor:"pointer", background:"var(--color-ground-card)", transition:"all 0.15s" },
-  seqItemActive: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--color-amber-tint)" },
+  flowHeader: { display:"flex", alignItems:"center", gap:14, flexWrap:"wrap", marginBottom:20 },
+  flowTitle: { fontFamily:"var(--font-display)", fontSize:26, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.01em" },
+  flowSelector: { display:"flex", alignItems:"center", gap:8, background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-lg)", padding:"9px 14px", cursor:"pointer", fontFamily:"inherit", maxWidth:340 },
+  flowSelectorName: { fontSize:13.5, fontWeight:700, color:"var(--color-ink-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  flowSelectorMeta: { fontSize:11, fontWeight:700, color:"var(--color-accent-amber-deep)", flexShrink:0 },
+  flowDropdown: { position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:200, background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-lg)", boxShadow:"var(--shadow-overlay)", minWidth:300, maxHeight:320, overflowY:"auto" },
+  flowDropdownItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", cursor:"pointer", borderBottom:"1px solid rgba(43,39,34,0.07)" },
+  flowDropdownItemActive: { background:"var(--color-amber-tint)" },
+  flowActions: { display:"flex", gap:8, alignItems:"center", marginLeft:"auto", flexWrap:"wrap" },
+
+  stepTabs: { display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(230px, 1fr))", gap:14, marginBottom:20 },
+  stepTab: { textAlign:"left", padding:"14px 16px", background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-card)", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" },
+  stepTabActive: { border:"1.5px solid var(--color-accent-amber)", background:"var(--color-amber-tint)" },
+  stepTabTop: { display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginBottom:8 },
+  stepTabTiming: { fontSize:11.5, color:"var(--color-ink-muted)", flexShrink:0 },
+  stepTabSubject: { fontSize:14, fontWeight:700, color:"var(--color-ink-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  addStepTab: { padding:"14px 16px", background:"none", border:"1.5px dashed var(--color-border)", borderRadius:"var(--radius-card)", cursor:"pointer", fontFamily:"inherit", fontSize:13, fontWeight:600, color:"var(--color-ink-muted)" },
+  newBtn: { background:"var(--color-ground-card)", color:"var(--color-ink-primary)", border:"1.5px solid var(--color-border)", borderRadius:"var(--radius-lg)", padding:"11px 18px", fontSize:13.5, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)", whiteSpace:"nowrap" },
   seqName: { fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:2 },
   seqMeta: { fontSize:11, color:"var(--color-ink-muted)" },
   launchIconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--color-accent-amber)", background:"var(--color-amber-tint)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
   deleteIconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--color-error)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
-  editor: { background:"var(--color-ground-card)", borderRadius:16, border:"1.5px solid var(--color-border)", padding:"24px" },
-  editorHeader: { marginBottom:24 },
   nameInput: { width:"100%", border:"none", outline:"none", fontSize:20, fontWeight:700, color:"var(--color-ink-primary)", fontFamily:"inherit", borderBottom:"2px solid var(--color-ground-sand)", paddingBottom:8 },
   richEditorBox: { border:"1.5px solid var(--color-border)", borderRadius:10, overflow:"hidden", background:"var(--color-ground-card)" },
   toolbar: { display:"flex", gap:2, padding:"7px 8px", alignItems:"center", background:"var(--color-ground-sand)", flexWrap:"wrap" },
@@ -551,6 +601,7 @@ const s = {
   toolSep: { width:1, height:18, background:"var(--color-border)", margin:"0 3px" },
   stepCard: { background:"var(--color-ground-sand)", borderRadius:14, border:"1px solid var(--color-ground-sand)", padding:"20px", marginBottom:16 },
   stepHeader: { display:"flex", alignItems:"center", gap:12, marginBottom:18, flexWrap:"wrap" },
+  stepBadgeActive: { background:"rgba(224,149,74,0.28)" },
   stepBadge: { fontSize:12, fontWeight:700, color:"var(--color-accent-amber-deep)", background:"var(--color-amber-tint)", padding:"4px 12px", borderRadius:20 },
   stepNote: { fontSize:12, color:"var(--color-ink-muted)" },
   delaySelect: { border:"1.5px solid var(--color-border)", borderRadius:8, padding:"6px 12px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", background:"var(--color-ground-card)", cursor:"pointer" },
@@ -563,10 +614,8 @@ const s = {
   input: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"10px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none" },
   textarea: { width:"100%", border:"1.5px solid var(--color-border)", borderRadius:10, padding:"11px 14px", fontSize:13, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none", resize:"vertical", lineHeight:1.7 },
   charCount: { fontSize:11, color:"var(--color-border)", textAlign:"right", marginTop:3 },
-  addStepBtn: { width:"100%", padding:"12px", border:"2px dashed var(--color-border)", borderRadius:12, fontSize:13, fontWeight:600, color:"var(--color-ink-muted)", background:"none", cursor:"pointer", fontFamily:"inherit", marginBottom:20, transition:"all 0.15s" },
-  saveRow: { display:"flex", gap:12, marginTop:8 },
-  saveBtn: { flex:1, padding:13, background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"opacity 0.2s" },
-  launchBtn: { display:"flex", alignItems:"center", gap:8, padding:"13px 24px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:12, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+  saveBtn: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-lg)", padding:"11px 22px", fontSize:13.5, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)", whiteSpace:"nowrap" },
+  launchBtn: { background:"var(--color-accent-terracotta)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-lg)", padding:"11px 22px", fontSize:13.5, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)", whiteSpace:"nowrap" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 24px", gap:8 },
   spinner: { width:24, height:24, border:"2.5px solid var(--color-ground-sand)", borderTopColor:"var(--color-accent-amber)", borderRadius:"50%", animation:"spin 0.8s linear infinite" },
   errorBox: { background:"var(--status-error-bg)", border:"1px solid var(--color-accent-amber)", borderRadius:10, padding:"12px 16px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
