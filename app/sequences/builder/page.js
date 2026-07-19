@@ -143,10 +143,27 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
   const [mode, setMode] = useState("list"); // "list" | "hotel"
   const [selectedListId, setSelectedListId] = useState("");
   const [selectedHotelId, setSelectedHotelId] = useState("");
+  const [contactedIds, setContactedIds] = useState(null); // null = still loading
   const { gmailToken } = useGmail();
 
+  // Hotels already targeted by THIS flow — any sequence_jobs row for this
+  // sequence (active, completed, replied or bounced) means they were already
+  // sent to, so relaunching a grown list should skip them automatically.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.from("sequence_jobs").select("hotel_id").eq("sequence_id", sequence.id)
+      .then(({ data }) => {
+        if (cancelled) return;
+        setContactedIds(new Set((data || []).map(j => j.hotel_id).filter(Boolean)));
+      });
+    return () => { cancelled = true; };
+  }, [sequence.id]);
+
   const listHotels = allHotels.filter(h => h.list_id === selectedListId && h.email);
+  const newListHotels = contactedIds ? listHotels.filter(h => !contactedIds.has(h.id)) : [];
+  const alreadyContactedCount = listHotels.length - newListHotels.length;
   const hotelsWithEmail = allHotels.filter(h => h.email);
+  const selectedHotelAlreadyContacted = !!(contactedIds && selectedHotelId && contactedIds.has(selectedHotelId));
 
   return (
     <div style={s.overlay}>
@@ -184,9 +201,19 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
                 {lists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
               {selectedListId && (
-                <p style={s.launchInfo}>
-                  {listHotels.length} hotels with email addresses in this list
-                </p>
+                contactedIds === null ? (
+                  <p style={s.launchInfo}>Checking who's already been sent this flow…</p>
+                ) : listHotels.length === 0 ? (
+                  <p style={s.launchInfo}>No hotels with email addresses in this list.</p>
+                ) : newListHotels.length === 0 ? (
+                  <p style={s.launchWarning}>All {listHotels.length} hotel{listHotels.length !== 1 ? "s" : ""} in this list have already been sent this flow.</p>
+                ) : alreadyContactedCount > 0 ? (
+                  <p style={s.launchInfo}>
+                    Sending to <strong>{newListHotels.length} new hotel{newListHotels.length !== 1 ? "s" : ""}</strong> — {alreadyContactedCount} of {listHotels.length} already received this flow and will be skipped.
+                  </p>
+                ) : (
+                  <p style={s.launchInfo}>{newListHotels.length} hotel{newListHotels.length !== 1 ? "s" : ""} with email addresses in this list</p>
+                )
               )}
             </div>
           )}
@@ -198,6 +225,9 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
                 <option value="">Choose a hotel...</option>
                 {hotelsWithEmail.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
               </select>
+              {selectedHotelAlreadyContacted && (
+                <p style={s.launchWarning}>This hotel has already been sent this flow. Launching again will send it a duplicate.</p>
+              )}
             </div>
           )}
 
@@ -217,8 +247,8 @@ function LaunchModal({ sequence, lists, allHotels, onClose, onLaunch, launching 
         <div style={s.modalFooter}>
           <button style={s.cancelBtn} onClick={onClose}>Cancel</button>
           <button
-            style={{ ...s.launchBtn, opacity: (!gmailToken || (mode === "list" ? !selectedListId : !selectedHotelId)) ? 0.45 : 1 }}
-            disabled={!gmailToken || (mode === "list" ? !selectedListId : !selectedHotelId) || launching}
+            style={{ ...s.launchBtn, opacity: (!gmailToken || (mode === "list" ? (!selectedListId || contactedIds === null || newListHotels.length === 0) : !selectedHotelId)) ? 0.45 : 1 }}
+            disabled={!gmailToken || (mode === "list" ? (!selectedListId || contactedIds === null || newListHotels.length === 0) : !selectedHotelId) || launching}
             onClick={() => onLaunch({ mode, listId: selectedListId, hotelId: selectedHotelId, gmailToken })}
           >
             {launching ? "Launching..." : `Launch Sequence`}
@@ -387,13 +417,19 @@ export default function SequenceBuilderPage() {
       const res = await fetch("/api/launch-sequence", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sequenceId: launchModal.id, hotels, gmailToken, userId: user.id }),
+        // List launches skip hotels already targeted by this flow — the API
+        // re-checks this itself rather than trusting the client, so a stale
+        // modal or a second launch can't double-queue a hotel. Picking a
+        // single hotel by name is an explicit choice, so it's never skipped.
+        body: JSON.stringify({ sequenceId: launchModal.id, hotels, gmailToken, userId: user.id, skipAlreadyContacted: mode === "list" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Launch failed");
 
-      setSuccess(`Flow launched! ${data.sent} email${data.sent !== 1 ? "s" : ""} sent immediately.`);
-      setTimeout(() => setSuccess(""), 4000);
+      const skipped = data.skipped || 0;
+      const skippedNote = skipped > 0 ? ` ${skipped} hotel${skipped !== 1 ? "s" : ""} already had this flow and ${skipped !== 1 ? "were" : "was"} skipped.` : "";
+      setSuccess(`Flow launched! ${data.queued} new email${data.queued !== 1 ? "s" : ""} queued.${skippedNote}`);
+      setTimeout(() => setSuccess(""), 5000);
       setLaunchModal(null);
     } catch (e) {
       alert("Could not launch: " + e.message);
@@ -631,6 +667,7 @@ const s = {
   modeBtn: { flex:1, padding:"10px", border:"1.5px solid var(--color-border)", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", color:"var(--color-ink-mid)", background:"var(--color-ground-card)", transition:"all 0.15s" },
   modeBtnActive: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--color-amber-tint)", color:"var(--color-accent-terracotta)" },
   launchInfo: { fontSize:12, color:"var(--color-ink-muted)", marginTop:6 },
+  launchWarning: { fontSize:12, color:"var(--color-accent-amber-deeper)", background:"var(--color-amber-tint)", border:"1px solid var(--color-glow-1)", borderRadius:8, padding:"7px 10px", marginTop:8, lineHeight:1.5 },
   stepsPreview: { background:"var(--color-ground-sand)", borderRadius:10, padding:"14px 16px", marginTop:8 },
   stepsPreviewTitle: { fontSize:11, fontWeight:700, color:"var(--color-ink-muted)", letterSpacing:"1px", textTransform:"uppercase", marginBottom:10 },
   stepsPreviewItem: { display:"flex", alignItems:"center", gap:10, marginBottom:8 },
