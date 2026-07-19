@@ -687,6 +687,11 @@ export default function ListsPage() {
                           {hotel.instagram ? (
                             <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
                               <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                  <circle cx="12" cy="12" r="4"/>
+                                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                                </svg>
                                 {hotel.instagram}
                               </a>
                               {isFollowUpNeeded(hotel) && (
@@ -981,7 +986,7 @@ const s = {
   cardMeta: { fontSize:11.5, color:"var(--color-ink-muted)" },
   cardEmail: { fontSize:12, color:"var(--color-ink-primary)", wordBreak:"break-all", margin:0 },
   cardNoEmail: { fontSize:12, color:"var(--color-ink-muted)" },
-  cardHandle: { fontSize:12, color:"var(--color-accent-amber-deep)", fontWeight:600, textDecoration:"none" },
+  cardHandle: { display:"inline-flex", alignItems:"center", gap:5, fontSize:12, color:"var(--brand-instagram)", fontWeight:700, textDecoration:"none" },
   cardNote: { fontSize:11.5, color:"var(--color-ink-mid)", fontStyle:"italic", lineHeight:1.45, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" },
   directTag: { fontSize:10, fontWeight:700, background:"var(--status-sent-bg)", color:"var(--status-sent-ink)", padding:"2px 7px", borderRadius:"var(--radius-pill)", flexShrink:0 },
 
