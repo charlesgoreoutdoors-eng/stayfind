@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Quicksand, Nunito_Sans } from "next/font/google";
 import { AuthProvider } from "../lib/auth";
+import { GmailProvider } from "../lib/useGmail";
 import AuthGuard from "../components/AuthGuard";
 import Sidebar from "../components/Sidebar";
 
@@ -30,9 +31,11 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${quicksand.variable} ${nunito.variable}`}>
       <body>
         <AuthProvider>
-          <AuthGuard>
-            <Sidebar>{children}</Sidebar>
-          </AuthGuard>
+          <GmailProvider>
+            <AuthGuard>
+              <Sidebar>{children}</Sidebar>
+            </AuthGuard>
+          </GmailProvider>
         </AuthProvider>
       </body>
     </html>
