@@ -637,9 +637,9 @@ export default function ListsPage() {
                     const replied   = igReplied.includes(hotel.id) || hotel.ig_replied;
                     const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;
                     const status = replied
-                      ? { label: "\u2713 REPLIED", ...s.pillReplied }
+                      ? { label: "\u2713 IG REPLIED", ...s.pillReplied }
                       : contacted
-                        ? { label: "DM SENT", ...s.pillDm }
+                        ? { label: "IG SENT", ...s.pillDm }
                         : { label: "NOT SENT", ...s.pillNone };
                     const { label: statusLabel, ...statusStyle } = status;
                     return (
@@ -695,7 +695,7 @@ export default function ListsPage() {
                                 {hotel.instagram}
                               </a>
                               {isFollowUpNeeded(hotel) && (
-                                <span style={s.followUpBadge} title="No reply after 3+ days">Follow up</span>
+                                <span style={s.followUpBadge} title="No reply after 3+ days">Need to follow up</span>
                               )}
                             </div>
                           ) : editingIg === hotel.id ? (
