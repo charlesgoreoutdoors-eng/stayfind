@@ -3,7 +3,6 @@ import { Quicksand, Nunito_Sans } from "next/font/google";
 import { AuthProvider } from "../lib/auth";
 import AuthGuard from "../components/AuthGuard";
 import Sidebar from "../components/Sidebar";
-import TawkChat from "../components/TawkChat";
 
 // Dapples brand type: Quicksand (display) + Nunito Sans (body).
 // Exposed as CSS vars that globals.css maps to --font-display / --font-body.
@@ -34,7 +33,6 @@ export default function RootLayout({ children }) {
           <AuthGuard>
             <Sidebar>{children}</Sidebar>
           </AuthGuard>
-          <TawkChat />
         </AuthProvider>
       </body>
     </html>
