@@ -594,7 +594,12 @@ function SearchApp() {
   return (
     <main>
       <div style={s.header}>
-        <span style={s.headerGlow} />
+        {/* The glow gets its own clipping wrapper. The band itself must NOT be
+            overflow:hidden, or it clips the Filters dropdown that opens from
+            inside the search bar. */}
+        <div style={s.headerGlowClip}>
+          <span style={s.headerGlow} />
+        </div>
         <div style={s.headerInner}>
           {!isMobile && <h1 style={s.headline}>Find hotels to partner with</h1>}
 
@@ -772,7 +777,8 @@ function SearchApp() {
 
 const s = {
   // Hero band — sand ground with a golden-hour glow behind the search bar.
-  header: { position:"relative", overflow:"hidden", background:"var(--color-ground-nav-tint)", padding:"30px 40px 26px" },
+  header: { position:"relative", background:"var(--color-ground-nav-tint)", padding:"30px 40px 26px" },
+  headerGlowClip: { position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none" },
   headerGlow: { position:"absolute", top:-40, right:"8%", width:180, height:180, borderRadius:"50%", background:"var(--color-glow-1)", opacity:0.35, filter:"blur(55px)", pointerEvents:"none" },
   headerInner: { position:"relative", display:"flex", flexDirection:"column", alignItems:"stretch", maxWidth:1080, margin:"0 auto", gap:16 },
   headline: { fontFamily:"var(--font-display)", fontSize:24, fontWeight:700, letterSpacing:"-0.01em", color:"var(--color-ink-primary)", flexShrink:0 },
