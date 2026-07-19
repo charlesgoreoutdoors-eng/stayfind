@@ -722,6 +722,22 @@ export default function ListsPage() {
 
                           {/* Actions */}
                           <div style={s.cardActions}>
+                            {hotel.website && (
+                              <a
+                                href={hotel.website}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={s.cardWebsiteBtn}
+                                title={hotel.website}
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                  <circle cx="12" cy="12" r="10"/>
+                                  <line x1="2" y1="12" x2="22" y2="12"/>
+                                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                </svg>
+                                Visit website
+                              </a>
+                            )}
                             {hotel.instagram && (
                               <button style={s.cardActionBtn} onClick={() => openIgDm(hotel)}>Send DM</button>
                             )}
@@ -977,6 +993,7 @@ const s = {
 
   cardActions: { display:"flex", gap:6, flexWrap:"wrap", marginTop:2 },
   cardActionBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-mid)", background:"none", border:"1px solid var(--color-border)", borderRadius:"var(--radius-sm)", padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
+  cardWebsiteBtn: { display:"inline-flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"var(--color-accent-amber-deep)", background:"var(--color-amber-tint)", border:"1px solid rgba(224,149,74,0.35)", borderRadius:"var(--radius-sm)", padding:"4px 9px", cursor:"pointer", fontFamily:"inherit", textDecoration:"none" },
   cardActionActive: { background:"var(--status-success-bg)", color:"var(--status-success-ink)", borderColor:"transparent" },
   cardRemoveBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"none", borderRadius:"var(--radius-sm)", padding:"4px 6px", cursor:"pointer", fontFamily:"inherit", marginLeft:"auto" },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
@@ -987,7 +1004,6 @@ const s = {
   contactRow: { display:"flex", alignItems:"flex-start", gap:12, padding:"12px", borderRadius:10, border:"1.5px solid var(--color-ground-sand)", cursor:"pointer", transition:"all 0.15s" },
   contactRowSelected: { border:"1.5px solid var(--color-accent-terracotta)", background:"var(--color-amber-tint)" },
   phoneText: { fontSize:11, color:"var(--color-ink-mid)", marginBottom:2 },
-  websiteLink: { fontSize:11, color:"var(--color-accent-amber-deep)", textDecoration:"none" },
   statusBtn: { fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontFamily:"var(--font-display)" },
   contacted: { background:"var(--status-success-bg)", color:"var(--status-success-ink)" },
   pending: { background:"var(--color-ground-sand)", color:"var(--color-ink-mid)" },
