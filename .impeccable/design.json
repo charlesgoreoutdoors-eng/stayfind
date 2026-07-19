@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-16T20:14:33Z",
+  "generatedAt": "2026-07-19T00:42:40Z",
   "title": "Design System: Dapples",
   "extensions": {
     "colorMeta": {
@@ -648,114 +648,113 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Full-width within search card; the main search action.",
-      "html": "<button class=\"ds-btn-primary\">Search Hotels</button>",
-      "css": ".ds-btn-primary { display: block; width: 100%; padding: 14px 20px; background: #0F2544; color: #F7F3EF; border: none; border-radius: 12px; font-family: Manrope, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, background 0.2s; } .ds-btn-primary:hover { background: #162F54; } .ds-btn-primary:focus-visible { outline: 2px solid #E85D3D; outline-offset: 3px; } .ds-btn-primary:active { opacity: 0.85; }"
+      "description": "Forest primary action — the default commit button across the app.",
+      "html": "<button class=\"ds-btn-primary\">Search</button>",
+      "css": ".ds-btn-primary { background:#44503A; color:#FBF5EA; font-family:'Quicksand',sans-serif; font-weight:700; font-size:14px; padding:14px 20px; border:none; border-radius:12px; cursor:pointer; transition:background .15s; } .ds-btn-primary:hover { background:#363F2E; } .ds-btn-primary:focus-visible { outline:2px solid #44503A; outline-offset:2px; }"
     },
     {
-      "name": "Coral Action Button",
+      "name": "Terracotta Action",
       "kind": "button",
-      "refersTo": "button-coral",
-      "description": "Secondary CTAs with energy: Find Emails, Send DM, Launch Sequence.",
-      "html": "<button class=\"ds-btn-coral\">Find Emails</button>",
-      "css": ".ds-btn-coral { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #E85D3D; color: #fff; border: none; border-radius: 12px; font-family: Manrope, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-btn-coral:hover { background: #B83A22; } .ds-btn-coral:focus-visible { outline: 2px solid #E85D3D; outline-offset: 3px; } .ds-btn-coral:active { background: #8c2c15; }"
+      "refersTo": "button-terracotta",
+      "description": "Secondary CTA with energy — Compose Emails, active pill tabs.",
+      "html": "<button class=\"ds-btn-terracotta\">Compose Emails</button>",
+      "css": ".ds-btn-terracotta { background:#C96E3C; color:#FBF5EA; font-family:'Quicksand',sans-serif; font-weight:700; font-size:13px; padding:9px 18px; border:none; border-radius:12px; cursor:pointer; transition:background .15s; } .ds-btn-terracotta:hover { background:#A85A30; }"
     },
     {
-      "name": "Pill Tab Button",
-      "kind": "button",
+      "name": "Pill Tab",
+      "kind": "chip",
       "refersTo": "button-pill",
-      "description": "Property type tabs: Hotels, Vacation Rentals, Apartments.",
-      "html": "<button class=\"ds-tab-pill ds-tab-pill--active\">🏨 Hotels <span class=\"ds-tab-count\">24</span></button>",
-      "css": ".ds-tab-pill { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 24px; border: 1.5px solid #DDD5CC; background: #fff; color: #0F2544; font-family: Manrope, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all 0.15s; } .ds-tab-pill--active { background: #fff; color: #0F2544; border-color: #0F2544; box-shadow: 0 1px 4px rgba(15,37,68,0.10); } .ds-tab-pill:hover:not(.ds-tab-pill--active) { background: #F7F3EF; } .ds-tab-count { background: #F0EBE5; color: #0F2544; font-size: 0.6875rem; font-weight: 700; padding: 2px 7px; border-radius: 12px; min-width: 20px; text-align: center; }"
+      "description": "Property-type tabs on Search; terracotta when active.",
+      "html": "<span class=\"ds-pill\">🏨 Hotels</span> <span class=\"ds-pill ds-pill-active\">🏡 Boutique Stays</span>",
+      "css": ".ds-pill { display:inline-flex; align-items:center; gap:7px; background:#FFFCF4; color:#2B2722; font-size:13px; font-weight:600; padding:9px 18px; border:1.5px solid #DDD0B8; border-radius:24px; } .ds-pill-active { background:#C96E3C; color:#FBF5EA; border-color:transparent; }"
     },
     {
       "name": "Search Input",
       "kind": "input",
       "refersTo": "input-search",
-      "description": "Location search field inside the search hero card.",
-      "html": "<div class=\"ds-input-wrap\"><svg class=\"ds-input-icon\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9FB3C8\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg><input class=\"ds-input-search\" placeholder=\"City, region or hotel name\"/></div>",
-      "css": ".ds-input-wrap { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid #DDD5CC; border-radius: 12px; padding: 12px 16px; transition: border-color 0.15s; } .ds-input-wrap:focus-within { border-color: #0F2544; } .ds-input-icon { flex-shrink: 0; } .ds-input-search { flex: 1; border: none; outline: none; font-family: Manrope, system-ui, sans-serif; font-size: 0.9375rem; color: #1E3A5F; background: transparent; } .ds-input-search::placeholder { color: #9FB3C8; }"
+      "description": "Floating search bar on the sand hero band.",
+      "html": "<div class=\"ds-input-wrap\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9C9388\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.35-4.35\"/></svg><input class=\"ds-input\" placeholder=\"City, region or destination\"/></div>",
+      "css": ".ds-input-wrap { display:flex; align-items:center; gap:10px; background:#FFFCF4; border:1px solid rgba(43,39,34,.08); border-radius:16px; padding:0 18px; box-shadow:0 14px 34px -22px rgba(120,80,30,.4); } .ds-input { border:none; outline:none; background:transparent; font-family:'Nunito Sans',sans-serif; font-size:14.5px; color:#2B2722; padding:15px 0; min-width:220px; } .ds-input::placeholder { color:#B6AD9C; }"
     },
     {
       "name": "Hotel Card",
       "kind": "card",
-      "description": "Search result card with photo, rating, and add-to-list action.",
-      "html": "<div class=\"ds-hotel-card\"><div class=\"ds-hotel-img\"></div><div class=\"ds-hotel-body\"><p class=\"ds-hotel-name\">The Grand Pacific</p><p class=\"ds-hotel-meta\">⭐ 4.8 · $$$ · San Francisco, CA</p><button class=\"ds-hotel-add\">+ Add to List</button></div></div>",
-      "css": ".ds-hotel-card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(15,37,68,0.08); border: 1px solid rgba(15,37,68,0.06); transition: transform 0.2s, box-shadow 0.2s; } .ds-hotel-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,37,68,0.13); } .ds-hotel-img { height: 160px; background: #EDE8E3; } .ds-hotel-body { padding: 14px 16px; } .ds-hotel-name { font-family: Manrope, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; color: #1E3A5F; margin-bottom: 4px; } .ds-hotel-meta { font-size: 0.8125rem; color: #9FB3C8; margin-bottom: 12px; } .ds-hotel-add { width: 100%; padding: 9px 12px; border: 1.5px solid #DDD5CC; border-radius: 8px; font-family: Manrope, system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; background: #F7F3EF; color: #1E3A5F; transition: all 0.15s; } .ds-hotel-add:hover { background: #F0EBE5; border-color: #0F2544; }"
+      "description": "Search result card — photo, name, address, rating, add-to-list.",
+      "html": "<div class=\"ds-hotel-card\"><div class=\"ds-hotel-img\">🏨</div><div class=\"ds-hotel-body\"><div class=\"ds-hotel-name\">The Olive &amp; Stone</div><div class=\"ds-hotel-addr\">Alfama, Lisbon</div><button class=\"ds-hotel-btn\">+ Add to List</button></div></div>",
+      "css": ".ds-hotel-card { width:260px; background:#FFFCF4; border:1px solid #DDD0B8; border-radius:16px; overflow:hidden; box-shadow:0 2px 12px rgba(140,90,30,.10); transition:transform .2s, box-shadow .2s; font-family:'Nunito Sans',sans-serif; } .ds-hotel-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(140,90,30,.15); } .ds-hotel-img { height:150px; display:flex; align-items:center; justify-content:center; font-size:40px; background:linear-gradient(135deg,#F3E7CF,#DDD0B8); } .ds-hotel-body { padding:14px 16px; } .ds-hotel-name { font-size:15px; font-weight:700; color:#2B2722; margin-bottom:3px; } .ds-hotel-addr { font-size:12px; color:#9C9388; margin-bottom:10px; } .ds-hotel-btn { width:100%; padding:9px 0; background:transparent; border:1.5px solid #44503A; color:#44503A; font-family:'Quicksand',sans-serif; font-weight:700; font-size:12.5px; border-radius:10px; cursor:pointer; }"
     },
     {
       "name": "Nav Item",
       "kind": "nav",
       "refersTo": "nav-item",
-      "description": "Sidebar navigation item — icon + label, with active state.",
-      "html": "<div class=\"ds-nav-item ds-nav-item--active\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#F5A882\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z\"/></svg><span class=\"ds-nav-label\">Search</span></div>",
-      "css": ".ds-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; } .ds-nav-item:hover { background: rgba(255,255,255,0.07); } .ds-nav-item--active { background: rgba(232,93,61,0.18); } .ds-nav-label { font-family: Manrope, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #7A9BBF; flex: 1; } .ds-nav-item--active .ds-nav-label { color: #F5A882; }"
+      "description": "Sidebar nav on the forest ground; amber tint when active.",
+      "html": "<div class=\"ds-nav\"><div class=\"ds-nav-item ds-nav-active\">Dashboard</div><div class=\"ds-nav-item\">Search</div></div>",
+      "css": ".ds-nav { background:#44503A; padding:12px; border-radius:12px; width:200px; font-family:'Nunito Sans',sans-serif; } .ds-nav-item { padding:10px 12px; border-radius:10px; font-size:14px; font-weight:500; color:rgba(251,245,234,.6); cursor:pointer; transition:background .15s; } .ds-nav-item:hover { background:rgba(251,245,234,.1); } .ds-nav-active { background:rgba(224,149,74,.2); color:#F4C97A; }"
     },
     {
-      "name": "Ghost Button",
-      "kind": "button",
-      "refersTo": "button-ghost",
-      "description": "Toolbar actions — view toggle, list/map switch.",
-      "html": "<button class=\"ds-btn-ghost\">🗺 Map View</button>",
-      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border: none; border-radius: 8px; font-family: Manrope, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 500; cursor: pointer; color: #7A9BBF; background: transparent; transition: all 0.15s; } .ds-btn-ghost:hover { color: #0F2544; background: #F0EBE5; } .ds-btn-ghost--active { background: #fff; color: #0F2544; box-shadow: 0 1px 4px rgba(15,37,68,0.10); } .ds-btn-ghost:focus-visible { outline: 2px solid #E85D3D; outline-offset: 2px; }"
+      "name": "Status Chips",
+      "kind": "chip",
+      "description": "Outreach state — the only sanctioned non-brand colours.",
+      "html": "<span class=\"ds-chip ds-chip-dm\">DM SENT</span> <span class=\"ds-chip ds-chip-replied\">✓ REPLIED</span> <span class=\"ds-chip ds-chip-none\">NOT SENT</span>",
+      "css": ".ds-chip { display:inline-flex; align-items:center; font-family:'Nunito Sans',sans-serif; font-size:10px; font-weight:700; letter-spacing:.04em; padding:3px 9px; border-radius:24px; } .ds-chip-dm { background:rgba(193,53,132,.12); color:#C13584; } .ds-chip-replied { background:#DCFCE7; color:#166534; } .ds-chip-none { background:#F3E7CF; color:#9C9388; }"
     }
   ],
   "narrative": {
     "northStar": "Golden Hour",
-    "overview": "StayFind carries the feeling of a great hotel front desk: quietly confident, warm before you even ask, never flustered. The interface knows what you need and has it ready. It does not announce itself — it recedes, and the creator's work comes forward.\n\nThe color strategy is restrained: Deep Harbour navy grounds the system with authority, Coral Spark activates the things that matter, and a warm off-white canvas keeps everything breathable. Nothing on this tool fights for attention.\n\nNotion is the reference for editorial calm. This is not generic SaaS blue, not creator-pink softness, not a consumer travel booking engine. It is a tool a creator reaches for between trips — purposeful, premium, and invisible.",
+    "overview": "Dapples is the hour before sunset, indoors: warm light falling in patches across a workspace. It is the opposite of the cold blue productivity tool — the surface is cream and sand, the actions are deep forest, and the accents are the amber and olive of light through leaves. The interface is calm and unhurried, but never precious: the creator is doing real work — finding properties, writing pitches, chasing replies — and the chrome recedes so their work comes forward. Every design decision should answer: does this feel like late-afternoon light, or like software?\n\nThe color strategy is **restrained**: cream and sand grounds carry the surface, deep forest carries every primary action, and amber/olive accents activate only the things that matter (current state, brand identity, positive progress). Nothing on this tool fights for attention. Hierarchy is earned through weight, spacing, and the controlled use of color — not size competitions or decorative flourish.\n\nNotion is the reference for editorial calm; the anti-references are clear. This is not generic SaaS blue (HubSpot's exhausted CRM blue, enterprise density). It is not creator-pink softness (Flodesk, Later). It is not a travel booking engine (consumer UI conventions don't apply here). It is a tool a creator reaches for between trips — purposeful, premium, and invisible.",
     "keyCharacteristics": [
-      "Dark navy sidebar anchors authority without aggression",
-      "Warm canvas body keeps the workspace inviting, not clinical",
-      "Coral Spark used only where it matters: primary actions, active states, brand mark",
-      "Manrope carries the full hierarchy — one family, multiple weights, no pairing needed",
-      "Shadows are navy-tinted — every drop of depth belongs to the brand"
+      "Deep-forest sidebar anchors authority without aggression",
+      "Cream canvas body keeps the workspace inviting, not clinical",
+      "Amber and terracotta used only where they matter: active states, brand identity, progress",
+      "Quicksand + Nunito Sans pair on a real contrast axis — geometric display, humanist body",
+      "Shadows are warm-tinted, not generic black — every drop of depth belongs to the brand"
     ],
     "rules": [
       {
-        "name": "The Coral Ration Rule",
-        "body": "Coral Spark (#E85D3D) appears on at most two elements at the same time on any given screen. Its rarity is the point.",
+        "name": "Status-Only",
+        "body": "`status-*` and `brand-instagram` are reserved for state and third-party identity — a status green never becomes a decorative accent, and Instagram magenta never appears on anything that isn't Instagram. Everything else on a Dapples surface comes from the golden-hour palette.",
         "section": "colors"
       },
       {
-        "name": "The Navy Shadow Rule",
-        "body": "All box-shadow values use rgba(15,37,68,...) as their color base, never generic rgba(0,0,0,...). Shadows are navy-tinted.",
+        "name": "Warm Shadow",
+        "body": "Every `box-shadow` uses a warm base — `rgba(140,90,30, ...)` for ambient depth, `rgba(120,80,30, ...)` for lifted surfaces — never generic `rgba(0,0,0, ...)`. A cold shadow on a golden-hour surface reads as a different product.",
         "section": "colors"
       },
       {
-        "name": "The One Family Rule",
-        "body": "Manrope carries the entire type system. Do not introduce a second typeface. Hierarchy is created through weight and size contrast, not family contrast.",
+        "name": "Two Family",
+        "body": "**Quicksand** (rounded geometric) carries display — the wordmark, headings, numerals in stat tiles, and button labels. **Nunito Sans** (humanist) carries everything else. Two families, paired on a real contrast axis (geometric vs humanist); do not introduce a third. Hierarchy within each comes from weight and size, not from more families.",
+        "section": "colors"
+      },
+      {
+        "name": "500-On-Forest",
+        "body": "Any text on the forest sidebar must be weight 500 or above. The perceived weight of light text on a dark ground drops by one notch; compensate.",
         "section": "typography"
       },
       {
-        "name": "The 500-On-Dark Rule",
-        "body": "Any text on the Deep Harbour navy sidebar must be weight 500 or above. Perceived weight of light text on dark drops by one notch; compensate.",
+        "name": "Flat-By-Default",
+        "body": "Surfaces are shadowless at rest unless they are interactive cards or floating elements. Do not add shadows to headers, nav items, input fields, or static sections for \"depth\". Depth is earned by position in the hierarchy, not sprinkled for decoration.",
         "section": "typography"
-      },
-      {
-        "name": "The Flat-By-Default Rule",
-        "body": "Surfaces are shadowless at rest unless they are interactive cards or floating elements. Do not add shadows to headers, nav items, or static sections for depth.",
-        "section": "elevation"
       }
     ],
     "dos": [
-      "Do use Coral Spark (#E85D3D) for primary actions and active states only. Its scarcity is what makes it work.",
-      "Do use navy-tinted shadows (rgba(15,37,68,...)) for all box-shadow declarations.",
-      "Do maintain weight 500 or above for any text on the Deep Harbour navy sidebar.",
-      "Do use Manrope as the sole typeface — weight contrast (400 vs 700) creates hierarchy.",
-      "Do use the Warm Divider border (#DDD5CC) for all input outlines and card strokes.",
-      "Do apply border-radius: 14px to hotel cards and map containers.",
-      "Do keep the coral accent to ≤2 simultaneous on-screen uses."
+      "Do use Dapple Forest (`#44503A`) for primary actions, and reserve Terracotta/Amber for active and selected states. Their scarcity is what makes them work.",
+      "Do use warm-tinted shadows (`rgba(140,90,30,...)` / `rgba(120,80,30,...)`) for all `box-shadow` declarations. Black shadows are prohibited.",
+      "Do maintain weight 500 or above for any text on the forest sidebar.",
+      "Do use Quicksand for display and Nunito Sans for body — and nothing else. Weight contrast creates hierarchy within each; a third family does not.",
+      "Do use the Dapple Border (`#DDD0B8`) for all input outlines and card strokes. Cool-gray borders are off-brand.",
+      "Do apply `border-radius: 16px` to cards and map containers. Roundness communicates approachability without softness.",
+      "Do keep the terracotta accent to ≤2 simultaneous on-screen uses. If you see it on a button, a nav pill, AND a badge at once, remove one."
     ],
     "donts": [
-      "Don't use generic SaaS blue (Material blue, Bootstrap primary, or any non-Deep-Harbour blue). Must not look like HubSpot or Salesforce.",
-      "Don't use pastel, soft, or pink-adjacent tones as UI color. Coral Spark is warm, not sweet.",
-      "Don't use consumer travel UI patterns — large hero images, star-rating rows, booking-engine forms.",
-      "Don't apply border-left greater than 1px as a colored accent stripe — background tint or nothing.",
-      "Don't use gradient text (background-clip: text). Emphasis is weight and size.",
-      "Don't add shadows to static content — shadows signal interactivity, not decoration.",
-      "Don't introduce a second typeface.",
-      "Don't put Coral Spark on inactive or default states.",
-      "Don't use cool-gray neutrals — all neutrals come from the warm or navy ramp."
+      "Don't use generic SaaS blue (Material blue, Bootstrap primary, any blue at all outside the `status-sent` chip). This tool must not look like HubSpot or Salesforce.",
+      "Don't use pastel, soft, or pink-adjacent tones as UI color. No lavender, no influencer-palette softness. The only magenta permitted is `brand-instagram`, and only on Instagram surfaces. Amber is warm, not sweet.",
+      "Don't use consumer travel UI patterns (large hero images, star-rating rows, booking-engine forms). The audience is a creator doing B2B outreach, not a tourist booking a room.",
+      "Don't apply `border-left` greater than 1px as a colored accent stripe. Background tint or no treatment — never a left-side colored bar.",
+      "Don't use gradient text (`background-clip: text`). Emphasis is weight and size.",
+      "Don't add shadows to static content (headers, nav items, page sections). Shadows signal interactivity or elevation — they are not decoration.",
+      "Don't introduce a third typeface. No serif for \"warmth\", no mono for \"tech credibility\" — Quicksand and Nunito Sans are the whole system.",
+      "Don't put Terracotta or Amber on inactive or default states. They are reserved for the active, selected, or primary condition only.",
+      "Don't use cool-gray neutrals (no `#e2e8f0`, no generic gray `#999` family). All neutrals must come from the golden-hour ramp."
     ]
   }
 }
