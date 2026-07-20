@@ -542,7 +542,7 @@ export default function ListsPage() {
           ) : (
             <>
               <div style={s.toolbar}>
-                <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+                <div data-tour="find-contacts" style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
                   {igScraping ? (
                     <div style={s.igScrapeProgress}>
                       <div style={s.igScrapeSpinner} />
@@ -632,7 +632,7 @@ export default function ListsPage() {
                   <Link href="/" style={{ color:"var(--color-accent-amber-deep)", fontWeight:600, fontSize:13 }}>Go to Search</Link>
                 </div>
               ) : (
-                <div className="dp-list-grid" style={s.cardGrid}>
+                <div className="dp-list-grid" data-tour="list-hotels" style={s.cardGrid}>
                   {listHotels.map(hotel => {
                     const replied   = igReplied.includes(hotel.id) || hotel.ig_replied;
                     const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;

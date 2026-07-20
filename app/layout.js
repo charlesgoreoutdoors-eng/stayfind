@@ -4,6 +4,7 @@ import { AuthProvider } from "../lib/auth";
 import { GmailProvider } from "../lib/useGmail";
 import AuthGuard from "../components/AuthGuard";
 import Sidebar from "../components/Sidebar";
+import TourGuide from "../components/TourGuide";
 
 // Dapples brand type: Quicksand (display) + Nunito Sans (body).
 // Exposed as CSS vars that globals.css maps to --font-display / --font-body.
@@ -35,6 +36,7 @@ export default function RootLayout({ children }) {
             <AuthGuard>
               <Sidebar>{children}</Sidebar>
             </AuthGuard>
+            <TourGuide />
           </GmailProvider>
         </AuthProvider>
       </body>

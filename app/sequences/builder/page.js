@@ -488,14 +488,14 @@ export default function SequenceBuilderPage() {
         )}
 
         <div style={s.flowActions}>
-          <button style={s.newBtn} onClick={() => { newSequence(); setActiveStep(0); }}>+ New Flow</button>
+          <button data-tour="new-flow" style={s.newBtn} onClick={() => { newSequence(); setActiveStep(0); }}>+ New Flow</button>
           {(activeSeq || isNew) && (
             <button style={{ ...s.saveBtn, opacity: saving ? 0.45 : 1 }} onClick={save} disabled={saving}>
               {saving ? "Saving…" : isNew ? "Create" : "Save"}
             </button>
           )}
           {activeSeq && !isNew && (
-            <button style={s.launchBtn} onClick={() => setLaunchModal(activeSeq)}>Launch →</button>
+            <button data-tour="launch-flow" style={s.launchBtn} onClick={() => setLaunchModal(activeSeq)}>Launch →</button>
           )}
         </div>
       </div>

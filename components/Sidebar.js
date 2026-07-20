@@ -236,6 +236,20 @@ export default function Sidebar({ children }) {
                 <p style={{ fontSize:11, color:"rgba(251,245,234,0.35)", marginBottom:10 }}>
                   {(profile?.plan || "spark").replace(/^\w/, c => c.toUpperCase())} Plan
                 </p>
+                {/* TourGuide lives in the layout, outside this tree — a window
+                    event is the simplest way to reach it without threading
+                    state through the whole app. */}
+                <button
+                  onClick={() => { setOpen(false); window.dispatchEvent(new Event("dapples:start-tour")); }}
+                  style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"1px solid rgba(251,245,234,0.12)", borderRadius:"var(--radius-sm)", padding:"8px 12px", cursor:"pointer", color:"rgba(251,245,234,0.6)", fontSize:12, fontFamily:"inherit", width:"100%", marginBottom:8 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  Take the tour
+                </button>
                 <button
                   onClick={async () => { await signOut(); router.push("/login"); }}
                   style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"1px solid rgba(251,245,234,0.12)", borderRadius:"var(--radius-sm)", padding:"8px 12px", cursor:"pointer", color:"rgba(251,245,234,0.6)", fontSize:12, fontFamily:"inherit", width:"100%" }}

@@ -75,7 +75,7 @@ function AddToListDropdown({ hotel, lists, onAdd, onCreateAndAdd, onClose }) {
   };
 
   return (
-    <div ref={ref} style={dd.wrap}>
+    <div ref={ref} data-tour="list-dropdown" style={dd.wrap}>
       <div style={dd.header}>
         <span style={dd.title}>Your Lists</span>
         <button style={dd.close} onClick={onClose} aria-label="Close">
@@ -167,6 +167,7 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
 
         <div style={{ position:"relative", marginTop:10 }}>
           <button
+            data-tour="add-to-list"
             style={{ ...s.addToListBtn, ...(addSuccess ? s.addToListBtnSuccess : {}) }}
             onClick={e => { e.stopPropagation(); onToggleDropdown(hotel.placeId); }}
           >
@@ -629,7 +630,7 @@ function SearchApp() {
             <div style={s.searchBar}>
               <div style={s.searchInputWrap}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input ref={inputRef} style={s.searchInput} placeholder="Search hotels by city or location..."
+                <input ref={inputRef} data-tour="search-input" style={s.searchInput} placeholder="Search hotels by city or location..."
                   value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
               </div>
               <div style={s.searchDivider} />
