@@ -55,19 +55,10 @@ export default function ListsPage() {
   const [hunterProgress, setHunterProgress] = useState({ done: 0, total: 0, found: 0 });
   const [contactsModal, setContactsModal] = useState(null);
   const [userPlan, setUserPlan] = useState("spark");
-  const [showListDropdown, setShowListDropdown] = useState(false);
-  const dropdownRef = useRef(null);
   const { user } = useAuth();
 
   useEffect(() => { fetchLists(); fetchIgTemplates(); }, []);
 
-  // Close list dropdown on outside click
-  useEffect(() => {
-    if (!showListDropdown) return;
-    const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowListDropdown(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showListDropdown]);
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("plan").eq("id", user.id).single()
@@ -310,6 +301,12 @@ export default function ListsPage() {
     setContactsModal(prev => prev?.id === hotel.id ? { ...prev, hunter_contacts: updated } : prev);
   };
 
+  const closeList = () => {
+    setActiveList(null);
+    setListHotels([]);
+    try { localStorage.removeItem("activeListId"); } catch {}
+  };
+
   const openList = async (list) => {
     setActiveList(list);
     localStorage.setItem("activeListId", list.id);
@@ -440,58 +437,14 @@ export default function ListsPage() {
     <div style={s.root}>
       <style>{`
         @media (max-width: 900px) { .dp-list-grid { grid-template-columns: 1fr !important; } }
+        .dp-list-tiles > div { transition: transform .15s, box-shadow .15s; }
+        .dp-list-tiles > div:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
       `}</style>
 
       {/* Header */}
       <div style={s.header}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", flex:1, minWidth:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, minWidth:0 }}>
           <h1 style={s.title}>My Lists</h1>
-          {!loading && lists.length > 0 && (
-            <div style={{ position:"relative" }} ref={dropdownRef}>
-              <button style={s.listSelector} onClick={() => setShowListDropdown(v => !v)}>
-                <span style={{ fontWeight:600, color: activeList ? "var(--color-ink-primary)" : "var(--color-ink-muted)", fontSize:14, flex:1, textAlign:"left", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                  {activeList ? activeList.name : "Select a list..."}
-                </span>
-                {activeList && (
-                  <span style={{ fontSize:11, color:"var(--color-accent-amber)", fontWeight:500, flexShrink:0, marginLeft:6 }}>
-                    {hotelCounts[activeList.id] || 0} hotels
-                  </span>
-                )}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2.5" style={{ flexShrink:0, marginLeft:6, transform: showListDropdown ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              {showListDropdown && (
-                <div style={s.listDropdown}>
-                  {lists.map(list => (
-                    <div key={list.id}
-                      style={{ ...s.listDropdownItem, ...(activeList?.id === list.id ? s.listDropdownItemActive : {}) }}
-                      onClick={() => { openList(list); setShowListDropdown(false); }}
-                    >
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <p style={{ fontSize:13, fontWeight:600, color: activeList?.id === list.id ? "var(--color-accent-terracotta)" : "var(--color-ink-primary)", marginBottom:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{list.name}</p>
-                        <p style={{ fontSize:11, color:"var(--color-ink-muted)" }}>{hotelCounts[list.id] || 0} hotels</p>
-                      </div>
-                      <div style={{ display:"flex", gap:5, flexShrink:0 }} onClick={e => e.stopPropagation()}>
-                        <Link href={`/compose?list=${list.id}`}>
-                          <button style={s.iconBtn} title="Compose outreach">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="2.5">
-                              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                            </svg>
-                          </button>
-                        </Link>
-                        <button style={{ ...s.iconBtn, borderColor:"var(--color-error)" }} onClick={() => { setDeleteConfirm(list.id); setShowListDropdown(false); }} title="Delete list">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
           {loading && <div style={s.loadingSpinner} />}
         </div>
         <button style={s.newBtn} onClick={() => setShowNew(v => !v)}>
@@ -530,17 +483,47 @@ export default function ListsPage() {
         </div>
       )}
 
-      {/* Hotels detail panel */}
+      {/* Body: list tiles, or the open list's hotels */}
       <div style={s.detailPanel}>
           {!activeList ? (
-            <div style={s.empty}>
-              <span style={{ fontSize:36 }}>📋</span>
-              <p style={{ fontWeight:600, color:"var(--color-ink-primary)" }}>{lists.length === 0 ? "No lists yet" : "Select a list above"}</p>
-              <p style={{ fontSize:13 }}>{lists.length === 0 ? "Create a list to start organising hotels from your searches." : "Use the dropdown in the header to pick a list."}</p>
-              {lists.length === 0 && <button style={s.saveBtn} onClick={() => setShowNew(true)}>+ Create your first list</button>}
-            </div>
+            lists.length === 0 ? (
+              <div style={s.empty}>
+                <span style={{ fontSize:36 }}>📋</span>
+                <p style={{ fontWeight:600, color:"var(--color-ink-primary)" }}>No lists yet</p>
+                <p style={{ fontSize:13 }}>Create a list to start organising hotels from your searches.</p>
+                <button style={s.saveBtn} onClick={() => setShowNew(true)}>+ Create your first list</button>
+              </div>
+            ) : (
+              <div className="dp-list-tiles" style={s.listTiles}>
+                {lists.map(list => (
+                  <div key={list.id} style={s.listTile} onClick={() => openList(list)}>
+                    <div style={s.tileTop}>
+                      <div style={s.tileIcon}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-cool-olive-deep)" strokeWidth="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/></svg>
+                      </div>
+                      <button style={s.tileDelete} onClick={e => { e.stopPropagation(); setDeleteConfirm(list.id); }} title="Delete list">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <p style={s.tileName}>{list.name}</p>
+                    {list.description && <p style={s.tileDesc}>{list.description}</p>}
+                    <p style={s.tileCount}>{hotelCounts[list.id] || 0} hotel{(hotelCounts[list.id] || 0) !== 1 ? "s" : ""}</p>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
             <>
+              <button style={s.backBtn} onClick={closeList}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                All lists
+              </button>
+              <div style={s.detailHead}>
+                <h2 style={s.detailTitle}>{activeList.name}</h2>
+                <span style={s.detailCount}>{listHotels.length} hotel{listHotels.length !== 1 ? "s" : ""}</span>
+              </div>
               <div style={s.toolbar}>
                 <div data-tour="find-contacts" style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
                   {igScraping ? (
@@ -961,17 +944,28 @@ const s = {
   title: { fontFamily:"var(--font-display)", fontSize:26, fontWeight:700, color:"var(--color-ink-primary)", marginBottom:4 },
   subtitle: { fontSize:14, color:"var(--color-ink-muted)" },
   newBtn: { background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:10, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)", flexShrink:0 },
-  listSelector: { display:"flex", alignItems:"center", gap:4, padding:"9px 14px", background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:10, cursor:"pointer", fontFamily:"inherit", minWidth:200, maxWidth:340 },
-  listDropdown: { position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:200, background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:12, boxShadow:"0 8px 24px rgba(43,39,34,0.12)", minWidth:280, maxHeight:320, overflowY:"auto" },
-  listDropdownItem: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", cursor:"pointer", borderBottom:"1px solid var(--color-ground-sand)", transition:"background 0.12s" },
-  listDropdownItemActive: { background:"var(--color-amber-tint)" },
+  // List tiles — the grid shown when no single list is open
+  listTiles: { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))", gap:16, alignItems:"start" },
+  listTile: { display:"flex", flexDirection:"column", gap:6, padding:"18px 18px 16px", background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-card)", boxShadow:"var(--shadow-low)", cursor:"pointer", transition:"transform 0.15s, box-shadow 0.15s" },
+  tileTop: { display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:2 },
+  tileIcon: { width:38, height:38, borderRadius:11, background:"rgba(139,154,106,0.18)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
+  tileDelete: { width:30, height:30, borderRadius:8, border:"none", background:"none", color:"var(--color-ink-muted)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
+  tileName: { fontFamily:"var(--font-display)", fontSize:16, fontWeight:700, color:"var(--color-ink-primary)", lineHeight:1.25 },
+  tileDesc: { fontSize:12.5, color:"var(--color-ink-mid)", lineHeight:1.45, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" },
+  tileCount: { fontSize:12, fontWeight:600, color:"var(--color-accent-amber-deep)", marginTop:4 },
+
+  // Open-list header — back link + name
+  backBtn: { display:"inline-flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:13, fontWeight:600, color:"var(--color-ink-mid)", padding:0, marginBottom:14 },
+  detailHead: { display:"flex", alignItems:"baseline", gap:10, marginBottom:18, flexWrap:"wrap" },
+  detailTitle: { fontFamily:"var(--font-display)", fontSize:20, fontWeight:700, color:"var(--color-ink-primary)" },
+  detailCount: { fontSize:13, color:"var(--color-ink-muted)" },
+
   errorBox: { background:"var(--status-error-bg)", border:"1px solid rgba(180,67,46,0.3)", borderRadius:10, padding:"12px 16px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
   newForm: { background:"var(--color-ground-card)", border:"1.5px solid var(--color-border)", borderRadius:14, padding:"20px", marginBottom:20, display:"flex", flexDirection:"column", gap:10, maxWidth:500 },
   newFormTitle: { fontFamily:"var(--font-display)", fontSize:16, fontWeight:700, color:"var(--color-ink-primary)" },
   input: { border:"1.5px solid var(--color-border)", borderRadius:10, padding:"11px 14px", fontSize:14, fontFamily:"inherit", color:"var(--color-ink-primary)", outline:"none" },
   saveBtn: { background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"10px 20px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
   cancelBtn: { background:"var(--color-ground-card)", color:"var(--color-ink-mid)", border:"1.5px solid var(--color-border)", borderRadius:9, padding:"10px 20px", fontSize:14, cursor:"pointer", fontFamily:"var(--font-display)" },
-  iconBtn: { width:28, height:28, borderRadius:7, border:"1.5px solid var(--color-border)", background:"var(--color-ground-card)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
   // Layout is a plain grid on the page ground — the old bordered detail panel
   // wrapper is gone, per the design.
   detailPanel: { minHeight:300 },
