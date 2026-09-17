@@ -194,18 +194,6 @@ export default function Waitlist() {
         </div>
       </section>
 
-      {/* ── Founder note ── */}
-      <section className="dpl-pad" style={s.founder}>
-        <div style={s.founderAvatar} aria-hidden>C</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#B5702E" }}>A note from the founder</div>
-          <div style={{ fontFamily: HEAD, fontSize: "clamp(18px, 2.6vw, 22px)", fontWeight: 500, lineHeight: 1.5, color: "#2B2722", letterSpacing: "-0.01em", maxWidth: "60ch" }}>
-            Dapples started when I realised finding and pitching to 100+ hotels for collabs on a single trip to Europe would take forever. So I created a visual, fast, and fun way to do it. It worked: 3 hotel collabs, thousands saved.
-          </div>
-          <div style={{ fontSize: 14.5, fontWeight: 700, color: "#6B6258" }}>Charles — Founder, Dapples</div>
-        </div>
-      </section>
-
       {/* ── Footer ── */}
       <footer className="dpl-pad" style={s.footer}>
         <Wordmark size={17} dots={FOOTER_DOTS} />
@@ -260,9 +248,6 @@ const s = {
   cellLabel: { display: "flex", alignItems: "center", fontSize: 14.5, fontWeight: 600, padding: "16px 4px" },
   cellManual: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, padding: "16px 4px" },
   cellDapples: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, padding: "16px 4px" },
-
-  founder: { maxWidth: 1120, margin: "0 auto", paddingTop: 56, paddingBottom: 56, display: "flex", gap: 26, alignItems: "flex-start" },
-  founderAvatar: { width: 82, height: 82, flex: "none", borderRadius: "50%", background: "linear-gradient(160deg,#F4C97A,#E5A04A)", color: "#FBF5EA", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: HEAD, fontSize: 34, fontWeight: 700 },
 
   footer: { maxWidth: 1120, margin: "0 auto", paddingTop: 24, paddingBottom: 24, borderTop: "1px solid rgba(43,39,34,0.10)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 },
 };
