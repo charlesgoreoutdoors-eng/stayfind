@@ -142,15 +142,9 @@ export default function Waitlist() {
             )}
           </div>
 
-          {/* Right column — product screenshot in a browser frame */}
-          <div style={s.browser}>
-            <div style={s.browserBar}>
-              <span style={{ ...s.browserDot, background: "#E0954A" }} />
-              <span style={{ ...s.browserDot, background: "#8B9A6A" }} />
-              <span style={{ ...s.browserDot, background: "#ECD9B8" }} />
-              <span style={{ marginLeft: 12, fontSize: 12, color: "#C8C2B2", fontWeight: 600 }}>app.dapples.co</span>
-            </div>
-            <img src="/dapples-preview.webp" alt="Dapples hotel search and map view" style={s.browserImg} />
+          {/* Right column — travel creator photo */}
+          <div style={s.heroPhotoWrap}>
+            <img src="/creator-hero.jpg" alt="Travel creator filming content in a hotel room" style={s.heroPhoto} />
           </div>
         </div>
       </section>
@@ -159,6 +153,19 @@ export default function Waitlist() {
       <section className="dpl-pad" style={s.painWrap}>
         <h2 style={s.painH}>Are you a travel creator, wanting to work with hotels and unique stays?</h2>
         <p style={s.painSub}>Dapples turns the whole grind of finding hotels and their contacts into a few clicks — here&apos;s how it works.</p>
+      </section>
+
+      {/* ── Product screenshot ── */}
+      <section className="dpl-pad" style={s.shotSection}>
+        <div style={s.shotFrame}>
+          <div style={s.browserBar}>
+            <span style={{ ...s.browserDot, background: "#E0954A" }} />
+            <span style={{ ...s.browserDot, background: "#8B9A6A" }} />
+            <span style={{ ...s.browserDot, background: "#ECD9B8" }} />
+            <span style={{ marginLeft: 12, fontSize: 12, color: "#C8C2B2", fontWeight: 600 }}>app.dapples.co</span>
+          </div>
+          <img src="/dapples-search-screenshot.png" alt="Dapples hotel search and map view" style={s.shotImg} />
+        </div>
       </section>
 
       {/* ── How it works ── */}
@@ -228,10 +235,14 @@ const s = {
   error: { fontSize: 13, color: "#B4432E", fontWeight: 600, margin: 0 },
   doneCard: { background: "#FFFCF4", border: "1px solid rgba(43,39,34,0.08)", borderRadius: 18, padding: "22px 24px", boxShadow: "0 18px 40px -34px rgba(120,80,30,0.55)" },
 
-  browser: { borderRadius: 20, overflow: "hidden", boxShadow: "0 26px 56px -34px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)" },
+  heroPhotoWrap: { borderRadius: 24, overflow: "hidden", boxShadow: "0 26px 56px -34px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)", aspectRatio: "4 / 5", maxHeight: 540 },
+  heroPhoto: { width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "center" },
+
+  shotSection: { background: "#F3E7CF", paddingTop: 52, paddingBottom: 0 },
+  shotFrame: { maxWidth: 940, margin: "0 auto", borderRadius: 20, overflow: "hidden", boxShadow: "0 26px 56px -34px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)" },
   browserBar: { background: "#44503A", padding: "11px 15px", display: "flex", alignItems: "center", gap: 7 },
   browserDot: { width: 10, height: 10, borderRadius: "50%" },
-  browserImg: { width: "100%", display: "block", aspectRatio: "985 / 640", objectFit: "cover", objectPosition: "top" },
+  shotImg: { width: "100%", display: "block" },
 
   painWrap: { maxWidth: 1120, margin: "0 auto", paddingTop: 56, paddingBottom: 44, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
   painH: { fontFamily: HEAD, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 600, lineHeight: 1.2, letterSpacing: "-0.01em", maxWidth: "40ch", color: "#2B2722" },
