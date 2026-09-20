@@ -111,7 +111,7 @@ export default function Waitlist() {
 
             <div className="dpl-hero-text">
               <h1 style={s.h1}>The outreach workspace to land hotel collabs</h1>
-              <p style={s.h1sub}>A quick and easy way to search, contact and track your outreach</p>
+              <p style={s.h1sub}>A quick and easy way to search, pitch and track your outreach</p>
             </div>
 
             {success ? (
