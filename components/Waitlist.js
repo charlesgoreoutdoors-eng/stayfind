@@ -106,7 +106,10 @@ export default function Waitlist() {
         <div className="dpl-pad dpl-hero" style={s.hero}>
           {/* Left column */}
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            <div>
+            {/* Mobile-only hero image with headline baked in (replaces the text + photo on small screens) */}
+            <img className="dpl-mobile-hero" src="/hero-mobile.webp" alt="The outreach workspace to land hotel collabs — a quick and easy way to search, contact and track your outreach" style={s.mobileHero} />
+
+            <div className="dpl-hero-text">
               <h1 style={s.h1}>The outreach workspace to land hotel collabs</h1>
               <p style={s.h1sub}>A quick and easy way to search, contact and track your outreach</p>
             </div>
@@ -142,9 +145,9 @@ export default function Waitlist() {
             )}
           </div>
 
-          {/* Right column — travel creator photo */}
-          <div style={s.heroPhotoWrap}>
-            <img src="/creator-hero.jpg" alt="Travel creator filming content in a hotel room" style={s.heroPhoto} />
+          {/* Right column — travel creator photo (desktop) */}
+          <div className="dpl-hero-photo" style={s.heroPhotoWrap}>
+            <img src="/creator-hero.webp" alt="Travel creator filming content in a hotel room" style={s.heroPhoto} />
           </div>
         </div>
       </section>
@@ -164,7 +167,7 @@ export default function Waitlist() {
             <span style={{ ...s.browserDot, background: "#ECD9B8" }} />
             <span style={{ marginLeft: 12, fontSize: 12, color: "#C8C2B2", fontWeight: 600 }}>app.dapples.co</span>
           </div>
-          <img src="/dapples-search-screenshot.png" alt="Dapples hotel search and map view" style={s.shotImg} />
+          <img src="/dapples-search-screenshot.webp" alt="Dapples hotel search and map view" style={s.shotImg} />
         </div>
       </section>
 
@@ -237,6 +240,7 @@ const s = {
 
   heroPhotoWrap: { borderRadius: 24, overflow: "hidden", boxShadow: "0 26px 56px -34px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)", aspectRatio: "4 / 5", maxHeight: 540 },
   heroPhoto: { width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "center" },
+  mobileHero: { width: "100%", borderRadius: 20, boxShadow: "0 22px 46px -32px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)" },
 
   shotSection: { background: "#F3E7CF", paddingTop: 52, paddingBottom: 0 },
   shotFrame: { maxWidth: 940, margin: "0 auto", borderRadius: 20, overflow: "hidden", boxShadow: "0 26px 56px -34px rgba(120,80,30,0.6)", border: "1px solid rgba(43,39,34,0.08)" },
@@ -270,8 +274,11 @@ const css = `
   .dpl-primary:active { transform: translateY(1px); }
   .dpl-in:focus { border-color: #B5702E !important; }
   .dpl-in::placeholder { color: #B6AD9C; }
+  .dpl-mobile-hero { display: none; }
   @media (max-width: 900px) {
-    .dpl-hero { grid-template-columns: 1fr !important; gap: 34px !important; padding-top: 40px !important; padding-bottom: 40px !important; }
+    .dpl-hero { grid-template-columns: 1fr !important; gap: 22px !important; padding-top: 32px !important; padding-bottom: 40px !important; }
+    .dpl-hero-text, .dpl-hero-photo { display: none !important; }
+    .dpl-mobile-hero { display: block !important; }
     .dpl-steps { grid-template-columns: 1fr 1fr !important; }
   }
   @media (max-width: 560px) {
