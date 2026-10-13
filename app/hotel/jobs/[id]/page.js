@@ -52,6 +52,19 @@ export default function OpportunityApplicantsPage() {
       return;
     }
     setApps(prev => prev.map(x => x.id === a.id ? { ...x, status: next } : x));
+    if (next === "shortlisted") {
+      // Best-effort email to the creator — never blocks the UI.
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          fetch("/api/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ type: "shortlisted", applicationId: a.id }),
+          }).catch(() => {});
+        }
+      } catch {}
+    }
   };
 
   return (

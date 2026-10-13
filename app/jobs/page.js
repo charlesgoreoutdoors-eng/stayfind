@@ -69,6 +69,20 @@ export default function JobBoardPage() {
     setApps(prev => ({ ...prev, [o.id]: data }));
     setApplyingId(null);
     setPitch("");
+    notifyServer("new-application", data.id);
+  };
+
+  // Best-effort transactional notification — never blocks the UI.
+  const notifyServer = async (type, applicationId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ type, applicationId }),
+      }).catch(() => {});
+    } catch {}
   };
 
   const payLabel = (o) => o.type === "paid"
