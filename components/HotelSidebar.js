@@ -12,6 +12,11 @@ const NAV = [
     label: "Profile",
     icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
   },
+  {
+    href: "/hotel/jobs",
+    label: "Jobs",
+    icon: "M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M8 7V5h8v2",
+  },
 ];
 
 // The "Scattered Light" wordmark — Dapples with soft blurred accent dots.
