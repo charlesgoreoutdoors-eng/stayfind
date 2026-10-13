@@ -78,9 +78,10 @@ export default function Sidebar({ children }) {
     setExpanded(prev => ({ ...prev, [href]: !prev[href] }));
   };
 
-  // No app chrome on the public marketing/auth surfaces, or for logged-out
-  // visitors (who see the waitlist landing at the root).
-  if (pathname === "/login" || pathname === "/waitlist" || !user) return <>{children}</>;
+  // No creator app chrome on the public marketing/auth surfaces, for logged-out
+  // visitors (who see the waitlist landing at the root), or anywhere in the
+  // hotel site — /hotel/* is a separate shell with its own layout + sidebar.
+  if (pathname === "/login" || pathname === "/waitlist" || pathname.startsWith("/hotel") || !user) return <>{children}</>;
 
   const isAdmin = (user?.email || "").toLowerCase() === ADMIN_EMAIL;
   const navItems = isAdmin

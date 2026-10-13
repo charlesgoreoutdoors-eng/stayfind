@@ -41,7 +41,11 @@ function LoginInner() {
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { full_name: name.trim() } },
+        // New sign-ups are creators on the free (spark) tier. The DB column
+        // defaults + handle_new_user() trigger also enforce this server-side;
+        // passing role here keeps the client explicit and future-proofs a
+        // separate hotel sign-up flow (which would pass role: 'hotel').
+        options: { data: { full_name: name.trim(), role: "creator" } },
       });
       if (error) setError(error.message);
       else {

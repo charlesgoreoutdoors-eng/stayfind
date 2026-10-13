@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../lib/auth";
+import { isHotel } from "../lib/access";
 
 const DONE_KEY = "dapples_tour_complete";
 const STEP_KEY = "dapples_tour_step";
@@ -99,9 +100,13 @@ const STEPS = [
 ];
 
 export default function TourGuide() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  // The tour is a creator-only feature — never run it for hotel users or
+  // anywhere inside the hotel site.
+  const tourDisabled = isHotel(profile) || pathname === "/hotel" || pathname.startsWith("/hotel/");
 
   const [active, setActive] = useState(false);
   const [index, setIndex] = useState(0);
@@ -138,7 +143,7 @@ export default function TourGuide() {
   // Auto-start on a first-time user, and expose a manual restart for the
   // sidebar button (which lives in a different component tree).
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading || !user || tourDisabled) return;
     let done = null, saved = null;
     try {
       done = localStorage.getItem(DONE_KEY);
@@ -155,7 +160,7 @@ export default function TourGuide() {
       }, 1000);
       return () => clearTimeout(t);
     }
-  }, [user, loading]);
+  }, [user, loading, tourDisabled]);
 
   useEffect(() => {
     const handler = () => startTour();
@@ -263,7 +268,7 @@ export default function TourGuide() {
     setTipSize({ w: r.width, h: r.height });
   }, [index, ready, confirmSkip]);
 
-  if (!active || !user || !step) return null;
+  if (!active || !user || !step || tourDisabled) return null;
 
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;

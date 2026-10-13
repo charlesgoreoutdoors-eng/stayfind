@@ -169,9 +169,14 @@ export default function AdminPage() {
     <div style={s.root}>
       <div style={s.headerRow}>
         <h1 style={s.h1}>Admin Dashboard</h1>
-        <button style={s.refreshBtn} onClick={() => loadData(token)} disabled={loading}>
-          {loading ? "Loading…" : "Refresh"}
-        </button>
+        <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+          {/* Admins can preview the separate hotel site. Role routing exempts
+              admins, so this opens the hotel shell without a second account. */}
+          <a href="/hotel/profile" style={s.hotelViewBtn}>Preview hotel site →</a>
+          <button style={s.refreshBtn} onClick={() => loadData(token)} disabled={loading}>
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {error && <div style={s.errorBox}>{error}</div>}
@@ -420,6 +425,7 @@ const s = {
   headerRow: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 },
   h1: { fontSize: 24, fontWeight: 700, color: "var(--color-ink-primary)", letterSpacing: "-0.4px" },
   refreshBtn: { padding: "8px 16px", background:"var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: 9, fontSize: 13, fontWeight: 600, color: "var(--color-ink-mid)", cursor: "pointer" },
+  hotelViewBtn: { padding: "8px 16px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration:"none", fontFamily:"var(--font-display)" },
   errorBox: { background: "var(--status-error-bg)", border: "1px solid rgba(180,67,46,0.3)", color: "var(--color-error)", padding: "12px 16px", borderRadius: 10, fontSize: 13, marginBottom: 20 },
 
   statsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, marginBottom: 32 },
