@@ -24,6 +24,7 @@ export default function OpportunityApplicantsPage() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [savingId, setSavingId] = useState(null);
 
   const load = useCallback(async () => {
     if (!user || !id) return;
@@ -38,6 +39,20 @@ export default function OpportunityApplicantsPage() {
   }, [user, id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const updateStatus = async (a, status) => {
+    const next = a.status === status ? "new" : status;   // click again to clear
+    setSavingId(a.id);
+    const { error: err } = await supabase.from("applications").update({ status: next }).eq("id", a.id);
+    setSavingId(null);
+    if (err) {
+      alert(err.message?.includes("row-level security")
+        ? "You can only action applicants on your own opportunities."
+        : "Could not update: " + err.message);
+      return;
+    }
+    setApps(prev => prev.map(x => x.id === a.id ? { ...x, status: next } : x));
+  };
 
   return (
     <div style={s.wrap}>
@@ -84,6 +99,18 @@ export default function OpportunityApplicantsPage() {
                       </div>
                     </div>
                     {a.pitch && <p style={s.pitch}>{a.pitch}</p>}
+                    <div style={s.actions}>
+                      <button
+                        style={{ ...s.shortlistBtn, ...(a.status === "shortlisted" ? s.shortlistActive : {}), ...(savingId === a.id ? s.busy : {}) }}
+                        onClick={() => updateStatus(a, "shortlisted")}
+                        disabled={savingId === a.id}
+                      >{a.status === "shortlisted" ? "✓ Shortlisted" : "Shortlist"}</button>
+                      <button
+                        style={{ ...s.declineBtn, ...(a.status === "declined" ? s.declineActive : {}), ...(savingId === a.id ? s.busy : {}) }}
+                        onClick={() => updateStatus(a, "declined")}
+                        disabled={savingId === a.id}
+                      >{a.status === "declined" ? "Declined" : "Decline"}</button>
+                    </div>
                   </div>
                 );
               })}
@@ -118,4 +145,10 @@ const s = {
   appliedDate: { fontSize: 12, color: "var(--color-ink-muted)" },
   statusBadge: { fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--radius-pill)" },
   pitch: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.6, marginTop: 10, whiteSpace: "pre-wrap" },
+  actions: { display: "flex", gap: 8, marginTop: 14 },
+  shortlistBtn: { padding: "8px 16px", background: "var(--color-ground-card)", color: "var(--status-success-ink)", border: "1.5px solid var(--status-success-ink)", borderRadius: "var(--radius-sm)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
+  shortlistActive: { background: "var(--status-success-bg)", borderColor: "transparent" },
+  declineBtn: { padding: "8px 16px", background: "var(--color-ground-card)", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
+  declineActive: { background: "var(--status-error-bg)", color: "var(--color-error)", borderColor: "transparent" },
+  busy: { opacity: 0.6, cursor: "default" },
 };
