@@ -46,6 +46,12 @@ export default function AdminPage() {
   const [showClear, setShowClear] = useState(false);
   const [clearing, setClearing]   = useState(false);
 
+  // hotel approvals
+  const [hotels, setHotels]             = useState([]);
+  const [hotelsLoading, setHotelsLoading] = useState(true);
+  const [hotelFilter, setHotelFilter]   = useState("pending");
+  const [hotelSavingId, setHotelSavingId] = useState(null);
+
   // ── Access control ──────────────────────────────────────────────
   useEffect(() => {
     if (authLoading) return;
@@ -63,6 +69,7 @@ export default function AdminPage() {
       const t = sessionData?.session?.access_token || "";
       setToken(t);
       await loadData(t);
+      loadHotels();
     })();
   }, [authorized]);
 
@@ -79,6 +86,25 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ── Hotel approvals ─────────────────────────────────────────────
+  // Admins have full access to hotel_profiles via the "admins manage all
+  // profiles" RLS policy, so these go straight through the normal client.
+  const loadHotels = async () => {
+    setHotelsLoading(true);
+    const { data: rows } = await supabase
+      .from("hotel_profiles").select("*").order("created_at", { ascending: false });
+    setHotels(rows || []);
+    setHotelsLoading(false);
+  };
+
+  const setHotelStatus = async (h, status) => {
+    setHotelSavingId(h.id);
+    const { error: err } = await supabase.from("hotel_profiles").update({ status }).eq("id", h.id);
+    setHotelSavingId(null);
+    if (err) { alert("Could not update hotel: " + err.message); return; }
+    setHotels(prev => prev.map(x => x.id === h.id ? { ...x, status } : x));
   };
 
   // ── Plan update ─────────────────────────────────────────────────
@@ -161,6 +187,9 @@ export default function AdminPage() {
   const pageUsers = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
   useEffect(() => { setPage(1); }, [search]);
 
+  const hotelsFiltered = hotelFilter === "all" ? hotels : hotels.filter(h => h.status === hotelFilter);
+  const pendingCount = hotels.filter(h => h.status === "pending").length;
+
   if (authLoading || !authorized) {
     return <div style={s.center}><div style={s.spinner} /></div>;
   }
@@ -200,6 +229,69 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
+
+      {/* ── HOTEL APPROVALS ── */}
+      <section style={s.section}>
+        <div style={s.sectionHead}>
+          <h2 style={s.h2}>
+            Hotels {pendingCount > 0 && <span style={s.countPill}>{pendingCount} pending</span>}
+          </h2>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {["pending", "approved", "rejected", "all"].map(f => (
+              <button key={f} onClick={() => setHotelFilter(f)}
+                style={{ ...s.hFilter, ...(hotelFilter === f ? s.hFilterActive : {}) }}>
+                {f[0].toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {hotelsLoading ? (
+          <div style={{ padding: "24px 0", color: "var(--color-ink-muted)", fontSize: 14 }}>Loading hotels…</div>
+        ) : hotelsFiltered.length === 0 ? (
+          <div style={{ padding: "24px 0", color: "var(--color-ink-muted)", fontSize: 14 }}>No {hotelFilter === "all" ? "" : hotelFilter} hotels.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {hotelsFiltered.map(h => {
+              const badge = h.status === "approved" ? { bg: "var(--status-success-bg)", ink: "var(--status-success-ink)" }
+                : h.status === "rejected" ? { bg: "var(--status-error-bg)", ink: "var(--color-error)" }
+                : { bg: "var(--color-ground-sand)", ink: "var(--color-ink-mid)" };
+              const busy = hotelSavingId === h.id;
+              return (
+                <div key={h.id} style={s.hCard}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+                      <span style={s.hName}>{h.name || "(no name)"}</span>
+                      <span style={{ ...s.hBadge, background: badge.bg, color: badge.ink }}>{h.status}</span>
+                    </div>
+                    <div style={s.hMeta}>
+                      {[h.city, h.country].filter(Boolean).join(", ") || "—"}
+                      {h.contact_email && <> · {h.contact_email}</>}
+                    </div>
+                    {h.description && <p style={s.hDesc}>{h.description}</p>}
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 4 }}>
+                      {h.website && <a href={h.website} target="_blank" rel="noreferrer" style={s.hLink}>Website</a>}
+                      {h.instagram && <a href={h.instagram} target="_blank" rel="noreferrer" style={s.hLink}>Instagram</a>}
+                    </div>
+                  </div>
+                  <div style={s.hActions}>
+                    <button
+                      style={{ ...s.approveBtn, ...(h.status === "approved" || busy ? s.hDisabled : {}) }}
+                      onClick={() => setHotelStatus(h, "approved")}
+                      disabled={h.status === "approved" || busy}
+                    >Approve</button>
+                    <button
+                      style={{ ...s.rejectBtn, ...(h.status === "rejected" || busy ? s.hDisabled : {}) }}
+                      onClick={() => setHotelStatus(h, "rejected")}
+                      disabled={h.status === "rejected" || busy}
+                    >Reject</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {/* ── USER TABLE ── */}
       <section style={s.section}>
@@ -426,6 +518,18 @@ const s = {
   h1: { fontSize: 24, fontWeight: 700, color: "var(--color-ink-primary)", letterSpacing: "-0.4px" },
   refreshBtn: { padding: "8px 16px", background:"var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: 9, fontSize: 13, fontWeight: 600, color: "var(--color-ink-mid)", cursor: "pointer" },
   hotelViewBtn: { padding: "8px 16px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration:"none", fontFamily:"var(--font-display)" },
+  hFilter: { padding: "6px 12px", background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-pill)", fontSize:12.5, fontWeight:600, color:"var(--color-ink-mid)", cursor:"pointer", fontFamily:"inherit" },
+  hFilterActive: { background:"var(--color-accent-terracotta)", color:"var(--color-ground-page)", border:"1px solid transparent" },
+  hCard: { display:"flex", gap:16, justifyContent:"space-between", alignItems:"flex-start", background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-card)", padding:"16px 18px", flexWrap:"wrap" },
+  hName: { fontSize:15, fontWeight:700, color:"var(--color-ink-primary)" },
+  hBadge: { fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.03em", padding:"3px 9px", borderRadius:"var(--radius-pill)" },
+  hMeta: { fontSize:12.5, color:"var(--color-ink-muted)" },
+  hDesc: { fontSize:13, color:"var(--color-ink-mid)", lineHeight:1.5, marginTop:6, maxWidth:"60ch" },
+  hLink: { fontSize:12, color:"var(--color-accent-amber-deep)", fontWeight:600, textDecoration:"none" },
+  hActions: { display:"flex", gap:8, flexShrink:0 },
+  approveBtn: { padding:"8px 16px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:"var(--radius-sm)", fontSize:12.5, fontWeight:700, cursor:"pointer", fontFamily:"var(--font-display)" },
+  rejectBtn: { padding:"8px 16px", background:"var(--color-ground-card)", color:"var(--color-error)", border:"1.5px solid var(--color-error)", borderRadius:"var(--radius-sm)", fontSize:12.5, fontWeight:700, cursor:"pointer", fontFamily:"inherit" },
+  hDisabled: { opacity:0.4, cursor:"not-allowed" },
   errorBox: { background: "var(--status-error-bg)", border: "1px solid rgba(180,67,46,0.3)", color: "var(--color-error)", padding: "12px 16px", borderRadius: 10, fontSize: 13, marginBottom: 20 },
 
   statsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, marginBottom: 32 },
