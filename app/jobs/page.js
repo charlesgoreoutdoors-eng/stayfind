@@ -10,7 +10,7 @@ const APP_STATUS = {
 };
 
 export default function JobBoardPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [opps, setOpps] = useState([]);
   const [apps, setApps] = useState({});       // opportunity_id -> application
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,7 @@ export default function JobBoardPage() {
 
   const [applyingId, setApplyingId] = useState(null);
   const [pitch, setPitch] = useState("");
+  const [link, setLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,14 +44,21 @@ export default function JobBoardPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const openApply = (o) => { setApplyingId(o.id); setPitch(""); setError(""); };
+  const openApply = (o) => { setApplyingId(o.id); setPitch(""); setLink(""); setError(""); };
 
   const submitApply = async (o) => {
     if (!pitch.trim()) { setError("Add a short pitch so the hotel knows why you're a fit."); return; }
     setSubmitting(true); setError("");
     const { data, error: err } = await supabase
       .from("applications")
-      .insert({ opportunity_id: o.id, creator_id: user.id, pitch: pitch.trim() })
+      .insert({
+        opportunity_id: o.id,
+        creator_id: user.id,
+        pitch: pitch.trim(),
+        // Snapshot the applicant's identity so the hotel can see who applied.
+        creator_name: (profile?.full_name || user.email || "").trim() || null,
+        creator_link: link.trim() || null,
+      })
       .select("id, opportunity_id, status, pitch")
       .single();
     setSubmitting(false);
@@ -140,6 +148,12 @@ export default function JobBoardPage() {
                       onChange={e => setPitch(e.target.value)}
                       autoFocus
                     />
+                    <input
+                      style={s.linkInput}
+                      placeholder="Instagram or portfolio link (optional)"
+                      value={link}
+                      onChange={e => setLink(e.target.value)}
+                    />
                     {error && <p style={s.error}>{error}</p>}
                     <div style={s.applyActions}>
                       <button style={s.ghostBtn} onClick={() => { setApplyingId(null); setError(""); }} disabled={submitting}>Cancel</button>
@@ -186,6 +200,7 @@ const s = {
   applyBox: { marginTop: 14, borderTop: "1px solid var(--color-border)", paddingTop: 14 },
   applyLabel: { display: "block", fontSize: 12.5, fontWeight: 700, color: "var(--color-ink-mid)", marginBottom: 6 },
   pitchInput: { width: "100%", minHeight: 92, resize: "vertical", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "11px 13px", fontSize: 13.5, fontFamily: "inherit", color: "var(--color-ink-primary)", outline: "none", background: "var(--color-ground-card)" },
+  linkInput: { width: "100%", marginTop: 8, border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "10px 13px", fontSize: 13.5, fontFamily: "inherit", color: "var(--color-ink-primary)", outline: "none", background: "var(--color-ground-card)" },
   error: { fontSize: 12.5, color: "var(--color-error)", fontWeight: 600, margin: "6px 0 0" },
   applyActions: { marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10 },
   ghostBtn: { background: "transparent", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },

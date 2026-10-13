@@ -23,6 +23,7 @@ export default function HotelJobsPage() {
   const [hotel, setHotel] = useState(null);      // { id, name, status } or null
   const [noProfile, setNoProfile] = useState(false);
   const [opps, setOpps] = useState([]);
+  const [appCounts, setAppCounts] = useState({});   // opportunity_id -> count
   const [loading, setLoading] = useState(true);
   const [needsMigration, setNeedsMigration] = useState(false);
 
@@ -50,6 +51,13 @@ export default function HotelJobsPage() {
       .from("opportunities").select("*").order("created_at", { ascending: false });
     if (oErr && oErr.code === "42P01") { setNeedsMigration(true); setLoading(false); return; }
     setOpps(rows || []);
+
+    // Applicant counts per opportunity (RLS returns only apps to our opps).
+    const { data: appRows } = await supabase.from("applications").select("opportunity_id");
+    const counts = {};
+    (appRows || []).forEach(a => { counts[a.opportunity_id] = (counts[a.opportunity_id] || 0) + 1; });
+    setAppCounts(counts);
+
     setLoading(false);
   }, [user]);
 
@@ -263,6 +271,9 @@ export default function HotelJobsPage() {
                   </div>
                 </div>
                 <div style={s.oppActions}>
+                  <Link href={`/hotel/jobs/${o.id}`} style={s.applicantsLink}>
+                    {(appCounts[o.id] || 0)} applicant{(appCounts[o.id] || 0) === 1 ? "" : "s"}
+                  </Link>
                   <button style={s.smallGhost} onClick={() => openEdit(o)}>Edit</button>
                   {o.status === "draft" && (
                     <button style={{ ...s.smallPrimary, ...(approved ? {} : s.disabledBtn) }} onClick={() => setStatus(o, "open")} disabled={!approved} title={approved ? "" : "Approval required to publish"}>Publish</button>
@@ -317,6 +328,7 @@ const s = {
   oppDesc: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.5, marginBottom: 8 },
   metaRow: { display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12, color: "var(--color-ink-muted)" },
   oppActions: { display: "flex", gap: 8, alignItems: "center", flexShrink: 0 },
+  applicantsLink: { fontSize: 12.5, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none", padding: "7px 10px", whiteSpace: "nowrap" },
   smallGhost: { background: "transparent", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   smallPrimary: { background: "var(--color-action-forest)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
 };
