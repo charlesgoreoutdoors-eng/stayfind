@@ -10,13 +10,13 @@ const FIELDS = [
   { key: "description",     label: "Description",    type: "textarea", placeholder: "Tell creators what makes your property special." },
   { key: "website",         label: "Website URL",    type: "url",      placeholder: "https://…" },
   { key: "instagram",       label: "Instagram URL",  type: "url",      placeholder: "https://instagram.com/…" },
-  { key: "logo_url",        label: "Logo image URL", type: "url",      placeholder: "https://…" },
-  { key: "cover_image_url", label: "Cover image URL",type: "url",      placeholder: "https://…" },
   { key: "contact_name",    label: "Contact name",   type: "text",     placeholder: "Who creators will hear from" },
   { key: "contact_email",   label: "Contact email",  type: "email",    placeholder: "you@hotel.com" },
 ];
 
-const EMPTY = Object.fromEntries(FIELDS.map(f => [f.key, ""]));
+// logo_url isn't an editable text field anymore (it's an upload), but we keep
+// it in form state + the save payload.
+const EMPTY = { ...Object.fromEntries(FIELDS.map(f => [f.key, ""])), logo_url: "" };
 
 const STATUS_BADGE = {
   pending:  { label: "Pending review", bg: "var(--status-sent-bg)",    ink: "var(--status-sent-ink)" },
@@ -33,6 +33,7 @@ export default function HotelProfilePage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [needsMigration, setNeedsMigration] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -49,7 +50,7 @@ export default function HotelProfilePage() {
         if (error.code === "42P01") setNeedsMigration(true);
         else setError(error.message);
       } else if (data) {
-        setForm({ ...EMPTY, ...Object.fromEntries(FIELDS.map(f => [f.key, data[f.key] ?? ""])) });
+        setForm({ ...EMPTY, ...Object.fromEntries(FIELDS.map(f => [f.key, data[f.key] ?? ""])), logo_url: data.logo_url ?? "" });
         setStatus(data.status);
       }
       setLoading(false);
@@ -59,12 +60,26 @@ export default function HotelProfilePage() {
 
   const update = (key, val) => { setForm(prev => ({ ...prev, [key]: val })); setSaved(false); };
 
+  // Upload the hotel logo to the "logos" bucket (owner-scoped folder).
+  const handleLogoFile = async (file) => {
+    if (!file || !user) return;
+    setUploadingLogo(true); setError("");
+    const safe = file.name.replace(/[^\w.\-]+/g, "_");
+    const path = `${user.id}/${Date.now()}-${safe}`;
+    const { error: upErr } = await supabase.storage.from("logos").upload(path, file, { cacheControl: "3600", upsert: false });
+    if (upErr) { setError("Logo upload failed: " + upErr.message); setUploadingLogo(false); return; }
+    const { data } = supabase.storage.from("logos").getPublicUrl(path);
+    setForm(prev => ({ ...prev, logo_url: data.publicUrl })); setSaved(false);
+    setUploadingLogo(false);
+  };
+
   const handleSave = async () => {
     if (!user || !form.name.trim()) { setError("Hotel name is required."); return; }
     setSaving(true);
     setError("");
     const payload = { user_id: user.id };
     FIELDS.forEach(f => { payload[f.key] = form[f.key]?.trim() || null; });
+    payload.logo_url = form.logo_url || null;
     const { data, error } = await supabase
       .from("hotel_profiles")
       .upsert(payload, { onConflict: "user_id" })
@@ -103,6 +118,25 @@ export default function HotelProfilePage() {
         <div style={s.loadingRow}><span style={s.spinner} /> Loading…</div>
       ) : (
         <div style={s.card}>
+          <div style={s.field}>
+            <label style={s.label}>Logo</label>
+            <div style={s.logoRow}>
+              {form.logo_url
+                ? <img src={form.logo_url} alt="Hotel logo" style={s.logoPreview} />
+                : <div style={s.logoPlaceholder}>No logo</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <label style={{ ...s.logoUpload, ...(uploadingLogo ? { opacity: 0.6 } : {}) }}>
+                  {uploadingLogo ? "Uploading…" : (form.logo_url ? "Replace logo" : "＋ Upload logo")}
+                  <input type="file" style={{ display: "none" }} accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={e => e.target.files?.[0] && handleLogoFile(e.target.files[0])} disabled={uploadingLogo} />
+                </label>
+                {form.logo_url && (
+                  <button type="button" style={s.logoRemove} onClick={() => { setForm(prev => ({ ...prev, logo_url: "" })); setSaved(false); }}>Remove</button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {FIELDS.map(f => (
             <div key={f.key} style={s.field}>
               <label style={s.label}>{f.label}{f.required && <span style={{ color: "var(--color-error)" }}> *</span>}</label>
@@ -153,6 +187,11 @@ const s = {
   spinner: { display: "inline-block", width: 16, height: 16, border: "2px solid var(--color-border)", borderTopColor: "var(--color-accent-amber)", borderRadius: "50%", animation: "spin 0.7s linear infinite" },
   card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "28px 26px", boxShadow: "var(--shadow-low)" },
   field: { marginBottom: 16 },
+  logoRow: { display: "flex", alignItems: "center", gap: 16 },
+  logoPreview: { width: 72, height: 72, borderRadius: "var(--radius-md)", objectFit: "cover", border: "1px solid var(--color-border)", background: "var(--color-ground-sand)", flexShrink: 0 },
+  logoPlaceholder: { width: 72, height: 72, borderRadius: "var(--radius-md)", border: "1.5px dashed var(--color-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--color-ink-muted)", flexShrink: 0 },
+  logoUpload: { display: "inline-block", cursor: "pointer", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "9px 16px", fontSize: 13, fontWeight: 600, color: "var(--color-ink-primary)", textAlign: "center" },
+  logoRemove: { background: "none", border: "none", color: "var(--color-error)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left", padding: 0 },
   label: { display: "block", fontSize: 12.5, fontWeight: 700, color: "var(--color-ink-mid)", marginBottom: 6 },
   input: { width: "100%", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "11px 14px", fontSize: 14, fontFamily: "inherit", color: "var(--color-ink-primary)", outline: "none", background: "var(--color-ground-card)" },
   error: { fontSize: 13, color: "var(--color-error)", fontWeight: 600, margin: "4px 0 0" },
