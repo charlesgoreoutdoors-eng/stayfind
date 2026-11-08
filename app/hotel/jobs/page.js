@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
-import { SERVICE_OPTIONS, CURRENCIES } from "../../../lib/marketplace";
+import { SERVICE_OPTIONS, SERVICE_LABELS, CURRENCIES, compensationLabel, fmtDate } from "../../../lib/marketplace";
 
 const EMPTY = {
   title: "", type: "free", payment_amount: "", currency: "USD", other_compensation: "",
@@ -335,16 +335,20 @@ export default function HotelJobsPage() {
             return (
               <div key={o.id} style={s.oppCard}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
                     <h3 style={s.oppTitle}>{o.title}</h3>
                     <span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span>
-                    <span style={s.typePill}>{o.type === "paid" ? `Paid · ${o.currency || ""} ${o.payment_amount ?? ""}`.trim() : "Free collab"}</span>
+                    <span style={s.typePill}>{compensationLabel(o)}</span>
+                    {o.service && <span style={s.servicePill}>{SERVICE_LABELS[o.service] || o.service}</span>}
                   </div>
                   {o.short_description && <p style={s.oppDesc}>{o.short_description}</p>}
+                  {o.other_compensation && <p style={s.otherComp}>🎁 {o.other_compensation}</p>}
                   <div style={s.metaRow}>
-                    {o.location && <span>{o.location}</span>}
-                    {o.application_deadline && <span>Apply by {o.application_deadline}</span>}
-                    {o.completion_deadline && <span>Complete by {o.completion_deadline}</span>}
+                    {o.location && <span>📍 {o.location}</span>}
+                    {o.application_deadline && <span>Apply by {fmtDate(o.application_deadline)}</span>}
+                    {o.completion_deadline && <span>Content due {fmtDate(o.completion_deadline)}</span>}
+                    {o.content_license_until && <span>License till {fmtDate(o.content_license_until)}</span>}
+                    {o.brief_url && <a href={o.brief_url} target="_blank" rel="noreferrer" style={s.briefChip}>📄 Brief</a>}
                   </div>
                 </div>
                 <div style={s.oppActions}>
@@ -407,7 +411,10 @@ const s = {
   oppTitle: { fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)" },
   badge: { fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--radius-pill)" },
   typePill: { fontSize: 11.5, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "3px 10px", borderRadius: "var(--radius-pill)" },
-  oppDesc: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.5, marginBottom: 8 },
+  servicePill: { fontSize: 11.5, fontWeight: 600, color: "var(--color-accent-amber-deep)", background: "rgba(224,149,74,0.14)", padding: "3px 10px", borderRadius: "var(--radius-pill)" },
+  oppDesc: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.5, marginBottom: 6 },
+  otherComp: { fontSize: 12.5, color: "var(--color-ink-mid)", fontWeight: 600, marginBottom: 8 },
+  briefChip: { fontSize: 12, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none" },
   metaRow: { display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12, color: "var(--color-ink-muted)" },
   oppActions: { display: "flex", gap: 8, alignItems: "center", flexShrink: 0 },
   applicantsLink: { fontSize: 12.5, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none", padding: "7px 10px", whiteSpace: "nowrap" },
