@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
-import { SERVICE_OPTIONS, SERVICE_LABELS, CURRENCIES, compensationLabel, fmtDate } from "../../../lib/marketplace";
+import { SERVICE_OPTIONS, SERVICE_LABELS, CURRENCIES, compensationLabel, fmtDate, sanitizeText } from "../../../lib/marketplace";
 
 const EMPTY = {
   title: "", type: "free", payment_amount: "", currency: "USD", other_compensation: "",
@@ -100,9 +100,9 @@ export default function HotelJobsPage() {
 
   const buildPayload = (status) => {
     const paid = form.type === "paid";
-    const clean = (v) => (v && v.trim() ? v.trim() : null);
+    const clean = (v) => { const s = sanitizeText(v); return s && s.trim() ? s.trim() : null; };
     return {
-      title: form.title.trim(),
+      title: sanitizeText(form.title).trim(),
       type: form.type,
       payment_amount: paid ? (form.payment_amount ? Number(form.payment_amount) : null) : null,
       currency: paid ? form.currency : null,
@@ -128,24 +128,31 @@ export default function HotelJobsPage() {
     if (!form.title.trim()) { setError("Title is required."); return; }
     if (form.type === "paid" && !form.payment_amount) { setError("Enter a payment amount for a paid opportunity."); return; }
     setSaving(true); setError("");
-    const payload = buildPayload(status);
-    let err;
-    if (editingId) {
-      ({ error: err } = await supabase.from("opportunities").update(payload).eq("id", editingId));
-    } else {
-      ({ error: err } = await supabase.from("opportunities").insert({ ...payload, hotel_id: hotel.id }));
+    try {
+      const payload = buildPayload(status);
+      let err;
+      if (editingId) {
+        ({ error: err } = await supabase.from("opportunities").update(payload).eq("id", editingId));
+      } else {
+        ({ error: err } = await supabase.from("opportunities").insert({ ...payload, hotel_id: hotel.id }));
+      }
+      if (err) {
+        setError(err.message?.includes("row-level security")
+          ? "Only approved hotels can publish. You can save it as a draft for now."
+          : err.message);
+        console.error("[opportunity save]", err);
+        return;
+      }
+      setFormOpen(false);
+      setEditingId(null);
+      setForm(EMPTY);
+      load();
+    } catch (e) {
+      console.error("[opportunity save] threw", e);
+      setError(e?.message || "Could not save — please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    if (err) {
-      setError(err.message?.includes("row-level security")
-        ? "Only approved hotels can publish. You can save it as a draft for now."
-        : err.message);
-      return;
-    }
-    setFormOpen(false);
-    setEditingId(null);
-    setForm(EMPTY);
-    load();
   };
 
   // Quick status change from a card (publish / close / reopen / back to draft).

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
+import { sanitizeText } from "../../../lib/marketplace";
 
 const FIELDS = [
   { key: "name",            label: "Hotel name",     type: "text",     placeholder: "The Dapple House", required: true },
@@ -77,22 +78,29 @@ export default function HotelProfilePage() {
     if (!user || !form.name.trim()) { setError("Hotel name is required."); return; }
     setSaving(true);
     setError("");
-    const payload = { user_id: user.id };
-    FIELDS.forEach(f => { payload[f.key] = form[f.key]?.trim() || null; });
-    payload.logo_url = form.logo_url || null;
-    const { data, error } = await supabase
-      .from("hotel_profiles")
-      .upsert(payload, { onConflict: "user_id" })
-      .select()
-      .single();
-    if (error) {
-      if (error.code === "42P01") setNeedsMigration(true);
-      else setError(error.message);
-    } else {
-      setStatus(data.status);
-      setSaved(true);
+    try {
+      const payload = { user_id: user.id };
+      FIELDS.forEach(f => { payload[f.key] = sanitizeText(form[f.key])?.trim() || null; });
+      payload.logo_url = form.logo_url || null;
+      const { data, error } = await supabase
+        .from("hotel_profiles")
+        .upsert(payload, { onConflict: "user_id" })
+        .select()
+        .single();
+      if (error) {
+        if (error.code === "42P01") setNeedsMigration(true);
+        else setError(error.message);
+        console.error("[hotel profile save]", error);
+      } else {
+        setStatus(data.status);
+        setSaved(true);
+      }
+    } catch (e) {
+      console.error("[hotel profile save] threw", e);
+      setError(e?.message || "Could not save — please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const badge = status ? STATUS_BADGE[status] : null;
