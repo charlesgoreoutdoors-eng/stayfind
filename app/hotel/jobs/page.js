@@ -3,13 +3,14 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
-
-const CURRENCIES = ["USD", "AUD", "EUR", "GBP", "NZD", "CAD"];
+import { SERVICE_OPTIONS, CURRENCIES } from "../../../lib/marketplace";
 
 const EMPTY = {
-  title: "", type: "free", payment_amount: "", currency: "USD",
-  short_description: "", whats_included: "", deliverables: "", location: "",
-  application_deadline: "", completion_deadline: "",
+  title: "", type: "free", payment_amount: "", currency: "USD", other_compensation: "",
+  short_description: "", description: "", whats_included: "", deliverables: "",
+  service: "", location: "", social_handles: "", cta_link: "",
+  application_deadline: "", completion_deadline: "", content_license_until: "",
+  brief_url: "", brief_name: "",
 };
 
 const STATUS_BADGE = {
@@ -32,6 +33,7 @@ export default function HotelJobsPage() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingBrief, setUploadingBrief] = useState(false);
 
   const approved = hotel?.status === "approved";
 
@@ -70,12 +72,30 @@ export default function HotelJobsPage() {
       title: o.title || "", type: o.type || "free",
       payment_amount: o.payment_amount != null ? String(o.payment_amount) : "",
       currency: o.currency || "USD",
-      short_description: o.short_description || "", whats_included: o.whats_included || "",
-      deliverables: o.deliverables || "", location: o.location || "",
+      other_compensation: o.other_compensation || "",
+      short_description: o.short_description || "", description: o.description || "",
+      whats_included: o.whats_included || "", deliverables: o.deliverables || "",
+      service: o.service || "", location: o.location || "",
+      social_handles: o.social_handles || "", cta_link: o.cta_link || "",
       application_deadline: o.application_deadline || "", completion_deadline: o.completion_deadline || "",
+      content_license_until: o.content_license_until || "",
+      brief_url: o.brief_url || "", brief_name: o.brief_name || "",
     });
     setError("");
     setFormOpen(true);
+  };
+
+  // Upload a creative brief to the "briefs" bucket (owner-scoped folder).
+  const handleBriefFile = async (file) => {
+    if (!file || !user) return;
+    setUploadingBrief(true); setError("");
+    const safe = file.name.replace(/[^\w.\-]+/g, "_");
+    const path = `${user.id}/${Date.now()}-${safe}`;
+    const { error: upErr } = await supabase.storage.from("briefs").upload(path, file, { cacheControl: "3600", upsert: false });
+    if (upErr) { setError("Brief upload failed: " + upErr.message); setUploadingBrief(false); return; }
+    const { data } = supabase.storage.from("briefs").getPublicUrl(path);
+    setForm(f => ({ ...f, brief_url: data.publicUrl, brief_name: file.name }));
+    setUploadingBrief(false);
   };
 
   const buildPayload = (status) => {
@@ -86,12 +106,20 @@ export default function HotelJobsPage() {
       type: form.type,
       payment_amount: paid ? (form.payment_amount ? Number(form.payment_amount) : null) : null,
       currency: paid ? form.currency : null,
+      other_compensation: clean(form.other_compensation),
       short_description: clean(form.short_description),
+      description: clean(form.description),
       whats_included: clean(form.whats_included),
       deliverables: clean(form.deliverables),
+      service: form.service || null,
       location: clean(form.location),
+      social_handles: clean(form.social_handles),
+      cta_link: clean(form.cta_link),
       application_deadline: form.application_deadline || null,
       completion_deadline: form.completion_deadline || null,
+      content_license_until: form.content_license_until || null,
+      brief_url: form.brief_url || null,
+      brief_name: form.brief_name || null,
       status,
     };
   };
@@ -197,22 +225,49 @@ export default function HotelJobsPage() {
           </div>
 
           <div style={s.field}>
+            <label style={s.label}>Other compensation</label>
+            <input style={s.input} placeholder="e.g. free 3-night stay + $300 product credit" value={form.other_compensation} onChange={e => setForm(f => ({ ...f, other_compensation: e.target.value }))} />
+          </div>
+
+          <div style={s.field}>
             <label style={s.label}>Short description</label>
-            <textarea style={{ ...s.input, minHeight: 70, resize: "vertical" }} placeholder="One or two lines creators see first." value={form.short_description} onChange={e => setForm(f => ({ ...f, short_description: e.target.value }))} />
+            <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="One or two lines creators see first on the board." value={form.short_description} onChange={e => setForm(f => ({ ...f, short_description: e.target.value }))} />
           </div>
           <div style={s.field}>
-            <label style={s.label}>What’s included</label>
+            <label style={s.label}>Campaign description</label>
+            <textarea style={{ ...s.input, minHeight: 120, resize: "vertical" }} placeholder="The full brief in your words — the idea, the vibe, what you're looking for." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>What’s included <span style={s.hint}>— what the creator receives</span></label>
             <textarea style={{ ...s.input, minHeight: 70, resize: "vertical" }} placeholder="e.g. 3 nights, all meals, spa access." value={form.whats_included} onChange={e => setForm(f => ({ ...f, whats_included: e.target.value }))} />
           </div>
           <div style={s.field}>
-            <label style={s.label}>Deliverables</label>
+            <label style={s.label}>Deliverables <span style={s.hint}>— what the creator delivers</span></label>
             <textarea style={{ ...s.input, minHeight: 70, resize: "vertical" }} placeholder="e.g. 1 Reel, 3 stories, 5 edited photos." value={form.deliverables} onChange={e => setForm(f => ({ ...f, deliverables: e.target.value }))} />
           </div>
 
           <div style={s.row2}>
             <div style={s.field}>
-              <label style={s.label}>Location</label>
-              <input style={s.input} placeholder="Byron Bay, Australia" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+              <label style={s.label}>Service type</label>
+              <select style={s.input} value={form.service} onChange={e => setForm(f => ({ ...f, service: e.target.value }))}>
+                <option value="">Select…</option>
+                {SERVICE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>Creator location</label>
+              <input style={s.input} placeholder="e.g. United States, or Anywhere" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+            </div>
+          </div>
+
+          <div style={s.row2}>
+            <div style={s.field}>
+              <label style={s.label}>Social hashtags &amp; mentions</label>
+              <input style={s.input} placeholder="@yourhotel #stay" value={form.social_handles} onChange={e => setForm(f => ({ ...f, social_handles: e.target.value }))} />
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>CTA link</label>
+              <input style={s.input} placeholder="https://yourhotel.com/book" value={form.cta_link} onChange={e => setForm(f => ({ ...f, cta_link: e.target.value }))} />
             </div>
           </div>
           <div style={s.row2}>
@@ -221,9 +276,31 @@ export default function HotelJobsPage() {
               <input style={s.input} type="date" value={form.application_deadline} onChange={e => setForm(f => ({ ...f, application_deadline: e.target.value }))} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Complete work by</label>
+              <label style={s.label}>Content deadline</label>
               <input style={s.input} type="date" value={form.completion_deadline} onChange={e => setForm(f => ({ ...f, completion_deadline: e.target.value }))} />
             </div>
+          </div>
+          <div style={s.row2}>
+            <div style={s.field}>
+              <label style={s.label}>Content licensed until</label>
+              <input style={s.input} type="date" value={form.content_license_until} onChange={e => setForm(f => ({ ...f, content_license_until: e.target.value }))} />
+            </div>
+          </div>
+
+          <div style={s.field}>
+            <label style={s.label}>Creative brief</label>
+            {form.brief_name ? (
+              <div style={s.briefRow}>
+                <a href={form.brief_url} target="_blank" rel="noreferrer" style={s.briefLink}>📄 {form.brief_name}</a>
+                <button type="button" style={s.briefRemove} onClick={() => setForm(f => ({ ...f, brief_url: "", brief_name: "" }))}>Remove</button>
+              </div>
+            ) : (
+              <label style={{ ...s.briefUpload, ...(uploadingBrief ? { opacity: 0.6 } : {}) }}>
+                {uploadingBrief ? "Uploading…" : "＋ Upload a brief (PDF, image or doc)"}
+                <input type="file" style={{ display: "none" }} accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
+                  onChange={e => e.target.files?.[0] && handleBriefFile(e.target.files[0])} disabled={uploadingBrief} />
+              </label>
+            )}
           </div>
 
           {error && <p style={s.error}>{error}</p>}
@@ -309,6 +386,11 @@ const s = {
   field: { marginBottom: 14, minWidth: 0 },
   label: { display: "block", fontSize: 12.5, fontWeight: 700, color: "var(--color-ink-mid)", marginBottom: 6 },
   req: { color: "var(--color-error)" },
+  hint: { fontWeight: 500, color: "var(--color-ink-muted)", textTransform: "none", letterSpacing: 0 },
+  briefRow: { display: "flex", alignItems: "center", gap: 12, background: "var(--color-ground-sand)", borderRadius: "var(--radius-md)", padding: "10px 14px" },
+  briefLink: { fontSize: 13.5, fontWeight: 600, color: "var(--color-accent-amber-deep)", textDecoration: "none", wordBreak: "break-all", flex: 1 },
+  briefRemove: { background: "none", border: "none", color: "var(--color-error)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 },
+  briefUpload: { display: "block", textAlign: "center", cursor: "pointer", border: "1.5px dashed var(--color-border)", borderRadius: "var(--radius-md)", padding: "14px", fontSize: 13.5, fontWeight: 600, color: "var(--color-ink-mid)" },
   input: { width: "100%", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "10px 13px", fontSize: 14, fontFamily: "inherit", color: "var(--color-ink-primary)", outline: "none", background: "var(--color-ground-card)" },
   typeBtn: { flex: 1, padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1.5px solid var(--color-border)", background: "var(--color-ground-card)", color: "var(--color-ink-mid)", fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   typeBtnActive: { borderColor: "var(--color-action-forest)", background: "var(--color-action-forest)", color: "var(--color-ground-page)" },
