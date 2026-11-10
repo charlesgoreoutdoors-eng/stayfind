@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../lib/auth";
+import ProfileMenu from "./ProfileMenu";
 
 const ADMIN_EMAIL = "chgore618@gmail.com";
 
@@ -163,6 +164,9 @@ export default function Sidebar({ children }) {
       `}</style>
 
       <div className="sf-layout">
+        {/* Account menu — fixed top-right on every creator page */}
+        <ProfileMenu />
+
         {/* Mobile top bar */}
         <div className="sf-topbar">
           <button onClick={() => setOpen(v => !v)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--color-ground-page)", display:"flex", alignItems:"center", padding:4 }}>
