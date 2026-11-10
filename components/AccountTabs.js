@@ -19,6 +19,7 @@ const TABS = [
   { href: "/security",         label: "Security",         d: PATHS.security },
   { href: "/payment-settings", label: "Payment settings", d: PATHS.payment },
   { href: "/notifications",    label: "Notifications",    d: PATHS.bell },
+  { href: "/sending",          label: "Sending",          d: "M22 2 11 13 M22 2l-7 20-4-9-9-4 20-7z" },
 ];
 
 function Icon({ d, instagram }) {

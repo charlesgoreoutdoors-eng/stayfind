@@ -22,6 +22,7 @@ const ITEMS = [
   { href: "/security",         label: "Security",         d: I.security,instagram: false },
   { href: "/payment-settings", label: "Payment settings", d: I.payment, instagram: false },
   { href: "/notifications",    label: "Notifications",    d: I.bell,    instagram: false },
+  { href: "/sending",          label: "Sending",          d: "M22 2 11 13 M22 2l-7 20-4-9-9-4 20-7z", instagram: false },
 ];
 
 function ItemIcon({ d, instagram }) {

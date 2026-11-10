@@ -12,7 +12,7 @@ const GENDERS = [
   { value: "prefer_not", label: "Prefer not to say" },
 ];
 
-const TEXT_FIELDS = ["username", "first_name", "last_name", "headline", "portfolio_url", "phone", "bio", "shoe_size", "clothing_top", "clothing_bottom", "waist_size", "inseam_length"];
+const TEXT_FIELDS = ["username", "first_name", "last_name", "headline", "portfolio_url", "phone", "bio"];
 const EMPTY = { ...Object.fromEntries(TEXT_FIELDS.map(k => [k, ""])), gender: "", avatar_url: "" };
 
 export default function AccountPage() {
@@ -152,16 +152,6 @@ export default function AccountPage() {
             <Field label="Tell us about yourself">
               <textarea style={{ ...s.input, minHeight: 110, resize: "vertical" }} placeholder="A short bio about you and the content you make." value={form.bio} onChange={e => set("bio", e.target.value)} />
             </Field>
-
-            <div style={s.sizesDivider}><span style={s.sizesLabel}>Sizes</span></div>
-
-            <div style={s.sizesGrid}>
-              <Field label="Shoe size"><input style={s.input} value={form.shoe_size} onChange={e => set("shoe_size", e.target.value)} /></Field>
-              <Field label="Clothing (Top)"><input style={s.input} value={form.clothing_top} onChange={e => set("clothing_top", e.target.value)} /></Field>
-              <Field label="Clothing (Bottom)"><input style={s.input} value={form.clothing_bottom} onChange={e => set("clothing_bottom", e.target.value)} /></Field>
-              <Field label="Waist size"><input style={s.input} value={form.waist_size} onChange={e => set("waist_size", e.target.value)} /></Field>
-              <Field label="Inseam length"><input style={s.input} value={form.inseam_length} onChange={e => set("inseam_length", e.target.value)} /></Field>
-            </div>
 
             {error && <p style={s.error}>{error}</p>}
 
