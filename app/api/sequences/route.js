@@ -29,7 +29,7 @@ export async function POST(request) {
     // is before now and scheduled_for_date != today.
     const { data: overdueJobs } = await supabase
       .from("sequence_jobs")
-      .select("*, sequence_steps!inner(*)")
+      .select("*")
       .eq("status", "active")
       .lte("next_send_at", now.toISOString())
       .or(`scheduled_for_date.is.null,scheduled_for_date.neq.${todayStr}`);
@@ -110,7 +110,7 @@ export async function POST(request) {
     // ── Step 3: Send everything due right now ─────────────────────────────
     const { data: dueJobs } = await supabase
       .from("sequence_jobs")
-      .select("*, sequence_steps!inner(*)")
+      .select("*")
       .eq("status", "active")
       .lte("next_send_at", now.toISOString());
 
@@ -136,8 +136,11 @@ export async function POST(request) {
           if (tokenCache[job.user_id]) {
             await checkForBounces(job.user_id, tokenCache[job.user_id], labelCache[job.user_id], supabase);
           }
-          // Cache signature so we don't fetch it per-email
-          signatureCache[job.user_id] = profileData?.email_signature || "";
+          // Cache the signature so we don't fetch it per-email. (profileData
+          // from the scheduling loop above isn't in scope here, so fetch it.)
+          const { data: sigProfile } = await supabase
+            .from("profiles").select("email_signature").eq("id", job.user_id).single();
+          signatureCache[job.user_id] = sigProfile?.email_signature || "";
         }
 
         // Skip if this job was just marked bounced by checkForBounces above
