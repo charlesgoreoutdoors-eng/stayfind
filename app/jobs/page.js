@@ -2,13 +2,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
-import { SERVICE_LABELS, compensationLabel, fmtDate } from "../../lib/marketplace";
+import { SERVICE_LABELS, fmtDate } from "../../lib/marketplace";
 
 const APP_STATUS = {
   new:         { label: "Applied",      bg: "var(--status-sent-bg)",     ink: "var(--status-sent-ink)" },
   shortlisted: { label: "Shortlisted",  bg: "var(--status-success-bg)",  ink: "var(--status-success-ink)" },
   declined:    { label: "Not selected", bg: "var(--status-error-bg)",    ink: "var(--color-error)" },
 };
+
+function CalendarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
 
 export default function JobBoardPage() {
   const { user, profile } = useAuth();
@@ -105,33 +113,56 @@ export default function JobBoardPage() {
           </p>
         </div>
       ) : (
-        <div style={s.list}>
-          {opps.map(o => {
-            const app = apps[o.id];
-            const badge = app ? (APP_STATUS[app.status] || APP_STATUS.new) : null;
-            const hotel = o.hotel || {};
-            return (
-              <button key={o.id} style={s.row} onClick={() => openJob(o)}>
-                <div style={s.rowMain}>
-                  <div style={s.rowTitleLine}>
-                    <span style={s.rowTitle}>{o.title}</span>
-                    <span style={{ ...s.typePill, ...(o.type === "paid" ? s.typePaid : {}) }}>{compensationLabel(o)}</span>
-                  </div>
-                  <div style={s.rowMeta}>
-                    <span style={s.rowHotel}>{hotel.name || "Hotel"}</span>
-                    {o.location && <span>· {o.location}</span>}
-                    {o.service && <span>· {SERVICE_LABELS[o.service] || o.service}</span>}
-                    {o.application_deadline && <span>· Apply by {fmtDate(o.application_deadline)}</span>}
-                  </div>
-                </div>
-                <div style={s.rowRight}>
-                  {badge
-                    ? <span style={{ ...s.rowBadge, background: badge.bg, color: badge.ink }}>{badge.label}</span>
-                    : <span style={s.rowChevron}>›</span>}
-                </div>
-              </button>
-            );
-          })}
+        <div style={s.card}>
+          <div style={s.tableScroll}>
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>Brand</th>
+                  <th style={s.th}>Campaign Title</th>
+                  <th style={s.th}>Earnings</th>
+                  <th style={s.th}>Other</th>
+                  <th style={{ ...s.th, textAlign: "right" }}>Application Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                {opps.map(o => {
+                  const app = apps[o.id];
+                  const badge = app ? (APP_STATUS[app.status] || APP_STATUS.new) : null;
+                  const hotel = o.hotel || {};
+                  return (
+                    <tr key={o.id} style={s.tr} onClick={() => openJob(o)}>
+                      <td style={s.td}>
+                        <div style={s.brandCell}>
+                          {hotel.logo_url
+                            ? <img src={hotel.logo_url} alt="" style={s.brandLogo} />
+                            : <div style={s.brandLogoFallback}>{(hotel.name || "H")[0]}</div>}
+                          <span style={s.brandName}>{hotel.name || "Hotel"}</span>
+                        </div>
+                      </td>
+                      <td style={s.td}>
+                        <span style={s.titleLink}>{o.title}</span>
+                        {badge && <span style={{ ...s.appliedChip, background: badge.bg, color: badge.ink }}>{badge.label}</span>}
+                      </td>
+                      <td style={s.td}>
+                        {o.type === "paid"
+                          ? <span style={s.earnPill}>{[o.currency, o.payment_amount].filter(v => v != null && v !== "").join(" ")}</span>
+                          : <span style={s.dash}>—</span>}
+                      </td>
+                      <td style={s.td}>
+                        {o.other_compensation ? <span style={s.otherText}>{o.other_compensation}</span> : <span style={s.dash}>—</span>}
+                      </td>
+                      <td style={{ ...s.td, textAlign: "right" }}>
+                        {o.application_deadline
+                          ? <span style={s.datePill}><CalendarIcon /> {fmtDate(o.application_deadline)}</span>
+                          : <span style={s.dash}>—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -266,19 +297,23 @@ const s = {
   spinner: { display: "inline-block", width: 16, height: 16, border: "2px solid var(--color-border)", borderTopColor: "var(--color-accent-amber)", borderRadius: "50%", animation: "spin 0.7s linear infinite" },
   empty: { textAlign: "center", padding: "70px 24px", display: "flex", flexDirection: "column", alignItems: "center" },
 
-  // List
-  list: { display: "flex", flexDirection: "column", gap: 10 },
-  row: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, width: "100%", textAlign: "left", background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "16px 18px", cursor: "pointer", fontFamily: "inherit", boxShadow: "var(--shadow-low)", transition: "border-color .15s, transform .15s" },
-  rowMain: { minWidth: 0, flex: 1 },
-  rowTitleLine: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 },
-  rowTitle: { fontSize: 15.5, fontWeight: 700, color: "var(--color-ink-primary)" },
-  rowMeta: { display: "flex", gap: 7, flexWrap: "wrap", fontSize: 12.5, color: "var(--color-ink-muted)" },
-  rowHotel: { fontWeight: 600, color: "var(--color-ink-mid)" },
-  rowRight: { flexShrink: 0, display: "flex", alignItems: "center" },
-  rowBadge: { fontSize: 11.5, fontWeight: 700, padding: "5px 12px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap" },
-  rowChevron: { fontSize: 24, color: "var(--color-ink-muted)", lineHeight: 1 },
-  typePill: { fontSize: 11.5, fontWeight: 700, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "3px 10px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap" },
-  typePaid: { background: "rgba(139,154,106,0.2)", color: "var(--status-success-ink)" },
+  // Table (Popfly-style "Latest Campaigns")
+  card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-low)", overflow: "hidden" },
+  tableScroll: { width: "100%", overflowX: "auto" },
+  table: { width: "100%", minWidth: 760, borderCollapse: "collapse", fontFamily: "var(--font-body)" },
+  th: { textAlign: "left", fontSize: 12, fontWeight: 700, color: "var(--color-ink-muted)", padding: "16px 20px", background: "var(--color-ground-sand)", borderBottom: "1px solid var(--color-border)", whiteSpace: "nowrap" },
+  tr: { cursor: "pointer", borderBottom: "1px solid var(--color-border)", transition: "background .12s" },
+  td: { padding: "16px 20px", fontSize: 14, color: "var(--color-ink-primary)", verticalAlign: "middle" },
+  brandCell: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 },
+  brandLogo: { width: 36, height: 36, borderRadius: 9, objectFit: "cover", flexShrink: 0, border: "1px solid var(--color-border)" },
+  brandLogoFallback: { width: 36, height: 36, borderRadius: 9, flexShrink: 0, background: "var(--color-action-forest)", color: "var(--color-ground-page)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700 },
+  brandName: { fontSize: 14, fontWeight: 600, color: "var(--color-ink-primary)" },
+  titleLink: { fontSize: 14.5, fontWeight: 600, color: "var(--color-action-forest)", lineHeight: 1.35, display: "inline-block" },
+  appliedChip: { display: "inline-block", marginLeft: 8, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--radius-pill)", verticalAlign: "middle", whiteSpace: "nowrap" },
+  earnPill: { display: "inline-block", fontSize: 13, fontWeight: 700, color: "var(--status-success-ink)", background: "var(--status-success-bg)", padding: "5px 12px", borderRadius: 8, whiteSpace: "nowrap" },
+  otherText: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.5 },
+  dash: { color: "var(--color-ink-muted)" },
+  datePill: { display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: "var(--color-action-forest)", border: "1px solid var(--color-border)", background: "var(--color-ground-card)", padding: "7px 12px", borderRadius: 9, whiteSpace: "nowrap" },
 
   // Modal
   overlay: { position: "fixed", inset: 0, background: "rgba(43,39,34,0.55)", zIndex: 500, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" },
