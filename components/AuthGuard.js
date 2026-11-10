@@ -33,10 +33,17 @@ export default function AuthGuard({ children }) {
 
   // Role separation. Admins can see BOTH sites (to approve hotels + preview),
   // so they're exempt from these redirects.
+  // IMPORTANT: only apply role redirects once the profile has actually loaded.
+  // The profile loads in the background, so before it arrives `is_admin`/`role`
+  // are unknown — redirecting then would wrongly bounce an admin (or a hotel)
+  // based on a null profile (e.g. "Preview hotel site" kicking the admin to
+  // /dashboard). While it's still loading we render the page and let the effect
+  // re-run once the profile lands.
+  const roleKnown = !!profile;
   const admin = !!profile?.is_admin;
   const hotelUser = isHotel(profile);
-  const hotelOnCreatorRoute = !!user && hotelUser && !inHotelArea && !isPublic && !isRoot;
-  const creatorInHotelArea = !!user && !hotelUser && !admin && inHotelArea;
+  const hotelOnCreatorRoute = roleKnown && !!user && hotelUser && !inHotelArea && !isPublic && !isRoot;
+  const creatorInHotelArea = roleKnown && !!user && !hotelUser && !admin && inHotelArea;
 
   useEffect(() => {
     if (loading && !timedOut) return;
