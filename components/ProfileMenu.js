@@ -69,7 +69,7 @@ export default function ProfileMenu() {
 
   const name = profile?.full_name || user.email?.split("@")[0] || "Account";
   const email = user.email || "";
-  const avatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const avatar = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const initial = (name || "C").trim()[0]?.toUpperCase() || "C";
 
   return (
