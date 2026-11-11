@@ -44,6 +44,7 @@ export default function JobDetailPage() {
   const { user, profile } = useAuth();
   const [o, setO] = useState(null);
   const [app, setApp] = useState(null);
+  const [hotelRating, setHotelRating] = useState(null);   // { avg, count }
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -59,7 +60,7 @@ export default function JobDetailPage() {
     setLoading(true);
     const { data } = await supabase
       .from("opportunities")
-      .select("*, hotel:hotel_profiles ( name, city, country, logo_url, website, instagram )")
+      .select("*, hotel:hotel_profiles ( user_id, name, city, country, logo_url, website, instagram )")
       .eq("id", id)
       .maybeSingle();
     if (!data) { setNotFound(true); setLoading(false); return; }
@@ -67,6 +68,16 @@ export default function JobDetailPage() {
     const { data: myApp } = await supabase
       .from("applications").select("id, status, pitch").eq("opportunity_id", id).eq("creator_id", user.id).maybeSingle();
     setApp(myApp || null);
+
+    // Hotel's aggregate rating from past collaborations, so creators can weigh
+    // who they're applying to. Reviews are readable by all signed-in users.
+    const hotelUserId = data.hotel?.user_id;
+    if (hotelUserId) {
+      const { data: revs } = await supabase.from("reviews").select("rating").eq("reviewee_id", hotelUserId);
+      if (revs && revs.length) {
+        setHotelRating({ avg: revs.reduce((a, r) => a + r.rating, 0) / revs.length, count: revs.length });
+      }
+    }
     setLoading(false);
   }, [user, id]);
 
@@ -134,6 +145,7 @@ export default function JobDetailPage() {
               : <div style={s.brandLogoFallback}>{(hotel.name || "H")[0]}</div>}
             <span style={s.brandName}>{hotel.name || "Hotel"}</span>
             {(hotel.city || hotel.country) && <span style={s.brandLoc}>· {[hotel.city, hotel.country].filter(Boolean).join(", ")}</span>}
+            {hotelRating && <span style={s.brandRating}>★ {hotelRating.avg.toFixed(1)} <span style={s.brandRatingCount}>({hotelRating.count})</span></span>}
           </div>
         </div>
         <div style={{ flexShrink: 0 }}>
@@ -237,6 +249,8 @@ const s = {
   brandLogoFallback: { width: 34, height: 34, borderRadius: 9, background: "var(--color-action-forest)", color: "var(--color-ground-page)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700 },
   brandName: { fontSize: 15, fontWeight: 700, color: "var(--color-ink-primary)" },
   brandLoc: { fontSize: 13, color: "var(--color-ink-muted)" },
+  brandRating: { fontSize: 13, fontWeight: 700, color: "var(--color-accent-amber-deep)" },
+  brandRatingCount: { fontWeight: 500, color: "var(--color-ink-muted)" },
   applyBtn: { background: "var(--color-ink-primary)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-md)", padding: "13px 34px", fontSize: 14.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
   statusBadge: { fontSize: 13, fontWeight: 700, padding: "10px 18px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap" },
 

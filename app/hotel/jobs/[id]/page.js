@@ -26,6 +26,7 @@ export default function OpportunityApplicantsPage() {
   const [notFound, setNotFound] = useState(false);
   const [savingId, setSavingId] = useState(null);
   const [expanded, setExpanded] = useState(null);
+  const [ratings, setRatings] = useState({});   // creator_id -> { avg, count }
 
   const load = useCallback(async () => {
     if (!user || !id) return;
@@ -36,6 +37,21 @@ export default function OpportunityApplicantsPage() {
     const { data: rows } = await supabase
       .from("applications").select("*").eq("opportunity_id", id).order("created_at", { ascending: false });
     setApps(rows || []);
+
+    // Pull aggregate ratings for every applicant so the hotel can weigh past
+    // collaborations before actioning. Reviews are readable by all signed-in users.
+    const creatorIds = [...new Set((rows || []).map(r => r.creator_id).filter(Boolean))];
+    if (creatorIds.length) {
+      const { data: revs } = await supabase
+        .from("reviews").select("reviewee_id, rating").in("reviewee_id", creatorIds);
+      const by = {};
+      (revs || []).forEach(rv => { (by[rv.reviewee_id] = by[rv.reviewee_id] || []).push(rv.rating); });
+      const agg = {};
+      Object.entries(by).forEach(([uid, arr]) => {
+        agg[uid] = { avg: arr.reduce((a, b) => a + b, 0) / arr.length, count: arr.length };
+      });
+      setRatings(agg);
+    }
     setLoading(false);
   }, [user, id]);
 
@@ -116,6 +132,9 @@ export default function OpportunityApplicantsPage() {
                             <td style={{ ...s.td, color: "var(--color-ink-muted)" }}>{isOpen ? "▾" : "▸"}</td>
                             <td style={s.td}>
                               <div style={s.name}>{a.creator_name || "Creator"}</div>
+                              {ratings[a.creator_id]
+                                ? <div style={s.rating}>★ {ratings[a.creator_id].avg.toFixed(1)} <span style={s.ratingCount}>· {ratings[a.creator_id].count} review{ratings[a.creator_id].count === 1 ? "" : "s"}</span></div>
+                                : <div style={s.ratingNone}>No reviews yet</div>}
                               {a.creator_link && (linkIsUrl(a.creator_link)
                                 ? <a href={a.creator_link} target="_blank" rel="noreferrer" style={s.link} onClick={e => e.stopPropagation()}>{a.creator_link}</a>
                                 : <span style={s.linkPlain}>{a.creator_link}</span>)}
@@ -176,6 +195,9 @@ const s = {
   tr: { cursor: "pointer", borderBottom: "1px solid var(--color-border)" },
   td: { padding: "14px 16px", fontSize: 13.5, color: "var(--color-ink-primary)", verticalAlign: "middle" },
   name: { fontSize: 14, fontWeight: 700, color: "var(--color-ink-primary)" },
+  rating: { fontSize: 12, fontWeight: 700, color: "var(--color-accent-amber-deep)", marginTop: 2 },
+  ratingCount: { fontWeight: 500, color: "var(--color-ink-muted)" },
+  ratingNone: { fontSize: 11.5, color: "var(--color-ink-muted)", marginTop: 2 },
   link: { display: "inline-block", fontSize: 12, color: "var(--color-accent-amber-deep)", fontWeight: 600, textDecoration: "none", marginTop: 2, wordBreak: "break-all" },
   linkPlain: { display: "inline-block", fontSize: 12, color: "var(--color-ink-muted)", marginTop: 2 },
   pitchClip: { fontSize: 13, color: "var(--color-ink-mid)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.45 },
