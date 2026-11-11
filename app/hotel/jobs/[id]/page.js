@@ -131,7 +131,7 @@ export default function OpportunityApplicantsPage() {
                           <tr style={s.tr} onClick={() => setExpanded(isOpen ? null : a.id)}>
                             <td style={{ ...s.td, color: "var(--color-ink-muted)" }}>{isOpen ? "▾" : "▸"}</td>
                             <td style={s.td}>
-                              <div style={s.name}>{a.creator_name || "Creator"}</div>
+                              <Link href={`/hotel/creators/${a.id}`} style={s.nameLink} onClick={e => e.stopPropagation()}>{a.creator_name || "Creator"}</Link>
                               {ratings[a.creator_id]
                                 ? <div style={s.rating}>★ {ratings[a.creator_id].avg.toFixed(1)} <span style={s.ratingCount}>· {ratings[a.creator_id].count} review{ratings[a.creator_id].count === 1 ? "" : "s"}</span></div>
                                 : <div style={s.ratingNone}>No reviews yet</div>}
@@ -195,6 +195,7 @@ const s = {
   tr: { cursor: "pointer", borderBottom: "1px solid var(--color-border)" },
   td: { padding: "14px 16px", fontSize: 13.5, color: "var(--color-ink-primary)", verticalAlign: "middle" },
   name: { fontSize: 14, fontWeight: 700, color: "var(--color-ink-primary)" },
+  nameLink: { fontSize: 14, fontWeight: 700, color: "var(--color-ink-primary)", textDecoration: "none", borderBottom: "1px solid transparent", cursor: "pointer" },
   rating: { fontSize: 12, fontWeight: 700, color: "var(--color-accent-amber-deep)", marginTop: 2 },
   ratingCount: { fontWeight: 500, color: "var(--color-ink-muted)" },
   ratingNone: { fontSize: 11.5, color: "var(--color-ink-muted)", marginTop: 2 },

@@ -141,6 +141,7 @@ export default function ConversationThread({ applicationId, backHref }) {
         <div style={{ minWidth: 0 }}>
           <div style={s.with}>Conversation with <b>{otherName}</b></div>
           <div style={s.oppTitle}>{app.opportunity?.title}</div>
+          {role === "hotel" && <Link href={`/hotel/creators/${applicationId}`} style={s.profileLink}>View profile →</Link>}
         </div>
         <span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span>
       </div>
@@ -272,6 +273,7 @@ const s = {
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 14, flexWrap: "wrap" },
   with: { fontSize: 13, color: "var(--color-ink-muted)" },
   oppTitle: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--color-ink-primary)", lineHeight: 1.2, marginTop: 2 },
+  profileLink: { display: "inline-block", fontSize: 12.5, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none", marginTop: 6 },
   badge: { fontSize: 12, fontWeight: 700, padding: "6px 13px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap" },
 
   actionPanel: { background: "var(--color-ground-sand)", borderRadius: "var(--radius-card)", padding: "16px 18px", marginBottom: 14 },
