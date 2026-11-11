@@ -125,6 +125,7 @@ export default function OpportunityApplicantsPage() {
                             <td style={s.td}><span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span></td>
                             <td style={{ ...s.td, textAlign: "right" }} onClick={e => e.stopPropagation()}>
                               <div style={s.actions}>
+                                <Link href={`/hotel/inbox/${a.id}`} style={s.msgBtn} onClick={e => e.stopPropagation()}>Message</Link>
                                 <button style={{ ...s.shortlistBtn, ...(a.status === "shortlisted" ? s.shortlistActive : {}), ...(busy ? s.busy : {}) }} onClick={() => updateStatus(a, "shortlisted")} disabled={busy}>{a.status === "shortlisted" ? "✓ Shortlisted" : "Shortlist"}</button>
                                 <button style={{ ...s.declineBtn, ...(a.status === "declined" ? s.declineActive : {}), ...(busy ? s.busy : {}) }} onClick={() => updateStatus(a, "declined")} disabled={busy}>{a.status === "declined" ? "Declined" : "Decline"}</button>
                               </div>
@@ -179,7 +180,8 @@ const s = {
   linkPlain: { display: "inline-block", fontSize: 12, color: "var(--color-ink-muted)", marginTop: 2 },
   pitchClip: { fontSize: 13, color: "var(--color-ink-mid)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.45 },
   badge: { fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap" },
-  actions: { display: "flex", gap: 8, justifyContent: "flex-end" },
+  actions: { display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" },
+  msgBtn: { padding: "7px 13px", background: "var(--color-action-forest)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-sm)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)", textDecoration: "none", whiteSpace: "nowrap" },
   shortlistBtn: { padding: "7px 13px", background: "var(--color-ground-card)", color: "var(--status-success-ink)", border: "1.5px solid var(--status-success-ink)", borderRadius: "var(--radius-sm)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)", whiteSpace: "nowrap" },
   shortlistActive: { background: "var(--status-success-bg)", borderColor: "transparent" },
   declineBtn: { padding: "7px 13px", background: "var(--color-ground-card)", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },

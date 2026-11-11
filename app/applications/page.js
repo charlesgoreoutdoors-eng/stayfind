@@ -106,6 +106,9 @@ export default function MyApplicationsPage() {
                     <p style={s.pitchText}>{a.pitch}</p>
                   </div>
                 )}
+                <div style={{ marginTop: 12 }}>
+                  <Link href={`/inbox/${a.id}`} style={s.msgBtn}>Open chat →</Link>
+                </div>
               </div>
             );
           })}
@@ -130,6 +133,7 @@ const s = {
   oppTitle: { fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)", lineHeight: 1.3 },
   hotelLine: { fontSize: 12.5, color: "var(--color-ink-muted)", marginTop: 3 },
   statusBadge: { fontSize: 11.5, fontWeight: 700, padding: "5px 12px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap", flexShrink: 0 },
+  msgBtn: { display: "inline-block", fontSize: 13, fontWeight: 700, color: "var(--color-action-forest)", textDecoration: "none" },
   metaRow: { display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "var(--color-ink-muted)", alignItems: "center", marginTop: 10 },
   typePill: { fontSize: 11.5, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "3px 10px", borderRadius: "var(--radius-pill)" },
   closedTag: { fontSize: 11, fontWeight: 600, color: "var(--color-ink-muted)", fontStyle: "italic" },
