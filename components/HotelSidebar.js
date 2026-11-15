@@ -9,11 +9,6 @@ import HotelProfileMenu from "./HotelProfileMenu";
 // Applications, etc. as the hotel site grows.
 const NAV = [
   {
-    href: "/hotel/profile",
-    label: "Profile",
-    icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
-  },
-  {
     href: "/hotel/jobs",
     label: "Jobs",
     icon: "M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M8 7V5h8v2",
@@ -22,6 +17,11 @@ const NAV = [
     href: "/hotel/search",
     label: "Find creators",
     icon: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35",
+  },
+  {
+    href: "/hotel/saved",
+    label: "Saved creators",
+    icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z",
   },
   {
     href: "/hotel/inbox",
@@ -112,7 +112,7 @@ export default function HotelSidebar({ children }) {
 
         <div className={`hs-sidebar${open ? " open" : ""}`}>
           {/* Logo + hotel badge */}
-          <Link href="/hotel/profile" style={{ display:"flex", alignItems:"center", gap:8, padding:"24px 8px 28px" }}>
+          <Link href="/hotel/jobs" style={{ display:"flex", alignItems:"center", gap:8, padding:"24px 8px 28px" }}>
             <Wordmark size={17} />
             <span style={badge}>Hotels</span>
           </Link>

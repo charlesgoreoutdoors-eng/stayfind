@@ -139,7 +139,7 @@ export default function CreatorActionBar({ creatorId, creatorName }) {
                       </div>
                       {modal === "invite" ? (
                         a ? (
-                          <span style={s.inPipeline}>{a.status === "invited" ? "Invited ✓" : "In pipeline"}</span>
+                          <span style={s.inPipeline}>{a.status === "invited" ? "Invited ✓" : "Currently in this job"}</span>
                         ) : (
                           <button style={s.rowBtn} onClick={() => invite(j)} disabled={busy}>{busy ? "…" : "Invite"}</button>
                         )
