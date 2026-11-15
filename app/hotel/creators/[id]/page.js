@@ -31,6 +31,28 @@ function formatSize(bytes) {
 const linkIsUrl = (v) => v && /^https?:\/\//i.test(v);
 const toHref = (v) => (linkIsUrl(v) ? v : `https://${v}`);
 
+// Build a clickable channel URL from whatever the creator saved — a full link
+// is used as-is, otherwise a bare "@handle" is turned into the platform's URL.
+function socialUrl(platform, value) {
+  const v = String(value || "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  const handle = v.replace(/^@+/, "").replace(/\s+/g, "");
+  if (!handle) return null;
+  switch (platform) {
+    case "instagram": return `https://instagram.com/${handle}`;
+    case "tiktok":    return `https://www.tiktok.com/@${handle}`;
+    case "youtube":   return `https://www.youtube.com/@${handle}`;
+    case "facebook":  return `https://www.facebook.com/${handle}`;
+    case "x":
+    case "twitter":   return `https://x.com/${handle}`;
+    case "linkedin":  return `https://www.linkedin.com/in/${handle}`;
+    case "pinterest": return `https://www.pinterest.com/${handle}`;
+    case "website":   return toHref(v);
+    default:          return `https://${handle}`;
+  }
+}
+
 function Card({ title, children }) {
   return (
     <div style={s.card}>
@@ -178,11 +200,14 @@ export default function HotelCreatorProfilePage() {
           {/* Socials & contact */}
           {(socials.length > 0 || p.portfolio_url || p.email || p.phone) && (
             <Card title="Social & contact">
-              {socials.map(([k, v]) => (
-                <Detail key={k} label={SOCIAL_LABELS[k] || titleCase(k)}>
-                  {linkIsUrl(v) ? <a href={toHref(v)} target="_blank" rel="noreferrer" style={s.link}>{v}</a> : v}
-                </Detail>
-              ))}
+              {socials.map(([k, v]) => {
+                const url = socialUrl(k, v);
+                return (
+                  <Detail key={k} label={SOCIAL_LABELS[k] || titleCase(k)}>
+                    {url ? <a href={url} target="_blank" rel="noreferrer" style={s.link}>{v}</a> : v}
+                  </Detail>
+                );
+              })}
               <Detail label="Portfolio site">
                 {p.portfolio_url ? <a href={toHref(p.portfolio_url)} target="_blank" rel="noreferrer" style={s.link}>{p.portfolio_url}</a> : null}
               </Detail>
