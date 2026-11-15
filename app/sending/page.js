@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useGmail } from "../../lib/useGmail";
 import { sanitizeText } from "../../lib/marketplace";
+import { readDraft, writeDraft, clearDraft } from "../../lib/draft";
 import AccountTabs from "../../components/AccountTabs";
 
 export default function SendingPage() {
@@ -16,6 +17,8 @@ export default function SendingPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const draftKey = user ? `dapples_sending_draft_${user.id}` : null;
+  const hydrated = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -23,12 +26,21 @@ export default function SendingPage() {
     (async () => {
       const { data } = await supabase.from("profiles").select("email_signature, daily_email_limit").eq("id", user.id).maybeSingle();
       if (!active) return;
-      setSignature(data?.email_signature || "");
-      setDailyLimit(data?.daily_email_limit != null ? String(data.daily_email_limit) : "");
+      const draft = readDraft(`dapples_sending_draft_${user.id}`);
+      setSignature(draft?.signature ?? (data?.email_signature || ""));
+      setDailyLimit(draft?.dailyLimit ?? (data?.daily_email_limit != null ? String(data.daily_email_limit) : ""));
       setLoading(false);
     })();
     return () => { active = false; };
   }, [user]);
+
+  // Keep unsaved edits in the browser so the fields remember them on return.
+  useEffect(() => {
+    if (loading) return;
+    if (!hydrated.current) { hydrated.current = true; return; }
+    writeDraft(draftKey, { signature, dailyLimit });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, dailyLimit, loading]);
 
   const save = async () => {
     setSaving(true); setError("");
@@ -38,7 +50,7 @@ export default function SendingPage() {
     };
     const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
     setSaving(false);
-    if (err) setError(err.message); else { setSaved(true); }
+    if (err) setError(err.message); else { setSaved(true); clearDraft(draftKey); }
   };
 
   const connected = !!gmailToken && !tokenExpired;

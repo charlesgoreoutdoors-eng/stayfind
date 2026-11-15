@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { readDraft, writeDraft, clearDraft } from "../../lib/draft";
 import AccountTabs from "../../components/AccountTabs";
 
 const CATEGORIES = ["Travel", "Luxury Travel", "Adventure & Outdoor", "Family Travel", "Food & Drink", "Wellness & Spa", "Couples / Honeymoon", "Budget / Backpacking", "City / Urban", "Beach / Coastal", "Road Trips / Vanlife", "Photography", "Lifestyle", "Nature & Wildlife"];
@@ -18,6 +19,8 @@ export default function PreferencesPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const draftKey = user ? `dapples_preferences_draft_${user.id}` : null;
+  const hydrated = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -25,16 +28,26 @@ export default function PreferencesPage() {
     (async () => {
       const { data } = await supabase.from("profiles").select("content_categories, services, creator_type, experience_level, audience, favorite_brands, min_rate, open_to_gifting, open_to_product_seeding").eq("id", user.id).maybeSingle();
       if (!active) return;
-      if (data) setForm({
+      const base = data ? {
         content_categories: data.content_categories || [], services: data.services || [],
         creator_type: data.creator_type || "", experience_level: data.experience_level || "", audience: data.audience || "",
         favorite_brands: data.favorite_brands || [], min_rate: data.min_rate != null ? String(data.min_rate) : "",
         open_to_gifting: data.open_to_gifting, open_to_product_seeding: data.open_to_product_seeding,
-      });
+      } : null;
+      const draft = readDraft(`dapples_preferences_draft_${user.id}`);
+      if (base || draft) setForm(f => ({ ...f, ...(base || {}), ...(draft || {}) }));
       setLoading(false);
     })();
     return () => { active = false; };
   }, [user]);
+
+  // Keep unsaved edits in the browser so the fields remember them on return.
+  useEffect(() => {
+    if (loading) return;
+    if (!hydrated.current) { hydrated.current = true; return; }
+    writeDraft(draftKey, form);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, loading]);
 
   const toggle = (key, val) => { setForm(f => ({ ...f, [key]: f[key].includes(val) ? f[key].filter(v => v !== val) : [...f[key], val] })); setSaved(false); };
   const set = (key, val) => { setForm(f => ({ ...f, [key]: val })); setSaved(false); };
@@ -50,7 +63,7 @@ export default function PreferencesPage() {
     };
     const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
     setSaving(false);
-    if (err) setError(err.message); else setSaved(true);
+    if (err) setError(err.message); else { setSaved(true); clearDraft(draftKey); }
   };
 
   return (

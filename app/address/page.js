@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { sanitizeText } from "../../lib/marketplace";
+import { readDraft, writeDraft, clearDraft } from "../../lib/draft";
 import AccountTabs from "../../components/AccountTabs";
 
 const COUNTRIES = ["Australia", "United States", "United Kingdom", "Canada", "New Zealand", "Ireland", "France", "Germany", "Italy", "Spain", "Portugal", "Netherlands", "Switzerland", "Austria", "Sweden", "Norway", "Denmark", "Greece", "Mexico", "Brazil", "Argentina", "Japan", "Thailand", "Indonesia", "Singapore", "United Arab Emirates", "South Africa", "India", "Other"];
@@ -15,6 +16,8 @@ export default function AddressPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const draftKey = user ? `dapples_address_draft_${user.id}` : null;
+  const hydrated = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -22,14 +25,24 @@ export default function AddressPage() {
     (async () => {
       const { data } = await supabase.from("profiles").select("street1, street2, city, state, postal_code, country, show_on_map").eq("id", user.id).maybeSingle();
       if (!active) return;
-      if (data) setForm({
+      const base = data ? {
         street1: data.street1 || "", street2: data.street2 || "", city: data.city || "", state: data.state || "",
         postal_code: data.postal_code || "", country: data.country || "", show_on_map: data.show_on_map !== false,
-      });
+      } : null;
+      const draft = readDraft(`dapples_address_draft_${user.id}`);
+      if (base || draft) setForm(f => ({ ...f, ...(base || {}), ...(draft || {}) }));
       setLoading(false);
     })();
     return () => { active = false; };
   }, [user]);
+
+  // Keep unsaved edits in the browser so the fields remember them on return.
+  useEffect(() => {
+    if (loading) return;
+    if (!hydrated.current) { hydrated.current = true; return; }
+    writeDraft(draftKey, form);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, loading]);
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); };
 
@@ -40,7 +53,7 @@ export default function AddressPage() {
     FIELDS.forEach(k => { payload[k] = clean(form[k]); });
     const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
     setSaving(false);
-    if (err) setError(err.message); else setSaved(true);
+    if (err) setError(err.message); else { setSaved(true); clearDraft(draftKey); }
   };
 
   return (
