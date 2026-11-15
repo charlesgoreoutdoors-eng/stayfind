@@ -24,10 +24,70 @@ export default function PortfolioPage() {
   const [success, setSuccess]           = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [dragging, setDragging]         = useState(false);
+  const [samples, setSamples]           = useState([]);
+  const [sampleUploading, setSampleUploading] = useState(false);
+  const [sampleError, setSampleError]   = useState("");
+  const [sampleDeleteConfirm, setSampleDeleteConfirm] = useState(null);
   const fileInputRef = useRef(null);
+  const sampleInputRef = useRef(null);
   const { user } = useAuth();
 
   useEffect(() => { fetchPortfolios(); }, []);
+  useEffect(() => { if (user) fetchSamples(); }, [user]);
+
+  // Pull the storage object path out of a public URL so we can delete the file.
+  const objectPathFromUrl = (url, bucket) => {
+    const marker = `/object/public/${bucket}/`;
+    const i = (url || "").indexOf(marker);
+    return i === -1 ? null : url.slice(i + marker.length);
+  };
+
+  const fetchSamples = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("work_samples").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+    setSamples(data || []);
+  };
+
+  const uploadSamples = async (files) => {
+    const list = Array.from(files || []);
+    if (!list.length || !user) return;
+    setSampleError(""); setSampleUploading(true);
+    try {
+      const rows = [];
+      for (const file of list) {
+        const isImage = file.type.startsWith("image/");
+        const isVideo = file.type.startsWith("video/");
+        if (!isImage && !isVideo) { setSampleError("Only images and videos are supported."); continue; }
+        const maxMB = isVideo ? 50 : 15;
+        if (file.size > maxMB * 1024 * 1024) { setSampleError(`${file.name} is over ${maxMB}MB.`); continue; }
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${safe}`;
+        const { error: upErr } = await supabase.storage.from("work-samples").upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) { setSampleError("Upload failed: " + upErr.message); continue; }
+        const { data: urlData } = supabase.storage.from("work-samples").getPublicUrl(path);
+        rows.push({ user_id: user.id, url: urlData.publicUrl, file_name: file.name, file_type: isImage ? "image" : "video", file_size: file.size });
+      }
+      if (rows.length) {
+        const { data, error: dbErr } = await supabase.from("work_samples").insert(rows).select();
+        if (dbErr) setSampleError(dbErr.message);
+        else setSamples(prev => [...(data || []), ...prev]);
+      }
+    } finally {
+      setSampleUploading(false);
+      if (sampleInputRef.current) sampleInputRef.current.value = "";
+    }
+  };
+
+  const deleteSample = async (sample) => {
+    try {
+      const path = objectPathFromUrl(sample.url, "work-samples");
+      if (path) await supabase.storage.from("work-samples").remove([path]);
+      await supabase.from("work_samples").delete().eq("id", sample.id);
+      setSamples(prev => prev.filter(x => x.id !== sample.id));
+      setSampleDeleteConfirm(null);
+    } catch { setSampleError("Could not delete that item."); }
+  };
 
   const fetchPortfolios = async () => {
     setLoading(true);
@@ -83,12 +143,13 @@ export default function PortfolioPage() {
     setUploadProgress(0);
 
     try {
-      const fileName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const safe = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const path = `${user.id}/${Date.now()}-${safe}`;
 
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage (per-user folder so it passes storage RLS)
       const { data: storageData, error: storageError } = await supabase.storage
         .from("portfolios")
-        .upload(fileName, selectedFile, { contentType: "application/pdf" });
+        .upload(path, selectedFile, { contentType: "application/pdf" });
 
       if (storageError) throw new Error(storageError.message);
 
@@ -97,7 +158,7 @@ export default function PortfolioPage() {
       // Get public URL
       const { data: urlData } = supabase.storage
         .from("portfolios")
-        .getPublicUrl(fileName);
+        .getPublicUrl(path);
 
       const fileUrl = urlData.publicUrl;
 
@@ -131,8 +192,8 @@ export default function PortfolioPage() {
     try {
       // Sample rows have no uploaded file — only remove storage for real ones.
       if (portfolio.file_url) {
-        const fileName = portfolio.file_url.split("/").pop();
-        await supabase.storage.from("portfolios").remove([fileName]);
+        const path = objectPathFromUrl(portfolio.file_url, "portfolios");
+        if (path) await supabase.storage.from("portfolios").remove([path]);
       }
       await supabase.from("portfolios").delete().eq("id", portfolio.id);
       setPortfolios(prev => prev.filter(p => p.id !== portfolio.id));
@@ -292,6 +353,60 @@ export default function PortfolioPage() {
         </div>
       )}
 
+      {/* Content examples — images & videos the creator has made */}
+      <div style={s.sampleSection}>
+        <div style={s.sampleHead}>
+          <div>
+            <h2 style={s.sampleTitle}>Content examples</h2>
+            <p style={s.sampleSub}>Upload photos and short videos you&rsquo;ve created. These appear on your profile so hotels can see examples of your work.</p>
+          </div>
+          <label style={{ ...s.addContentBtn, ...(sampleUploading ? { opacity: 0.6, pointerEvents: "none" } : {}) }}>
+            {sampleUploading ? "Uploading…" : "+ Add content"}
+            <input ref={sampleInputRef} type="file" accept="image/*,video/*" multiple style={{ display: "none" }}
+              onChange={e => uploadSamples(e.target.files)} disabled={sampleUploading} />
+          </label>
+        </div>
+
+        {sampleError && <div style={s.errorBox}>{sampleError}</div>}
+
+        {samples.length === 0 ? (
+          <div style={s.sampleEmpty}>
+            <span style={{ fontSize: 34 }}>🖼️</span>
+            <p style={{ fontSize: 14, color: "var(--color-ink-muted)", marginTop: 10 }}>No content yet — add photos or videos you&rsquo;ve made.</p>
+            <p style={{ fontSize: 12, color: "var(--color-ink-faint)", marginTop: 2 }}>Images up to 15MB, videos up to 50MB.</p>
+          </div>
+        ) : (
+          <div style={s.gallery}>
+            {samples.map(sm => (
+              <div key={sm.id} style={s.galleryTile}>
+                {sm.file_type === "video"
+                  ? <video src={sm.url} style={s.galleryMedia} controls preload="metadata" />
+                  : <img src={sm.url} alt={sm.file_name || ""} style={s.galleryMedia} />}
+                <button style={s.galleryDelete} onClick={() => setSampleDeleteConfirm(sm)} title="Delete">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Content delete confirm modal */}
+      {sampleDeleteConfirm && (
+        <div style={s.overlay} onClick={() => setSampleDeleteConfirm(null)}>
+          <div style={s.modal} onClick={e => e.stopPropagation()}>
+            <h3 style={s.modalTitle}>Delete this content?</h3>
+            <p style={s.modalDesc}>This example will be permanently removed from your profile. This cannot be undone.</p>
+            <div style={s.modalActions}>
+              <button style={s.cancelBtn} onClick={() => setSampleDeleteConfirm(null)}>Cancel</button>
+              <button style={s.confirmDeleteBtn} onClick={() => deleteSample(sampleDeleteConfirm)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete confirm modal */}
       {deleteConfirm && (
         <div style={s.overlay}>
@@ -315,6 +430,18 @@ const s = {
   title: { fontSize:26, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.3px", marginBottom:4 },
   subtitle: { fontSize:14, color:"var(--color-ink-muted)" },
   errorBox: { background:"var(--status-error-bg)", border:"1px solid var(--color-accent-amber)", borderRadius:10, padding:"12px 16px", color:"var(--color-error)", fontSize:13, marginBottom:16 },
+
+  // Content examples (images & videos)
+  sampleSection: { marginTop:40, paddingTop:32, borderTop:"1px solid var(--color-border)" },
+  sampleHead: { display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:16, marginBottom:16, flexWrap:"wrap" },
+  sampleTitle: { fontSize:20, fontWeight:700, color:"var(--color-ink-primary)", letterSpacing:"-0.2px", marginBottom:4 },
+  sampleSub: { fontSize:13.5, color:"var(--color-ink-muted)", maxWidth:"60ch", lineHeight:1.5 },
+  addContentBtn: { flex:"none", cursor:"pointer", padding:"11px 20px", background:"var(--color-action-forest)", color:"var(--color-ground-page)", borderRadius:"var(--radius-lg)", fontSize:14, fontWeight:700, fontFamily:"var(--font-display)", whiteSpace:"nowrap" },
+  sampleEmpty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", padding:"44px 24px", border:"1.5px dashed var(--color-border)", borderRadius:"var(--radius-card)", background:"var(--color-ground-card)" },
+  gallery: { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))", gap:14 },
+  galleryTile: { position:"relative", aspectRatio:"1 / 1", borderRadius:"var(--radius-card)", overflow:"hidden", background:"var(--color-ink-primary)", border:"1px solid var(--color-border)" },
+  galleryMedia: { width:"100%", height:"100%", objectFit:"cover", display:"block", background:"var(--color-ink-primary)" },
+  galleryDelete: { position:"absolute", top:8, right:8, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(43,39,34,0.62)", color:"var(--color-ground-page)", border:"none", borderRadius:"50%", cursor:"pointer" },
   successBox: { background:"var(--status-success-bg)", border:"1px solid rgba(22,101,52,0.3)", borderRadius:10, padding:"12px 16px", color:"var(--status-success-ink)", fontSize:13, marginBottom:16 },
   // Upload banner — full width, dashed amber
   uploadBanner: { display:"flex", alignItems:"center", gap:18, padding:"22px 24px", marginBottom:26, border:"2px dashed var(--color-accent-amber)", borderRadius:"var(--radius-card)", background:"var(--color-amber-tint)", cursor:"pointer", transition:"background 0.2s, border-color 0.2s", flexWrap:"wrap" },

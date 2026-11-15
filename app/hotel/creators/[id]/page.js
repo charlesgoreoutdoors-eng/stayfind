@@ -78,6 +78,7 @@ export default function HotelCreatorProfilePage() {
   const [app, setApp] = useState(null);
   const [profile, setProfile] = useState(null);
   const [portfolios, setPortfolios] = useState([]);
+  const [samples, setSamples] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -95,13 +96,15 @@ export default function HotelCreatorProfilePage() {
     setApp(a);
 
     // Profile + uploaded content, readable because this creator applied to us.
-    const [{ data: p }, { data: pf }, { data: rv }] = await Promise.all([
+    const [{ data: p }, { data: pf }, { data: ws }, { data: rv }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", a.creator_id).maybeSingle(),
       supabase.from("portfolios").select("*").eq("user_id", a.creator_id).order("created_at", { ascending: false }),
+      supabase.from("work_samples").select("*").eq("user_id", a.creator_id).order("created_at", { ascending: false }),
       supabase.from("reviews").select("rating, comment, reviewer_role, created_at").eq("reviewee_id", a.creator_id).order("created_at", { ascending: false }),
     ]);
     setProfile(p || null);
     setPortfolios((pf || []).filter(x => x.file_url));   // real uploads only
+    setSamples(ws || []);
     setReviews(rv || []);
     setLoading(false);
   }, [user, id]);
@@ -218,11 +221,27 @@ export default function HotelCreatorProfilePage() {
         </div>
 
         <div style={s.col}>
-          {/* Uploaded content */}
-          <Card title={`Content${portfolios.length ? ` · ${portfolios.length}` : ""}`}>
-            {portfolios.length === 0 ? (
-              <p style={s.muted}>This creator hasn’t uploaded any content yet.</p>
+          {/* Work samples — images & videos the creator has made */}
+          <Card title={`Content examples${samples.length ? ` · ${samples.length}` : ""}`}>
+            {samples.length === 0 ? (
+              <p style={s.muted}>No content examples uploaded yet.</p>
             ) : (
+              <div style={s.gallery}>
+                {samples.map(sm => (
+                  <a key={sm.id} href={sm.url} target="_blank" rel="noreferrer" style={s.galleryTile}>
+                    {sm.file_type === "video"
+                      ? <video src={sm.url} style={s.galleryMedia} muted preload="metadata" />
+                      : <img src={sm.url} alt={sm.file_name || ""} style={s.galleryMedia} />}
+                    {sm.file_type === "video" && <span style={s.playBadge}>▶</span>}
+                  </a>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Media kits (PDF) */}
+          {portfolios.length > 0 && (
+            <Card title={`Media kits · ${portfolios.length}`}>
               <div style={s.pfList}>
                 {portfolios.map(pf => (
                   <a key={pf.id} href={pf.file_url} target="_blank" rel="noreferrer" style={s.pfRow}>
@@ -235,8 +254,8 @@ export default function HotelCreatorProfilePage() {
                   </a>
                 ))}
               </div>
-            )}
-          </Card>
+            </Card>
+          )}
 
           {/* Reviews */}
           <Card title={`Reviews${reviews.length ? ` · ${reviews.length}` : ""}`}>
@@ -300,6 +319,10 @@ const s = {
   pill: { fontSize: 12, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "4px 11px", borderRadius: "var(--radius-pill)" },
   pillAmber: { fontSize: 12, fontWeight: 600, color: "var(--color-accent-amber-deep)", background: "rgba(224,149,74,0.14)", padding: "4px 11px", borderRadius: "var(--radius-pill)" },
 
+  gallery: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 8 },
+  galleryTile: { position: "relative", aspectRatio: "1 / 1", borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--color-ink-primary)", border: "1px solid var(--color-border)", textDecoration: "none", display: "block" },
+  galleryMedia: { width: "100%", height: "100%", objectFit: "cover", display: "block", background: "var(--color-ink-primary)" },
+  playBadge: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--color-ground-page)", background: "rgba(43,39,34,0.28)", pointerEvents: "none" },
   pfList: { display: "flex", flexDirection: "column", gap: 10 },
   pfRow: { display: "flex", alignItems: "center", gap: 12, textDecoration: "none", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "12px 14px", background: "var(--color-ground-sand)" },
   pfIcon: { fontSize: 20, flexShrink: 0 },
