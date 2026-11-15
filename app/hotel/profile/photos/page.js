@@ -25,6 +25,7 @@ export default function HotelPropertyPhotosPage() {
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
   const [confirmDel, setConfirmDel] = useState(null);
+  const [dragIdx, setDragIdx] = useState(null);   // reorder: index being dragged
   const fileRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -34,10 +35,15 @@ export default function HotelPropertyPhotosPage() {
     if (!hp) { setNoProfile(true); setLoading(false); return; }
     setNoProfile(false);
     setHotelId(hp.id);
-    const { data } = await supabase.from("property_images").select("*").eq("hotel_id", hp.id).order("created_at", { ascending: false });
+    const { data } = await supabase.from("property_images").select("*").eq("hotel_id", hp.id).order("position", { ascending: true }).order("created_at", { ascending: false });
     setImages(data || []);
     setLoading(false);
   }, [user]);
+
+  // Persist the current order as position = array index.
+  const persistOrder = useCallback(async (arr) => {
+    await Promise.all(arr.map((img, i) => supabase.from("property_images").update({ position: i }).eq("id", img.id)));
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -58,9 +64,26 @@ export default function HotelPropertyPhotosPage() {
     if (toInsert.length) {
       const { data: rows, error: insErr } = await supabase.from("property_images").insert(toInsert).select("*");
       if (insErr) setError(insErr.message);
-      else setImages(prev => [...(rows || []), ...prev]);
+      else setImages(prev => { const merged = [...(rows || []), ...prev]; persistOrder(merged); return merged; });
     }
     setUploading(false);
+  };
+
+  // Drag a tile over another to reorder; persist on drop.
+  const onTileDragOver = (e, i) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === i) return;
+    setImages(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIdx, 1);
+      next.splice(i, 0, moved);
+      return next;
+    });
+    setDragIdx(i);
+  };
+  const onTileDrop = () => {
+    setDragIdx(null);
+    setImages(prev => { persistOrder(prev); return prev; });
   };
 
   const onDrop = (e) => {
@@ -113,11 +136,19 @@ export default function HotelPropertyPhotosPage() {
             <div style={s.empty}>No property photos yet. Upload a few above.</div>
           ) : (
             <>
-              <div style={s.count}>{images.length} photo{images.length === 1 ? "" : "s"}</div>
+              <div style={s.count}>{images.length} photo{images.length === 1 ? "" : "s"} · drag to reorder</div>
               <div style={s.gallery}>
-                {images.map(img => (
-                  <div key={img.id} style={s.tile}>
-                    <img src={img.url} alt={img.file_name || ""} style={s.tileImg} />
+                {images.map((img, i) => (
+                  <div
+                    key={img.id}
+                    style={{ ...s.tile, ...(dragIdx === i ? s.tileDragging : {}) }}
+                    draggable
+                    onDragStart={() => setDragIdx(i)}
+                    onDragOver={e => onTileDragOver(e, i)}
+                    onDrop={onTileDrop}
+                    onDragEnd={onTileDrop}
+                  >
+                    <img src={img.url} alt={img.file_name || ""} style={s.tileImg} draggable={false} />
                     <button style={s.tileDelete} onClick={() => setConfirmDel(img)} aria-label="Delete photo" title="Delete">✕</button>
                   </div>
                 ))}
@@ -164,7 +195,8 @@ const s = {
   count: { fontSize: 13, fontWeight: 600, color: "var(--color-ink-muted)", margin: "24px 0 12px" },
   empty: { textAlign: "center", padding: "40px 20px", color: "var(--color-ink-muted)", fontSize: 14, marginTop: 20, border: "1px dashed var(--color-border)", borderRadius: "var(--radius-card)" },
   gallery: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 },
-  tile: { position: "relative", aspectRatio: "4 / 3", borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--color-border)", background: "var(--color-ground-sand)" },
+  tile: { position: "relative", aspectRatio: "4 / 3", borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--color-border)", background: "var(--color-ground-sand)", cursor: "grab" },
+  tileDragging: { opacity: 0.4, outline: "2px solid var(--color-action-forest)" },
   tileImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
   tileDelete: { position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: "50%", border: "none", background: "rgba(43,39,34,0.6)", color: "var(--color-ground-page)", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
 

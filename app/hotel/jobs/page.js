@@ -432,7 +432,7 @@ export default function HotelJobsPage() {
 }
 
 const s = {
-  wrap: { maxWidth: 820, margin: "0 auto", padding: "40px 24px 64px" },
+  wrap: { maxWidth: 1120, margin: "0 auto", padding: "40px 24px 64px" },
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 22, flexWrap: "wrap" },
   title: { fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--color-ink-primary)" },
   sub: { fontSize: 14, color: "var(--color-ink-muted)", marginTop: 6, maxWidth: "56ch", lineHeight: 1.55 },
@@ -440,7 +440,7 @@ const s = {
   noticeWarn: { background: "var(--status-sent-bg)", color: "var(--status-sent-ink)", border: "1px solid rgba(43,39,34,0.08)", borderRadius: "var(--radius-md)", padding: "12px 16px", fontSize: 13.5, lineHeight: 1.5, marginBottom: 18 },
   noticeInfo: { background: "rgba(224,149,74,0.12)", color: "var(--color-ink-primary)", border: "1px solid rgba(224,149,74,0.3)", borderRadius: "var(--radius-md)", padding: "12px 16px", fontSize: 13.5, lineHeight: 1.5, marginBottom: 18 },
   inlineLink: { color: "var(--color-accent-amber-deep)", fontWeight: 700, textDecoration: "underline" },
-  card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "24px 24px", boxShadow: "var(--shadow-low)", marginBottom: 24 },
+  card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "24px 24px", boxShadow: "var(--shadow-low)", marginBottom: 24, maxWidth: 820 },
   formTitle: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 16 },
   row2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 },
   field: { marginBottom: 14, minWidth: 0 },
@@ -466,7 +466,7 @@ const s = {
   oppCard: { display: "flex", gap: 16, justifyContent: "space-between", alignItems: "flex-start", background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "18px 20px", boxShadow: "var(--shadow-low)", flexWrap: "wrap" },
   oppTitle: { fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)" },
   badge: { fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--radius-pill)" },
-  typePill: { fontSize: 11.5, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "3px 10px", borderRadius: "var(--radius-pill)" },
+  typePill: { display: "inline-block", fontSize: 11.5, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "3px 10px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap" },
   servicePill: { fontSize: 11.5, fontWeight: 600, color: "var(--color-accent-amber-deep)", background: "rgba(224,149,74,0.14)", padding: "3px 10px", borderRadius: "var(--radius-pill)" },
   oppDesc: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.5, marginBottom: 6 },
   otherComp: { fontSize: 12.5, color: "var(--color-ink-mid)", fontWeight: 600, marginBottom: 8 },

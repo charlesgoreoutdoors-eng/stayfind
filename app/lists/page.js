@@ -213,6 +213,13 @@ export default function ListsPage() {
     setIgInputText("");
   };
 
+  const removeIgHandle = async (hotelId) => {
+    await supabase.from("list_hotels").update({ instagram: null }).eq("id", hotelId);
+    setListHotels(prev => prev.map(h => h.id === hotelId ? { ...h, instagram: null } : h));
+    setEditingIg(null);
+    setIgInputText("");
+  };
+
   const findEmails = async () => {
     const hotelsToScrape = listHotels.filter(h => h.website && !h.email);
     if (hotelsToScrape.length === 0) {
@@ -671,17 +678,8 @@ export default function ListsPage() {
                               {/* Instagram */}
                               <td style={s.td}>
                                 <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:8 }}>
-                                  {hotel.instagram ? (
-                                    <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                                        <circle cx="12" cy="12" r="4"/>
-                                        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                                      </svg>
-                                      {hotel.instagram}
-                                    </a>
-                                  ) : editingIg === hotel.id ? (
-                                    <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                                  {editingIg === hotel.id ? (
+                                    <div style={{ display:"flex", gap:5, alignItems:"center", flexWrap:"wrap" }}>
                                       <input
                                         style={s.igManualInput}
                                         value={igInputText}
@@ -695,6 +693,19 @@ export default function ListsPage() {
                                       />
                                       <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
                                       <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
+                                    </div>
+                                  ) : hotel.instagram ? (
+                                    <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                                      <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                          <circle cx="12" cy="12" r="4"/>
+                                          <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                                        </svg>
+                                        {hotel.instagram}
+                                      </a>
+                                      <button style={s.igEditLink} onClick={() => { setEditingIg(hotel.id); setIgInputText(hotel.instagram.replace(/^@/, "")); }}>Edit</button>
+                                      <button style={s.igRemoveLink} onClick={() => removeIgHandle(hotel.id)}>Remove</button>
                                     </div>
                                   ) : (
                                     <button style={s.igAddBtn} onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}>
@@ -992,7 +1003,9 @@ const s = {
   cardActionBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-mid)", background:"none", border:"1px solid var(--color-border)", borderRadius:"var(--radius-sm)", padding:"4px 9px", cursor:"pointer", fontFamily:"inherit" },
   cardWebsiteBtn: { display:"inline-flex", alignItems:"center", gap:5, fontSize:11, fontWeight:600, color:"var(--color-accent-amber-deep)", background:"var(--color-amber-tint)", border:"1px solid rgba(224,149,74,0.35)", borderRadius:"var(--radius-sm)", padding:"4px 9px", cursor:"pointer", fontFamily:"inherit", textDecoration:"none" },
   cardActionActive: { background:"var(--status-success-bg)", color:"var(--status-success-ink)", borderColor:"transparent" },
-  cardRemoveBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"none", borderRadius:"var(--radius-sm)", padding:"4px 6px", cursor:"pointer", fontFamily:"inherit", marginLeft:"auto" },
+  cardRemoveBtn: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"none", borderRadius:"var(--radius-sm)", padding:"4px 6px", cursor:"pointer", fontFamily:"inherit" },
+  igEditLink: { fontSize:11, fontWeight:600, color:"var(--color-ink-muted)", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"inherit", textDecoration:"underline" },
+  igRemoveLink: { fontSize:11, fontWeight:600, color:"var(--color-error)", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"inherit", textDecoration:"underline" },
   composeBtn: { display:"flex", alignItems:"center", gap:8, background:"var(--color-action-forest)", color:"var(--color-ground-page)", border:"none", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-display)" },
   emailText: { fontSize:12, color:"var(--color-ink-primary)", fontWeight:500, marginBottom:2, wordBreak:"break-all" },
   noEmailText: { fontSize:12, color:"var(--color-border)", marginBottom:2 },
