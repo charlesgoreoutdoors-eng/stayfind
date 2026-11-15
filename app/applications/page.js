@@ -81,7 +81,7 @@ export default function MyApplicationsPage() {
                   <div style={{ minWidth: 0 }}>
                     {o ? (
                       <>
-                        <h3 style={s.oppTitle}>{o.title}</h3>
+                        <Link href={`/jobs/${o.id}`} style={s.oppTitleLink}>{o.title}</Link>
                         <div style={s.hotelLine}>
                           {o.hotel?.name || "Hotel"}
                           {(o.hotel?.city || o.hotel?.country) && ` · ${[o.hotel?.city, o.hotel?.country].filter(Boolean).join(", ")}`}
@@ -107,7 +107,8 @@ export default function MyApplicationsPage() {
                     <p style={s.pitchText}>{a.pitch}</p>
                   </div>
                 )}
-                <div style={{ marginTop: 12 }}>
+                <div style={s.actions}>
+                  {o && <Link href={`/jobs/${o.id}`} style={s.viewJobBtn}>View job details →</Link>}
                   <Link href={`/inbox/${a.id}`} style={s.msgBtn}>Open chat →</Link>
                 </div>
               </div>
@@ -132,8 +133,11 @@ const s = {
   card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "18px 20px", boxShadow: "var(--shadow-low)" },
   cardTop: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
   oppTitle: { fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)", lineHeight: 1.3 },
+  oppTitleLink: { display: "inline-block", fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)", lineHeight: 1.3, textDecoration: "none", cursor: "pointer" },
   hotelLine: { fontSize: 12.5, color: "var(--color-ink-muted)", marginTop: 3 },
   statusBadge: { fontSize: 11.5, fontWeight: 700, padding: "5px 12px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap", flexShrink: 0 },
+  actions: { marginTop: 12, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" },
+  viewJobBtn: { display: "inline-block", fontSize: 13, fontWeight: 700, color: "var(--color-action-forest)", textDecoration: "none" },
   msgBtn: { display: "inline-block", fontSize: 13, fontWeight: 700, color: "var(--color-action-forest)", textDecoration: "none" },
   metaRow: { display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "var(--color-ink-muted)", alignItems: "center", marginTop: 10 },
   typePill: { fontSize: 11.5, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "3px 10px", borderRadius: "var(--radius-pill)" },
