@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { sanitizeText } from "../../lib/marketplace";
@@ -23,6 +23,8 @@ export default function AccountPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const dirty = useRef(false);     // unsaved changes pending
+  const hydrated = useRef(false);  // true once the initial load has populated the form
 
   useEffect(() => {
     if (!user) return;
@@ -47,7 +49,22 @@ export default function AccountPage() {
     return () => { active = false; };
   }, [user]);
 
-  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); };
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); dirty.current = true; };
+
+  // Autosave: a short debounce after the form stops changing, so leaving the
+  // page never loses what was typed. The first run after the initial load is
+  // skipped so loading the profile doesn't trigger a write.
+  useEffect(() => {
+    if (loading || !user) return;
+    if (!hydrated.current) { hydrated.current = true; return; }
+    const t = setTimeout(() => { if (dirty.current) save(); }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
+
+  // Save immediately when a field loses focus (e.g. clicking a link away),
+  // rather than waiting for the debounce.
+  const flush = () => { if (dirty.current && !saving) save(); };
 
   const uploadAvatar = async (file) => {
     if (!file || !user) return;
@@ -62,6 +79,8 @@ export default function AccountPage() {
   };
 
   const save = async () => {
+    if (!user) return;
+    dirty.current = false;        // claim the pending changes; re-set on failure
     setSaving(true); setError("");
     try {
       const clean = (v) => { const t = sanitizeText(v); return t && t.trim() ? t.trim() : null; };
@@ -71,10 +90,16 @@ export default function AccountPage() {
       payload.avatar_url = form.avatar_url || null;
       const full = [form.first_name, form.last_name].map(x => (x || "").trim()).filter(Boolean).join(" ");
       if (full) payload.full_name = full;
-      const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
-      if (err) { setError(err.message); console.error("[account save]", err); }
-      else setSaved(true);
+      const { data, error: err } = await supabase.from("profiles").update(payload).eq("id", user.id).select("id");
+      if (err) { dirty.current = true; setError(err.message); console.error("[account save]", err); }
+      else if (!data || data.length === 0) {
+        // No error but nothing updated — the row wasn't writable (usually an
+        // expired session). Keep the edits marked dirty so they aren't lost.
+        dirty.current = true;
+        setError("Couldn’t save — your session may have expired. Please refresh and sign in again.");
+      } else setSaved(true);
     } catch (e) {
+      dirty.current = true;
       console.error("[account save] threw", e); setError(e?.message || "Could not save — please try again.");
     } finally {
       setSaving(false);
@@ -108,7 +133,7 @@ export default function AccountPage() {
           <div style={s.form}>
             <div style={s.row2}>
               <Field label="Username" required>
-                <input style={s.input} placeholder="your-handle" value={form.username} onChange={e => set("username", e.target.value)} />
+                <input style={s.input} placeholder="your-handle" value={form.username} onChange={e => set("username", e.target.value)} onBlur={flush} />
                 <p style={s.helper}>Your profile URL: dapples.io/@{form.username || "your-handle"}</p>
               </Field>
               <Field label="Email">
@@ -118,10 +143,10 @@ export default function AccountPage() {
 
             <div style={s.row2}>
               <Field label="First name" required>
-                <input style={s.input} value={form.first_name} onChange={e => set("first_name", e.target.value)} />
+                <input style={s.input} value={form.first_name} onChange={e => set("first_name", e.target.value)} onBlur={flush} />
               </Field>
               <Field label="Last name" required>
-                <input style={s.input} value={form.last_name} onChange={e => set("last_name", e.target.value)} />
+                <input style={s.input} value={form.last_name} onChange={e => set("last_name", e.target.value)} onBlur={flush} />
               </Field>
             </div>
 
@@ -138,19 +163,19 @@ export default function AccountPage() {
 
             <div style={s.row2}>
               <Field label="Headline">
-                <input style={s.input} placeholder="Photographer | Videographer" value={form.headline} onChange={e => set("headline", e.target.value)} />
+                <input style={s.input} placeholder="Photographer | Videographer" value={form.headline} onChange={e => set("headline", e.target.value)} onBlur={flush} />
               </Field>
               <Field label="Portfolio URL">
-                <input style={s.input} placeholder="https://…" value={form.portfolio_url} onChange={e => set("portfolio_url", e.target.value)} />
+                <input style={s.input} placeholder="https://…" value={form.portfolio_url} onChange={e => set("portfolio_url", e.target.value)} onBlur={flush} />
               </Field>
             </div>
 
             <Field label="Phone">
-              <input style={s.input} placeholder="+61 400 000 000" value={form.phone} onChange={e => set("phone", e.target.value)} />
+              <input style={s.input} placeholder="+61 400 000 000" value={form.phone} onChange={e => set("phone", e.target.value)} onBlur={flush} />
             </Field>
 
             <Field label="Tell us about yourself">
-              <textarea style={{ ...s.input, minHeight: 110, resize: "vertical" }} placeholder="A short bio about you and the content you make." value={form.bio} onChange={e => set("bio", e.target.value)} />
+              <textarea style={{ ...s.input, minHeight: 110, resize: "vertical" }} placeholder="A short bio about you and the content you make." value={form.bio} onChange={e => set("bio", e.target.value)} onBlur={flush} />
             </Field>
 
             {error && <p style={s.error}>{error}</p>}
@@ -158,6 +183,7 @@ export default function AccountPage() {
             <button style={{ ...s.saveBtn, ...(saving ? { opacity: 0.7, cursor: "default" } : {}) }} onClick={save} disabled={saving}>
               {saving ? "Saving…" : saved ? "Saved ✓" : "Save"}
             </button>
+            <p style={s.autosaveHint}>Changes save automatically as you type.</p>
           </div>
         </div>
       )}
@@ -200,4 +226,5 @@ const s = {
 
   error: { fontSize: 13, color: "var(--color-error)", fontWeight: 600, margin: "4px 0 0" },
   saveBtn: { width: "100%", marginTop: 24, background: "var(--color-ink-primary)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-lg)", padding: "15px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
+  autosaveHint: { fontSize: 12.5, color: "var(--color-ink-muted)", textAlign: "center", marginTop: 10 },
 };
