@@ -162,10 +162,7 @@ export default function HotelCreatorProfilePage() {
             <Detail label="Creator type">{titleCase(p.creator_type)}</Detail>
             <Detail label="Experience">{titleCase(p.experience_level)}</Detail>
             <Detail label="Audience">{p.audience}</Detail>
-            <Detail label="Minimum rate">{p.min_rate != null ? `$${p.min_rate}` : null}</Detail>
-            <Detail label="Open to">
-              {[p.open_to_gifting && "Gifting", p.open_to_product_seeding && "Product seeding"].filter(Boolean).join(" · ") || null}
-            </Detail>
+            <Detail label="Free stays">{p.open_to_gifting ? "Open to free stays" : p.open_to_gifting === false ? "Not at this time" : null}</Detail>
             {categories.length > 0 && (
               <Detail label="Content categories">
                 <div style={s.pills}>{categories.map(c => <span key={c} style={s.pill}>{titleCase(c)}</span>)}</div>

@@ -13,7 +13,7 @@ const AUDIENCE = ["Families", "Couples", "Solo travellers", "Adventure seekers",
 
 export default function PreferencesPage() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ content_categories: [], services: [], creator_type: "", experience_level: "", audience: "", favorite_brands: [], min_rate: "", open_to_gifting: null, open_to_product_seeding: null });
+  const [form, setForm] = useState({ content_categories: [], services: [], creator_type: "", experience_level: "", audience: "", favorite_brands: [], open_to_gifting: null });
   const [brandInput, setBrandInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,13 +26,12 @@ export default function PreferencesPage() {
     if (!user) return;
     let active = true;
     (async () => {
-      const { data } = await supabase.from("profiles").select("content_categories, services, creator_type, experience_level, audience, favorite_brands, min_rate, open_to_gifting, open_to_product_seeding").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("content_categories, services, creator_type, experience_level, audience, favorite_brands, open_to_gifting").eq("id", user.id).maybeSingle();
       if (!active) return;
       const base = data ? {
         content_categories: data.content_categories || [], services: data.services || [],
         creator_type: data.creator_type || "", experience_level: data.experience_level || "", audience: data.audience || "",
-        favorite_brands: data.favorite_brands || [], min_rate: data.min_rate != null ? String(data.min_rate) : "",
-        open_to_gifting: data.open_to_gifting, open_to_product_seeding: data.open_to_product_seeding,
+        favorite_brands: data.favorite_brands || [], open_to_gifting: data.open_to_gifting,
       } : null;
       const draft = readDraft(`dapples_preferences_draft_${user.id}`);
       if (base || draft) setForm(f => ({ ...f, ...(base || {}), ...(draft || {}) }));
@@ -58,8 +57,8 @@ export default function PreferencesPage() {
     const payload = {
       content_categories: form.content_categories, services: form.services,
       creator_type: form.creator_type || null, experience_level: form.experience_level || null, audience: form.audience || null,
-      favorite_brands: form.favorite_brands, min_rate: form.min_rate ? Number(form.min_rate) : null,
-      open_to_gifting: form.open_to_gifting, open_to_product_seeding: form.open_to_product_seeding,
+      favorite_brands: form.favorite_brands,
+      open_to_gifting: form.open_to_gifting,
     };
     const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
     setSaving(false);
@@ -103,19 +102,10 @@ export default function PreferencesPage() {
             </div>
           </Field>
 
-          <div style={s.divider}><span style={s.dividerLabel}>Rates & Availability</span></div>
+          <div style={s.divider}><span style={s.dividerLabel}>Availability</span></div>
 
-          <Field label="Do you have any typical minimum rates?" hint="This won’t lock you in, but helps us match you to the best opportunities.">
-            <div style={s.rateWrap}>
-              <span style={s.ratePrefix}>$</span>
-              <input style={s.rateInput} type="number" min="0" placeholder="Min rate" value={form.min_rate} onChange={e => set("min_rate", e.target.value)} />
-            </div>
-          </Field>
-          <Field label="Giftings" hint="Are you open to receive gifts from brands as compensation (i.e. trade-collabs)?">
+          <Field label="Free stays" hint="Are you open to creating content in exchange for a free stay?">
             <YesNo value={form.open_to_gifting} onChange={v => set("open_to_gifting", v)} />
-          </Field>
-          <Field label="Product Seeding" hint="Are you open to receive gifts from brands with no strings attached?">
-            <YesNo value={form.open_to_product_seeding} onChange={v => set("open_to_product_seeding", v)} />
           </Field>
 
           {error && <p style={s.error}>{error}</p>}
