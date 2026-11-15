@@ -6,6 +6,7 @@ import { supabase } from "../../../../lib/supabase";
 import { useAuth } from "../../../../lib/auth";
 
 const APP_STATUS = {
+  invited:     { label: "Invited",      bg: "rgba(224,149,74,0.16)",    ink: "var(--color-accent-amber-deep)" },
   new:         { label: "New",          bg: "var(--status-sent-bg)",    ink: "var(--status-sent-ink)" },
   shortlisted: { label: "Shortlisted",  bg: "var(--status-success-bg)", ink: "var(--status-success-ink)" },
   declined:    { label: "Declined",     bg: "var(--status-error-bg)",   ink: "var(--color-error)" },

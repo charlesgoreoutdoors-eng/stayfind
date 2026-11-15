@@ -1,0 +1,305 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { supabase } from "../../../../../lib/supabase";
+import { useAuth } from "../../../../../lib/auth";
+import { SERVICE_LABELS, fmtDate } from "../../../../../lib/marketplace";
+import CreatorActionBar from "../../../../../components/CreatorActionBar";
+
+const SOCIAL_LABELS = { instagram: "Instagram", tiktok: "TikTok", youtube: "YouTube", twitter: "X / Twitter", facebook: "Facebook", pinterest: "Pinterest", website: "Website", linkedin: "LinkedIn" };
+
+function titleCase(v) {
+  return String(v || "").replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+function formatSize(bytes) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+const linkIsUrl = (v) => v && /^https?:\/\//i.test(v);
+const toHref = (v) => (linkIsUrl(v) ? v : `https://${v}`);
+
+// Build a clickable channel URL from whatever the creator saved — a full link
+// is used as-is, otherwise a bare "@handle" is turned into the platform's URL.
+function socialUrl(platform, value) {
+  const v = String(value || "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  const handle = v.replace(/^@+/, "").replace(/\s+/g, "");
+  if (!handle) return null;
+  switch (platform) {
+    case "instagram": return `https://instagram.com/${handle}`;
+    case "tiktok":    return `https://www.tiktok.com/@${handle}`;
+    case "youtube":   return `https://www.youtube.com/@${handle}`;
+    case "facebook":  return `https://www.facebook.com/${handle}`;
+    case "x":
+    case "twitter":   return `https://x.com/${handle}`;
+    case "linkedin":  return `https://www.linkedin.com/in/${handle}`;
+    case "pinterest": return `https://www.pinterest.com/${handle}`;
+    case "website":   return toHref(v);
+    default:          return `https://${handle}`;
+  }
+}
+
+function Card({ title, children }) {
+  return (
+    <div style={s.card}>
+      {title && <h3 style={s.cardTitle}>{title}</h3>}
+      {children}
+    </div>
+  );
+}
+function Detail({ label, children }) {
+  if (children === null || children === undefined || children === "" || (Array.isArray(children) && !children.length)) return null;
+  return (
+    <div style={s.detail}>
+      <div style={s.detailLabel}>{label}</div>
+      <div style={s.detailValue}>{children}</div>
+    </div>
+  );
+}
+
+export default function HotelCreatorViewPage() {
+  const { id } = useParams();            // creator (profile) id
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [portfolios, setPortfolios] = useState([]);
+  const [samples, setSamples] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!user || !id) return;
+    setLoading(true);
+    const { data: p } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+    if (!p) { setNotFound(true); setLoading(false); return; }
+    setProfile(p);
+
+    const [{ data: pf }, { data: ws }, { data: rv }] = await Promise.all([
+      supabase.from("portfolios").select("*").eq("user_id", id).order("created_at", { ascending: false }),
+      supabase.from("work_samples").select("*").eq("user_id", id).order("created_at", { ascending: false }),
+      supabase.from("reviews").select("rating, comment, reviewer_role, created_at").eq("reviewee_id", id).order("created_at", { ascending: false }),
+    ]);
+    setPortfolios((pf || []).filter(x => x.file_url));
+    setSamples(ws || []);
+    setReviews(rv || []);
+    setLoading(false);
+  }, [user, id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) {
+    return <div style={s.wrap}><div style={s.loadingRow}><span style={s.spinner} /> Loading…</div></div>;
+  }
+  if (notFound) {
+    return (
+      <div style={s.wrap}>
+        <Link href="/hotel/search" style={s.back}>← Back to search</Link>
+        <div style={s.notice}>This creator isn’t available. They may have turned off discovery.</div>
+      </div>
+    );
+  }
+
+  const p = profile || {};
+  const name = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "Creator";
+  const location = [p.city, p.state, p.country].filter(Boolean).join(", ");
+  const ratingAvg = reviews.length ? reviews.reduce((a, r) => a + r.rating, 0) / reviews.length : null;
+  const socials = p.socials && typeof p.socials === "object" ? Object.entries(p.socials).filter(([, v]) => v) : [];
+  const services = Array.isArray(p.services) ? p.services : [];
+  const categories = Array.isArray(p.content_categories) ? p.content_categories : [];
+
+  return (
+    <div style={s.wrap}>
+      <Link href="/hotel/search" style={s.back}>← Back to search</Link>
+
+      {/* Header */}
+      <div style={s.header}>
+        {p.avatar_url
+          ? <img src={p.avatar_url} alt="" style={s.avatar} />
+          : <div style={s.avatarFallback}>{name[0]?.toUpperCase() || "C"}</div>}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h1 style={s.name}>{name}</h1>
+          {p.headline && <p style={s.headline}>{p.headline}</p>}
+          <div style={s.metaRow}>
+            {location && <span style={s.metaItem}>📍 {location}</span>}
+            {ratingAvg != null
+              ? <span style={s.rating}>★ {ratingAvg.toFixed(1)} <span style={s.ratingCount}>· {reviews.length} review{reviews.length === 1 ? "" : "s"}</span></span>
+              : <span style={s.metaMuted}>No reviews yet</span>}
+          </div>
+        </div>
+        {p.open_to_gifting === true && (
+          <span style={{ flexShrink: 0 }}>
+            <span style={s.freeBadge}>Open to free stays</span>
+          </span>
+        )}
+      </div>
+
+      <div style={s.actions}>
+        <CreatorActionBar creatorId={id} creatorName={name} />
+      </div>
+
+      <div style={s.cols}>
+        <div style={s.col}>
+          {/* About */}
+          <Card title="About">
+            {p.bio ? <p style={s.bio}>{p.bio}</p> : <p style={s.muted}>No bio added yet.</p>}
+          </Card>
+
+          {/* Creator details */}
+          <Card title="Creator details">
+            <Detail label="Creator type">{titleCase(p.creator_type)}</Detail>
+            <Detail label="Experience">{titleCase(p.experience_level)}</Detail>
+            <Detail label="Audience">{p.audience}</Detail>
+            <Detail label="Free stays">{p.open_to_gifting ? "Open to free stays" : p.open_to_gifting === false ? "Not at this time" : null}</Detail>
+            {categories.length > 0 && (
+              <Detail label="Content categories">
+                <div style={s.pills}>{categories.map(c => <span key={c} style={s.pill}>{titleCase(c)}</span>)}</div>
+              </Detail>
+            )}
+            {services.length > 0 && (
+              <Detail label="Services">
+                <div style={s.pills}>{services.map(sv => <span key={sv} style={s.pillAmber}>{SERVICE_LABELS[sv] || titleCase(sv)}</span>)}</div>
+              </Detail>
+            )}
+          </Card>
+
+          {/* Socials & contact */}
+          {(socials.length > 0 || p.portfolio_url || p.email || p.phone) && (
+            <Card title="Social & contact">
+              {socials.map(([k, v]) => {
+                const url = socialUrl(k, v);
+                return (
+                  <Detail key={k} label={SOCIAL_LABELS[k] || titleCase(k)}>
+                    {url ? <a href={url} target="_blank" rel="noreferrer" style={s.link}>{v}</a> : v}
+                  </Detail>
+                );
+              })}
+              <Detail label="Portfolio site">
+                {p.portfolio_url ? <a href={toHref(p.portfolio_url)} target="_blank" rel="noreferrer" style={s.link}>{p.portfolio_url}</a> : null}
+              </Detail>
+              <Detail label="Email">{p.email ? <a href={`mailto:${p.email}`} style={s.link}>{p.email}</a> : null}</Detail>
+              <Detail label="Phone">{p.phone}</Detail>
+            </Card>
+          )}
+        </div>
+
+        <div style={s.col}>
+          {/* Work samples — images & videos the creator has made */}
+          <Card title={`Content examples${samples.length ? ` · ${samples.length}` : ""}`}>
+            {samples.length === 0 ? (
+              <p style={s.muted}>No content examples uploaded yet.</p>
+            ) : (
+              <div style={s.gallery}>
+                {samples.map(sm => (
+                  <a key={sm.id} href={sm.url} target="_blank" rel="noreferrer" style={s.galleryTile}>
+                    {sm.file_type === "video"
+                      ? <video src={sm.url} style={s.galleryMedia} muted preload="metadata" />
+                      : <img src={sm.url} alt={sm.file_name || ""} style={s.galleryMedia} />}
+                    {sm.file_type === "video" && <span style={s.playBadge}>▶</span>}
+                  </a>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Media kits (PDF) */}
+          {portfolios.length > 0 && (
+            <Card title={`Media kits · ${portfolios.length}`}>
+              <div style={s.pfList}>
+                {portfolios.map(pf => (
+                  <a key={pf.id} href={pf.file_url} target="_blank" rel="noreferrer" style={s.pfRow}>
+                    <span style={s.pfIcon}>📄</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={s.pfName}>{pf.name}</span>
+                      <span style={s.pfMeta}>{pf.file_name}{pf.file_size ? ` · ${formatSize(pf.file_size)}` : ""}</span>
+                    </span>
+                    <span style={s.pfView}>View</span>
+                  </a>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Reviews */}
+          <Card title={`Reviews${reviews.length ? ` · ${reviews.length}` : ""}`}>
+            {reviews.length === 0 ? (
+              <p style={s.muted}>No reviews from past collaborations yet.</p>
+            ) : (
+              <div style={s.reviewList}>
+                {reviews.map((r, i) => (
+                  <div key={i} style={s.review}>
+                    <div style={s.reviewTop}>
+                      <span style={s.reviewStars}>{"★".repeat(r.rating)}<span style={s.reviewStarsEmpty}>{"★".repeat(Math.max(0, 5 - r.rating))}</span></span>
+                      <span style={s.reviewMeta}>{r.reviewer_role === "hotel" ? "Hotel" : "Creator"} · {fmtDate(r.created_at)}</span>
+                    </div>
+                    {r.comment && <p style={s.reviewText}>{r.comment}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const s = {
+  wrap: { maxWidth: 940, margin: "0 auto", padding: "32px 24px 64px" },
+  back: { display: "inline-block", fontSize: 13, fontWeight: 600, color: "var(--color-ink-mid)", textDecoration: "none", marginBottom: 20 },
+  loadingRow: { display: "flex", alignItems: "center", gap: 10, color: "var(--color-ink-muted)", fontSize: 14, padding: "40px 0" },
+  spinner: { display: "inline-block", width: 16, height: 16, border: "2px solid var(--color-border)", borderTopColor: "var(--color-accent-amber)", borderRadius: "50%", animation: "spin 0.7s linear infinite" },
+  notice: { background: "var(--status-error-bg)", color: "var(--color-error)", borderRadius: "var(--radius-md)", padding: "12px 16px", fontSize: 14 },
+
+  header: { display: "flex", alignItems: "flex-start", gap: 18, marginBottom: 22, flexWrap: "wrap" },
+  avatar: { width: 76, height: 76, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--color-border)", flexShrink: 0 },
+  avatarFallback: { width: 76, height: 76, borderRadius: "50%", background: "var(--color-action-forest)", color: "var(--color-ground-page)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-display)" },
+  name: { fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--color-ink-primary)", lineHeight: 1.15 },
+  headline: { fontSize: 14.5, color: "var(--color-ink-mid)", marginTop: 4 },
+  metaRow: { display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", marginTop: 10 },
+  metaItem: { fontSize: 13, color: "var(--color-ink-mid)", fontWeight: 600 },
+  metaMuted: { fontSize: 13, color: "var(--color-ink-muted)" },
+  rating: { fontSize: 13.5, fontWeight: 700, color: "var(--color-accent-amber-deep)" },
+  ratingCount: { fontWeight: 500, color: "var(--color-ink-muted)" },
+  freeBadge: { fontSize: 11.5, fontWeight: 700, padding: "6px 13px", borderRadius: "var(--radius-pill)", whiteSpace: "nowrap", background: "var(--status-success-bg)", color: "var(--status-success-ink)" },
+
+  actions: { marginBottom: 20 },
+  cols: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18, alignItems: "start", marginTop: 4 },
+  col: { display: "flex", flexDirection: "column", gap: 18, minWidth: 0 },
+
+  card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "18px 20px", boxShadow: "var(--shadow-low)" },
+  cardTitle: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 14 },
+
+  detail: { padding: "10px 0", borderTop: "1px solid rgba(43,39,34,0.06)" },
+  detailLabel: { fontSize: 12, fontWeight: 700, color: "var(--color-ink-muted)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 3 },
+  detailValue: { fontSize: 14.5, fontWeight: 600, color: "var(--color-ink-primary)", lineHeight: 1.5, wordBreak: "break-word" },
+  bio: { fontSize: 14, color: "var(--color-ink-mid)", lineHeight: 1.7, whiteSpace: "pre-wrap" },
+  muted: { fontSize: 13.5, color: "var(--color-ink-muted)" },
+  link: { color: "var(--color-accent-amber-deep)", fontWeight: 600, textDecoration: "none", wordBreak: "break-all" },
+
+  pills: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 },
+  pill: { fontSize: 12, fontWeight: 600, color: "var(--color-ink-mid)", background: "var(--color-ground-sand)", padding: "4px 11px", borderRadius: "var(--radius-pill)" },
+  pillAmber: { fontSize: 12, fontWeight: 600, color: "var(--color-accent-amber-deep)", background: "rgba(224,149,74,0.14)", padding: "4px 11px", borderRadius: "var(--radius-pill)" },
+
+  gallery: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 8 },
+  galleryTile: { position: "relative", aspectRatio: "1 / 1", borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--color-ink-primary)", border: "1px solid var(--color-border)", textDecoration: "none", display: "block" },
+  galleryMedia: { width: "100%", height: "100%", objectFit: "cover", display: "block", background: "var(--color-ink-primary)" },
+  playBadge: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--color-ground-page)", background: "rgba(43,39,34,0.28)", pointerEvents: "none" },
+  pfList: { display: "flex", flexDirection: "column", gap: 10 },
+  pfRow: { display: "flex", alignItems: "center", gap: 12, textDecoration: "none", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "12px 14px", background: "var(--color-ground-sand)" },
+  pfIcon: { fontSize: 20, flexShrink: 0 },
+  pfName: { display: "block", fontSize: 13.5, fontWeight: 700, color: "var(--color-ink-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  pfMeta: { display: "block", fontSize: 12, color: "var(--color-ink-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  pfView: { fontSize: 12.5, fontWeight: 700, color: "var(--color-accent-amber-deep)", flexShrink: 0 },
+
+  reviewList: { display: "flex", flexDirection: "column", gap: 14 },
+  review: { borderTop: "1px solid rgba(43,39,34,0.06)", paddingTop: 12 },
+  reviewTop: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" },
+  reviewStars: { fontSize: 14, color: "var(--color-accent-amber-deep)", letterSpacing: "1px" },
+  reviewStarsEmpty: { color: "var(--color-border)" },
+  reviewMeta: { fontSize: 12, color: "var(--color-ink-muted)", fontWeight: 600 },
+  reviewText: { fontSize: 13.5, color: "var(--color-ink-mid)", lineHeight: 1.6, marginTop: 6, whiteSpace: "pre-wrap" },
+};

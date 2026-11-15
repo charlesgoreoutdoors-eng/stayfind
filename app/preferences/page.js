@@ -13,7 +13,7 @@ const AUDIENCE = ["Families", "Couples", "Solo travellers", "Adventure seekers",
 
 export default function PreferencesPage() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ content_categories: [], services: [], creator_type: "", experience_level: "", audience: "", favorite_brands: [], open_to_gifting: null });
+  const [form, setForm] = useState({ content_categories: [], services: [], creator_type: "", experience_level: "", audience: "", favorite_brands: [], open_to_gifting: null, discoverable: true });
   const [brandInput, setBrandInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,12 +26,13 @@ export default function PreferencesPage() {
     if (!user) return;
     let active = true;
     (async () => {
-      const { data } = await supabase.from("profiles").select("content_categories, services, creator_type, experience_level, audience, favorite_brands, open_to_gifting").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("content_categories, services, creator_type, experience_level, audience, favorite_brands, open_to_gifting, discoverable").eq("id", user.id).maybeSingle();
       if (!active) return;
       const base = data ? {
         content_categories: data.content_categories || [], services: data.services || [],
         creator_type: data.creator_type || "", experience_level: data.experience_level || "", audience: data.audience || "",
         favorite_brands: data.favorite_brands || [], open_to_gifting: data.open_to_gifting,
+        discoverable: data.discoverable !== false,
       } : null;
       const draft = readDraft(`dapples_preferences_draft_${user.id}`);
       if (base || draft) setForm(f => ({ ...f, ...(base || {}), ...(draft || {}) }));
@@ -59,6 +60,7 @@ export default function PreferencesPage() {
       creator_type: form.creator_type || null, experience_level: form.experience_level || null, audience: form.audience || null,
       favorite_brands: form.favorite_brands,
       open_to_gifting: form.open_to_gifting,
+      discoverable: form.discoverable !== false,
     };
     const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
     setSaving(false);
@@ -106,6 +108,12 @@ export default function PreferencesPage() {
 
           <Field label="Free stays" hint="Are you open to creating content in exchange for a free stay?">
             <YesNo value={form.open_to_gifting} onChange={v => set("open_to_gifting", v)} />
+          </Field>
+
+          <div style={s.divider}><span style={s.dividerLabel}>Visibility</span></div>
+
+          <Field label="Discoverable to hotels" hint="Let hotels find your profile in creator search. Turn this off to hide from search — hotels you’ve already applied to can still see you.">
+            <YesNo value={form.discoverable} onChange={v => set("discoverable", v)} />
           </Field>
 
           {error && <p style={s.error}>{error}</p>}

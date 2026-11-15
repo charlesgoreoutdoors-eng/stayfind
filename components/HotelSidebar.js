@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../lib/auth";
+import HotelProfileMenu from "./HotelProfileMenu";
 
 // Hotel-side navigation. Starts with just Profile — we'll add Opportunities,
 // Applications, etc. as the hotel site grows.
@@ -16,6 +17,11 @@ const NAV = [
     href: "/hotel/jobs",
     label: "Jobs",
     icon: "M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M8 7V5h8v2",
+  },
+  {
+    href: "/hotel/search",
+    label: "Find creators",
+    icon: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35",
   },
   {
     href: "/hotel/inbox",
@@ -88,6 +94,9 @@ export default function HotelSidebar({ children }) {
       `}</style>
 
       <div className="hs-layout">
+        {/* Account menu — fixed top-right on every hotel page */}
+        <HotelProfileMenu />
+
         {/* Mobile top bar */}
         <div className="hs-topbar">
           <button onClick={() => setOpen(v => !v)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--color-ground-page)", display:"flex", alignItems:"center", padding:4 }}>

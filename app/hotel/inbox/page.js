@@ -5,7 +5,7 @@ import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 
 const STATUS = {
-  new: "New", shortlisted: "Shortlisted", offered: "Offer sent", booked: "Booked",
+  invited: "Invited", new: "New", shortlisted: "Shortlisted", offered: "Offer sent", booked: "Booked",
   content_submitted: "Content submitted", completed: "Completed", declined: "Declined", withdrawn: "Withdrawn",
 };
 

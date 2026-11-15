@@ -1,22 +1,21 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { sanitizeText } from "../../../lib/marketplace";
+import { readDraft, writeDraft, clearDraft } from "../../../lib/draft";
+import HotelAccountTabs from "../../../components/HotelAccountTabs";
 
+// Public-facing property info. Contact details live on the Contact tab.
 const FIELDS = [
-  { key: "name",            label: "Hotel name",     type: "text",     placeholder: "The Dapple House", required: true },
-  { key: "city",            label: "City",           type: "text",     placeholder: "Byron Bay" },
-  { key: "country",         label: "Country",        type: "text",     placeholder: "Australia" },
-  { key: "description",     label: "Description",    type: "textarea", placeholder: "Tell creators what makes your property special." },
-  { key: "website",         label: "Website URL",    type: "url",      placeholder: "https://…" },
-  { key: "instagram",       label: "Instagram URL",  type: "url",      placeholder: "https://instagram.com/…" },
-  { key: "contact_name",    label: "Contact name",   type: "text",     placeholder: "Who creators will hear from" },
-  { key: "contact_email",   label: "Contact email",  type: "email",    placeholder: "you@hotel.com" },
+  { key: "name",        label: "Hotel name",     type: "text",     placeholder: "The Dapple House", required: true },
+  { key: "city",        label: "City",           type: "text",     placeholder: "Byron Bay" },
+  { key: "country",     label: "Country",        type: "text",     placeholder: "Australia" },
+  { key: "description", label: "Description",    type: "textarea", placeholder: "Tell creators what makes your property special." },
+  { key: "website",     label: "Website URL",    type: "url",      placeholder: "https://…" },
+  { key: "instagram",   label: "Instagram URL",  type: "url",      placeholder: "https://instagram.com/…" },
 ];
 
-// logo_url isn't an editable text field anymore (it's an upload), but we keep
-// it in form state + the save payload.
 const EMPTY = { ...Object.fromEntries(FIELDS.map(f => [f.key, ""])), logo_url: "" };
 
 const STATUS_BADGE = {
@@ -28,13 +27,16 @@ const STATUS_BADGE = {
 export default function HotelProfilePage() {
   const { user } = useAuth();
   const [form, setForm] = useState(EMPTY);
-  const [status, setStatus] = useState(null);     // row status, or null if no row yet
+  const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [needsMigration, setNeedsMigration] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const draftKey = user ? `dapples_hotel_profile_draft_${user.id}` : null;
+  const hydrated = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -46,22 +48,32 @@ export default function HotelProfilePage() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (!active) return;
+      let base = EMPTY;
       if (error) {
-        // 42P01 = relation does not exist (migration 0002 not run yet).
         if (error.code === "42P01") setNeedsMigration(true);
         else setError(error.message);
       } else if (data) {
-        setForm({ ...EMPTY, ...Object.fromEntries(FIELDS.map(f => [f.key, data[f.key] ?? ""])), logo_url: data.logo_url ?? "" });
+        base = { ...EMPTY, ...Object.fromEntries(FIELDS.map(f => [f.key, data[f.key] ?? ""])), logo_url: data.logo_url ?? "" };
         setStatus(data.status);
       }
+      // Overlay any unsaved local edits so the fields remember what was typed.
+      const draft = readDraft(draftKey);
+      setForm(draft ? { ...base, ...draft } : base);
+      hydrated.current = true;
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const update = (key, val) => { setForm(prev => ({ ...prev, [key]: val })); setSaved(false); };
+  const update = (key, val) => {
+    setForm(prev => {
+      const next = { ...prev, [key]: val };
+      if (hydrated.current) writeDraft(draftKey, next);
+      return next;
+    });
+    setSaved(false);
+  };
 
-  // Upload the hotel logo to the "logos" bucket (owner-scoped folder).
   const handleLogoFile = async (file) => {
     if (!file || !user) return;
     setUploadingLogo(true); setError("");
@@ -70,7 +82,8 @@ export default function HotelProfilePage() {
     const { error: upErr } = await supabase.storage.from("logos").upload(path, file, { cacheControl: "3600", upsert: false });
     if (upErr) { setError("Logo upload failed: " + upErr.message); setUploadingLogo(false); return; }
     const { data } = supabase.storage.from("logos").getPublicUrl(path);
-    setForm(prev => ({ ...prev, logo_url: data.publicUrl })); setSaved(false);
+    setForm(prev => { const next = { ...prev, logo_url: data.publicUrl }; if (hydrated.current) writeDraft(draftKey, next); return next; });
+    setSaved(false);
     setUploadingLogo(false);
   };
 
@@ -93,6 +106,7 @@ export default function HotelProfilePage() {
         console.error("[hotel profile save]", error);
       } else {
         setStatus(data.status);
+        clearDraft(draftKey);
         setSaved(true);
       }
     } catch (e) {
@@ -107,6 +121,8 @@ export default function HotelProfilePage() {
 
   return (
     <div style={s.wrap}>
+      <HotelAccountTabs />
+
       <div style={s.header}>
         <div>
           <h1 style={s.title}>Hotel profile</h1>
@@ -139,7 +155,7 @@ export default function HotelProfilePage() {
                     onChange={e => e.target.files?.[0] && handleLogoFile(e.target.files[0])} disabled={uploadingLogo} />
                 </label>
                 {form.logo_url && (
-                  <button type="button" style={s.logoRemove} onClick={() => { setForm(prev => ({ ...prev, logo_url: "" })); setSaved(false); }}>Remove</button>
+                  <button type="button" style={s.logoRemove} onClick={() => update("logo_url", "")}>Remove</button>
                 )}
               </div>
             </div>
