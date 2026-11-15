@@ -14,49 +14,39 @@ const NAV = [
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6",
   },
   {
-    href: "/",
-    label: "Search",
-    icon: "M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z",
-  },
-  {
-    href: "/jobs",
-    label: "Job Board",
-    icon: "M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M8 7V5h8v2",
-  },
-  {
-    href: "/applications",
-    label: "My Applications",
-    icon: "M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
-  },
-  {
-    href: "/inbox",
-    label: "Inbox",
-    icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
-  },
-  {
-    href: "/lists",
-    label: "Lists",
-    icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2",
-  },
-  {
-    href: "/sequences",
-    label: "Outreach",
-    icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9",
+    // Free marketplace — applying to hotel opportunities.
+    href: "#marketplace",
+    label: "Marketplace",
+    icon: "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z M3 6h18 M16 10a4 4 0 0 1-8 0",
     children: [
-      { href: "/sequences/templates", label: "Templates" },
-      { href: "/sequences/builder",   label: "Flows" },
-      { href: "/sequences/tracking",  label: "Tracking" },
+      { href: "/jobs",         label: "Job Board" },
+      { href: "/applications", label: "My Applications" },
+      { href: "/inbox",        label: "Inbox" },
     ],
-  },
-  {
-    href: "/messages",
-    label: "Messages",
-    icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
   },
   {
     href: "/portfolio",
     label: "Portfolio",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
+  },
+  {
+    // Paid outreach — finding hotels and emailing them directly.
+    href: "#outreach",
+    label: "Outreach",
+    icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 0l8 9 8-9",
+    children: [
+      { href: "/",      label: "Search" },
+      { href: "/lists", label: "Lists" },
+      {
+        href: "/sequences",
+        label: "Emails",
+        children: [
+          { href: "/sequences/templates", label: "Templates" },
+          { href: "/sequences/builder",   label: "Flows" },
+          { href: "/sequences/tracking",  label: "Tracking" },
+        ],
+      },
+    ],
   },
   {
     href: "/analytics",
@@ -82,12 +72,19 @@ export default function Sidebar({ children }) {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
 
-  // Track which dropdowns are expanded
-  const [expanded, setExpanded] = useState({ "/sequences": true });
+  // Track which dropdowns are expanded. The two sections open by default so
+  // their items are visible; the Emails sub-group stays collapsed.
+  const [expanded, setExpanded] = useState({ "#marketplace": true, "#outreach": true });
 
   const toggleExpanded = (href) => {
     setExpanded(prev => ({ ...prev, [href]: !prev[href] }));
   };
+
+  // A leaf is active on its own route and any sub-route (except "/", which only
+  // matches the home/search page exactly). A group is active when a descendant
+  // leaf is active.
+  const leafActive = (href) => href === "/" ? pathname === "/" : (pathname === href || pathname.startsWith(href + "/"));
+  const groupActive = (item) => !!item.children?.some(c => c.children ? groupActive(c) : leafActive(c.href));
 
   // No creator app chrome on the public marketing/auth surfaces, for logged-out
   // visitors (who see the waitlist landing at the root), or anywhere in the
@@ -102,6 +99,64 @@ export default function Sidebar({ children }) {
         icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z",
       }]
     : NAV;
+
+  // Recursive nav renderer — depth 0 is a top-level item (icon + label),
+  // deeper levels are indented dropdown children that can themselves nest.
+  const renderNode = (item, depth) => {
+    const hasChildren = !!item.children;
+    const active = hasChildren ? groupActive(item) : leafActive(item.href);
+    // Follow the active trail until the user explicitly toggles this group.
+    const isExpanded = expanded[item.href] !== undefined ? expanded[item.href] : (hasChildren && active);
+    const onClick = () => {
+      if (hasChildren) toggleExpanded(item.href);
+      else { router.push(item.href); setOpen(false); }
+    };
+
+    if (depth === 0) {
+      return (
+        <div key={item.href}>
+          <div className={`sf-nav-item${active ? " active" : ""}`} onClick={onClick}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+              stroke={active ? "var(--color-glow-1)" : "rgba(251,245,234,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d={item.icon}/>
+            </svg>
+            <span className="sf-nav-label">{item.label}</span>
+            {hasChildren && (
+              <svg className={`sf-chevron${isExpanded ? " open" : ""}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(251,245,234,0.5)" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            )}
+          </div>
+          {hasChildren && isExpanded && (
+            <div style={{ marginTop:2, marginBottom:4 }}>
+              {item.children.map(c => renderNode(c, 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Nested (child / grandchild) item.
+    const padLeft = depth === 1 ? 42 : 58;
+    return (
+      <div key={item.href}>
+        <div className={`sf-child-item${active ? " active" : ""}`} style={{ paddingLeft: padLeft }} onClick={onClick}>
+          <div style={{ width:4, height:4, borderRadius:"50%", background: active ? "var(--color-glow-1)" : "rgba(251,245,234,0.3)", flexShrink:0 }} />
+          <span className="sf-child-label" style={{ flex:1 }}>{item.label}</span>
+          {hasChildren && (
+            <svg className={`sf-chevron${isExpanded ? " open" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(251,245,234,0.45)" strokeWidth="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          )}
+        </div>
+        {hasChildren && isExpanded && (
+          <div style={{ marginTop:1, marginBottom:3 }}>
+            {item.children.map(c => renderNode(c, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -187,58 +242,7 @@ export default function Sidebar({ children }) {
 
           {/* Nav */}
           <nav style={{ display:"flex", flexDirection:"column", gap:2 }}>
-            {navItems.map(item => {
-              const isActive = pathname === item.href || (item.children && pathname.startsWith(item.href));
-              const isExpanded = expanded[item.href];
-
-              return (
-                <div key={item.href}>
-                  {/* Main nav item */}
-                  <div
-                    className={`sf-nav-item${isActive ? " active" : ""}`}
-                    onClick={() => {
-                      if (item.children) {
-                        toggleExpanded(item.href);
-                      } else {
-                        router.push(item.href);
-                        setOpen(false);
-                      }
-                    }}
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-                      stroke={isActive ? "var(--color-glow-1)" : "rgba(251,245,234,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d={item.icon}/>
-                    </svg>
-                    <span className="sf-nav-label">{item.label}</span>
-                    {item.children && (
-                      <svg
-                        className={`sf-chevron${isExpanded ? " open" : ""}`}
-                        width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="rgba(251,245,234,0.5)" strokeWidth="2.5">
-                        <polyline points="6 9 12 15 18 9"/>
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* Children dropdown */}
-                  {item.children && isExpanded && (
-                    <div style={{ marginTop:2, marginBottom:4 }}>
-                      {item.children.map(child => {
-                        const childActive = pathname === child.href;
-                        return (
-                          <Link key={child.href} href={child.href} onClick={() => setOpen(false)}>
-                            <div className={`sf-child-item${childActive ? " active" : ""}`}>
-                              <div style={{ width:4, height:4, borderRadius:"50%", background: childActive ? "var(--color-glow-1)" : "rgba(251,245,234,0.3)", flexShrink:0 }} />
-                              <span className="sf-child-label">{child.label}</span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {navItems.map(item => renderNode(item, 0))}
           </nav>
 
           {/* User info + sign out */}
