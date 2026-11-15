@@ -28,6 +28,7 @@ export default function PortfolioPage() {
   const [sampleUploading, setSampleUploading] = useState(false);
   const [sampleError, setSampleError]   = useState("");
   const [sampleDeleteConfirm, setSampleDeleteConfirm] = useState(null);
+  const [sampleDragging, setSampleDragging] = useState(false);
   const fileInputRef = useRef(null);
   const sampleInputRef = useRef(null);
   const { user } = useAuth();
@@ -77,6 +78,12 @@ export default function PortfolioPage() {
       setSampleUploading(false);
       if (sampleInputRef.current) sampleInputRef.current.value = "";
     }
+  };
+
+  const handleSampleDrop = (e) => {
+    e.preventDefault();
+    setSampleDragging(false);
+    if (e.dataTransfer?.files?.length) uploadSamples(e.dataTransfer.files);
   };
 
   const deleteSample = async (sample) => {
@@ -360,22 +367,37 @@ export default function PortfolioPage() {
             <h2 style={s.sampleTitle}>Content examples</h2>
             <p style={s.sampleSub}>Upload photos and short videos you&rsquo;ve created. These appear on your profile so hotels can see examples of your work.</p>
           </div>
-          <label style={{ ...s.addContentBtn, ...(sampleUploading ? { opacity: 0.6, pointerEvents: "none" } : {}) }}>
-            {sampleUploading ? "Uploading…" : "+ Add content"}
-            <input ref={sampleInputRef} type="file" accept="image/*,video/*" multiple style={{ display: "none" }}
-              onChange={e => uploadSamples(e.target.files)} disabled={sampleUploading} />
-          </label>
         </div>
 
         {sampleError && <div style={s.errorBox}>{sampleError}</div>}
 
-        {samples.length === 0 ? (
-          <div style={s.sampleEmpty}>
-            <span style={{ fontSize: 34 }}>🖼️</span>
-            <p style={{ fontSize: 14, color: "var(--color-ink-muted)", marginTop: 10 }}>No content yet — add photos or videos you&rsquo;ve made.</p>
-            <p style={{ fontSize: 12, color: "var(--color-ink-faint)", marginTop: 2 }}>Images up to 15MB, videos up to 50MB.</p>
+        {/* Drag & drop zone */}
+        <div
+          style={{ ...s.uploadBanner, ...(sampleDragging ? s.uploadBannerActive : {}), ...(sampleUploading ? { opacity: 0.7 } : {}) }}
+          onDragOver={e => { e.preventDefault(); setSampleDragging(true); }}
+          onDragLeave={() => setSampleDragging(false)}
+          onDrop={handleSampleDrop}
+          onClick={() => !sampleUploading && sampleInputRef.current?.click()}
+        >
+          <input ref={sampleInputRef} type="file" accept="image/*,video/*" multiple style={{ display: "none" }}
+            onChange={e => uploadSamples(e.target.files)} disabled={sampleUploading} />
+          <div style={s.bannerIcon}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-terracotta)" strokeWidth="1.9">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
           </div>
-        ) : (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={s.bannerTitle}>{sampleUploading ? "Uploading…" : sampleDragging ? "Drop your files here" : "Drag & drop photos or videos, or click to browse"}</p>
+            <p style={s.bannerSub}>Images up to 15MB, videos up to 50MB — add several at once</p>
+          </div>
+          <button style={s.chooseBtn} onClick={e => { e.stopPropagation(); sampleInputRef.current?.click(); }} disabled={sampleUploading}>
+            {sampleUploading ? "Uploading…" : "Choose files"}
+          </button>
+        </div>
+
+        {samples.length > 0 && (
           <div style={s.gallery}>
             {samples.map(sm => (
               <div key={sm.id} style={s.galleryTile}>
