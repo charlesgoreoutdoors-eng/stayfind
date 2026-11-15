@@ -46,12 +46,8 @@ const NAV = [
           { href: "/sequences/tracking",  label: "Tracking" },
         ],
       },
+      { href: "/analytics", label: "Analytics" },
     ],
-  },
-  {
-    href: "/analytics",
-    label: "Analytics",
-    icon: "M18 20V10M12 20V4M6 20v-6",
   },
 ];
 
@@ -72,9 +68,10 @@ export default function Sidebar({ children }) {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
 
-  // Track which dropdowns are expanded. The two sections open by default so
-  // their items are visible; the Emails sub-group stays collapsed.
-  const [expanded, setExpanded] = useState({ "#marketplace": true, "#outreach": true });
+  // Track which dropdowns are expanded. Everything starts collapsed; the group
+  // containing the current page auto-expands (see isExpanded below) until the
+  // user explicitly toggles it.
+  const [expanded, setExpanded] = useState({});
 
   const toggleExpanded = (href) => {
     setExpanded(prev => ({ ...prev, [href]: !prev[href] }));
