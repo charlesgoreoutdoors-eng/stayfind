@@ -79,6 +79,10 @@ const findInstagram = (html) => {
     if (!clean || clean.length < 2 || clean.length > 30) return;
     if (igBlacklist.includes(clean)) return;
     if (/^\d+$/.test(clean)) return;
+    // Asset filenames mistaken for handles, e.g. "2x.jpg", "logo.png", "sprite.svg".
+    if (/\.(jpe?g|png|gif|webp|svg|ico|css|js|mjs|json|xml|mp4|webm|pdf|woff2?|ttf|otf|eot|avif|bmp|tiff?)$/i.test(clean)) return;
+    // Retina/density descriptors like "2x", "3x", "x2".
+    if (/^\d+x$/.test(clean) || /^x\d+$/.test(clean)) return;
     candidates.set(clean, Math.max(candidates.get(clean) || 0, score));
   };
 

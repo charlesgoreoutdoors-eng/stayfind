@@ -335,15 +335,6 @@ export default function ListsPage() {
     setEditingNote(null);
   };
 
-  const isFollowUpNeeded = (hotel) => {
-    const replied = igReplied.includes(hotel.id) || hotel.ig_replied;
-    if (replied) return false;
-    const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;
-    if (!contacted || !hotel.ig_contacted_at) return false;
-    const daysSince = (Date.now() - new Date(hotel.ig_contacted_at).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSince > 3;
-  };
-
   const markIgReplied = async (hotel, replied) => {
     setIgReplied(prev => replied ? [...prev, hotel.id] : prev.filter(id => id !== hotel.id));
     await supabase.from("list_hotels").update({ ig_replied: replied }).eq("id", hotel.id);
@@ -571,7 +562,7 @@ export default function ListsPage() {
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                         <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
                       </svg>
-                      Find Specific Emails
+                      Find Specific Contacts
                     </button>
                   ) : (
                     <div style={{ position:"relative" }} title="Upgrade to Glow plan to find direct contacts">
@@ -580,7 +571,7 @@ export default function ListsPage() {
                           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                           <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
                         </svg>
-                        Find Specific Emails
+                        Find Specific Contacts
                       </button>
                     </div>
                   )}
@@ -679,8 +670,8 @@ export default function ListsPage() {
 
                               {/* Instagram */}
                               <td style={s.td}>
-                                {hotel.instagram ? (
-                                  <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                                <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:8 }}>
+                                  {hotel.instagram ? (
                                     <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -689,39 +680,27 @@ export default function ListsPage() {
                                       </svg>
                                       {hotel.instagram}
                                     </a>
-                                    {isFollowUpNeeded(hotel) && (
-                                      <span style={s.followUpBadge} title="No reply after 3+ days">Need to follow up</span>
-                                    )}
-                                  </div>
-                                ) : editingIg === hotel.id ? (
-                                  <div style={{ display:"flex", gap:5, alignItems:"center" }}>
-                                    <input
-                                      style={s.igManualInput}
-                                      value={igInputText}
-                                      onChange={e => setIgInputText(e.target.value)}
-                                      placeholder="@handle"
-                                      autoFocus
-                                      onKeyDown={e => {
-                                        if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
-                                        if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
-                                      }}
-                                    />
-                                    <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
-                                    <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
-                                  </div>
-                                ) : (
-                                  <button style={s.igAddBtn} onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}>
-                                    + Add handle
-                                  </button>
-                                )}
-                              </td>
-
-                              {/* Status */}
-                              <td style={s.td}><span style={{ ...s.pillBase, ...statusStyle }}>{statusLabel}</span></td>
-
-                              {/* Actions */}
-                              <td style={{ ...s.td, textAlign:"right" }}>
-                                <div style={s.tActions}>
+                                  ) : editingIg === hotel.id ? (
+                                    <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                                      <input
+                                        style={s.igManualInput}
+                                        value={igInputText}
+                                        onChange={e => setIgInputText(e.target.value)}
+                                        placeholder="@handle"
+                                        autoFocus
+                                        onKeyDown={e => {
+                                          if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
+                                          if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
+                                        }}
+                                      />
+                                      <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
+                                      <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
+                                    </div>
+                                  ) : (
+                                    <button style={s.igAddBtn} onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}>
+                                      + Add handle
+                                    </button>
+                                  )}
                                   {hotel.website && (
                                     <a href={hotel.website} target="_blank" rel="noreferrer" style={s.cardWebsiteBtn} title={hotel.website}>
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -732,6 +711,15 @@ export default function ListsPage() {
                                       Visit website
                                     </a>
                                   )}
+                                </div>
+                              </td>
+
+                              {/* Status */}
+                              <td style={s.td}><span style={{ ...s.pillBase, ...statusStyle }}>{statusLabel}</span></td>
+
+                              {/* Actions */}
+                              <td style={{ ...s.td, textAlign:"right" }}>
+                                <div style={s.tActions}>
                                   {hotel.instagram && (
                                     <button style={s.cardActionBtn} onClick={() => openIgDm(hotel)}>Send DM</button>
                                   )}
@@ -740,9 +728,11 @@ export default function ListsPage() {
                                       {replied ? "✓ Replied" : "Replied?"}
                                     </button>
                                   )}
-                                  <button style={s.cardActionBtn} onClick={() => toggleContacted(hotel)} title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}>
-                                    {hotel.ig_contacted ? "Undo sent" : "Mark sent"}
-                                  </button>
+                                  {!contacted && (
+                                    <button style={s.cardActionBtn} onClick={() => toggleContacted(hotel)} title="Mark as DM sent">
+                                      Mark sent
+                                    </button>
+                                  )}
                                   <button style={s.cardActionBtn} onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}>
                                     {hotel.notes ? "Edit note" : "+ Note"}
                                   </button>
