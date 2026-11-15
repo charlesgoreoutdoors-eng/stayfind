@@ -615,150 +615,146 @@ export default function ListsPage() {
                   <Link href="/" style={{ color:"var(--color-accent-amber-deep)", fontWeight:600, fontSize:13 }}>Go to Search</Link>
                 </div>
               ) : (
-                <div className="dp-list-grid" data-tour="list-hotels" style={s.cardGrid}>
-                  {listHotels.map(hotel => {
-                    const replied   = igReplied.includes(hotel.id) || hotel.ig_replied;
-                    const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;
-                    const status = replied
-                      ? { label: "\u2713 IG REPLIED", ...s.pillReplied }
-                      : contacted
-                        ? { label: "IG SENT", ...s.pillDm }
-                        : { label: "NOT SENT", ...s.pillNone };
-                    const { label: statusLabel, ...statusStyle } = status;
-                    return (
-                      <div key={hotel.id} style={s.hotelCard}>
-                        {/* Photo */}
-                        <div style={s.cardThumbWrap}>
-                          {hotel.photo_url
-                            ? <img src={hotel.photo_url} alt={hotel.name} style={s.cardThumb} onError={e => { e.target.style.display = "none"; }} />
-                            : <div style={s.cardThumbFallback}>🏨</div>}
-                        </div>
+                <div style={s.tableCard} data-tour="list-hotels">
+                  <div style={s.tableScroll}>
+                    <table style={s.table}>
+                      <thead>
+                        <tr>
+                          <th style={s.th}>Hotel</th>
+                          <th style={s.th}>Email</th>
+                          <th style={s.th}>Instagram</th>
+                          <th style={s.th}>Status</th>
+                          <th style={{ ...s.th, textAlign:"right" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {listHotels.map(hotel => {
+                          const replied   = igReplied.includes(hotel.id) || hotel.ig_replied;
+                          const contacted = igContacted.includes(hotel.id) || hotel.ig_contacted;
+                          const status = replied
+                            ? { label: "✓ IG REPLIED", ...s.pillReplied }
+                            : contacted
+                              ? { label: "IG SENT", ...s.pillDm }
+                              : { label: "NOT SENT", ...s.pillNone };
+                          const { label: statusLabel, ...statusStyle } = status;
+                          return (
+                            <tr key={hotel.id} style={s.tr}>
+                              {/* Hotel */}
+                              <td style={s.td}>
+                                <div style={s.hotelCell}>
+                                  <div style={s.tThumbWrap}>
+                                    {hotel.photo_url
+                                      ? <img src={hotel.photo_url} alt={hotel.name} style={s.cardThumb} onError={e => { e.target.style.display = "none"; }} />
+                                      : <div style={s.cardThumbFallback}>🏨</div>}
+                                  </div>
+                                  <div style={{ minWidth:0 }}>
+                                    <p style={s.cardName}>{hotel.name}</p>
+                                    <p style={s.cardMeta}>{hotel.address}{hotel.rating ? ` · ★ ${hotel.rating}` : ""}</p>
+                                    {hotel.notes && <p style={s.tNote}>&ldquo;{hotel.notes}&rdquo;</p>}
+                                  </div>
+                                </div>
+                              </td>
 
-                        {/* Body */}
-                        <div style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", gap:5 }}>
-                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
-                            <p style={s.cardName}>{hotel.name}</p>
-                            <span style={{ ...s.pillBase, ...statusStyle }}>{statusLabel}</span>
-                          </div>
+                              {/* Email — Hunter contacts take priority, then direct, then scraped */}
+                              <td style={s.td}>
+                                {hotel.hunter_contacts?.length > 0 ? (
+                                  <button style={s.contactCountBadge} onClick={() => setContactsModal(hotel)}>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    {hotel.hunter_contacts.length} contact{hotel.hunter_contacts.length !== 1 ? "s" : ""} found
+                                    {hotel.hunter_contacts.some(c => c.selected) && (
+                                      <span style={s.selectedCount}>{hotel.hunter_contacts.filter(c => c.selected).length} selected</span>
+                                    )}
+                                  </button>
+                                ) : hotel.contact_email ? (
+                                  <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                                    <p style={s.cardEmail}>{hotel.contact_email}</p>
+                                    <span style={s.directTag}>Direct</span>
+                                  </div>
+                                ) : hotel.email ? (
+                                  <p style={s.cardEmail}>{hotel.email}</p>
+                                ) : (
+                                  <p style={s.cardNoEmail}>No email yet</p>
+                                )}
+                              </td>
 
-                          <p style={s.cardMeta}>
-                            {hotel.address}
-                            {hotel.rating ? ` \u00b7 \u2605 ${hotel.rating}` : ""}
-                          </p>
+                              {/* Instagram */}
+                              <td style={s.td}>
+                                {hotel.instagram ? (
+                                  <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                                    <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                        <circle cx="12" cy="12" r="4"/>
+                                        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                                      </svg>
+                                      {hotel.instagram}
+                                    </a>
+                                    {isFollowUpNeeded(hotel) && (
+                                      <span style={s.followUpBadge} title="No reply after 3+ days">Need to follow up</span>
+                                    )}
+                                  </div>
+                                ) : editingIg === hotel.id ? (
+                                  <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                                    <input
+                                      style={s.igManualInput}
+                                      value={igInputText}
+                                      onChange={e => setIgInputText(e.target.value)}
+                                      placeholder="@handle"
+                                      autoFocus
+                                      onKeyDown={e => {
+                                        if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
+                                        if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
+                                      }}
+                                    />
+                                    <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
+                                    <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
+                                  </div>
+                                ) : (
+                                  <button style={s.igAddBtn} onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}>
+                                    + Add handle
+                                  </button>
+                                )}
+                              </td>
 
-                          {/* Email — Hunter contacts take priority, then direct, then scraped */}
-                          {hotel.hunter_contacts?.length > 0 ? (
-                            <button style={s.contactCountBadge} onClick={() => setContactsModal(hotel)}>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                              {hotel.hunter_contacts.length} contact{hotel.hunter_contacts.length !== 1 ? "s" : ""} found
-                              {hotel.hunter_contacts.some(c => c.selected) && (
-                                <span style={s.selectedCount}>{hotel.hunter_contacts.filter(c => c.selected).length} selected</span>
-                              )}
-                            </button>
-                          ) : hotel.contact_email ? (
-                            <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                              <p style={s.cardEmail}>{hotel.contact_email}</p>
-                              <span style={s.directTag}>Direct</span>
-                            </div>
-                          ) : hotel.email ? (
-                            <p style={s.cardEmail}>{hotel.email}</p>
-                          ) : (
-                            <p style={s.cardNoEmail}>No email yet</p>
-                          )}
+                              {/* Status */}
+                              <td style={s.td}><span style={{ ...s.pillBase, ...statusStyle }}>{statusLabel}</span></td>
 
-                          {/* Instagram */}
-                          {hotel.instagram ? (
-                            <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-                              <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.cardHandle}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                                  <circle cx="12" cy="12" r="4"/>
-                                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                                </svg>
-                                {hotel.instagram}
-                              </a>
-                              {isFollowUpNeeded(hotel) && (
-                                <span style={s.followUpBadge} title="No reply after 3+ days">Need to follow up</span>
-                              )}
-                            </div>
-                          ) : editingIg === hotel.id ? (
-                            <div style={{ display:"flex", gap:5, alignItems:"center" }}>
-                              <input
-                                style={s.igManualInput}
-                                value={igInputText}
-                                onChange={e => setIgInputText(e.target.value)}
-                                placeholder="@handle"
-                                autoFocus
-                                onKeyDown={e => {
-                                  if (e.key === "Enter") saveIgManual(hotel.id, igInputText);
-                                  if (e.key === "Escape") { setEditingIg(null); setIgInputText(""); }
-                                }}
-                              />
-                              <button style={s.noteSaveBtn} onClick={() => saveIgManual(hotel.id, igInputText)}>Save</button>
-                              <button style={s.noteCancelBtn} onClick={() => { setEditingIg(null); setIgInputText(""); }}>Cancel</button>
-                            </div>
-                          ) : (
-                            <button style={s.igAddBtn} onClick={() => { setEditingIg(hotel.id); setIgInputText(""); }}>
-                              + Add handle
-                            </button>
-                          )}
-
-                          {/* Note preview */}
-                          {hotel.notes && (
-                            <p style={s.cardNote}>&ldquo;{hotel.notes}&rdquo;</p>
-                          )}
-
-                          {/* Actions */}
-                          <div style={s.cardActions}>
-                            {hotel.website && (
-                              <a
-                                href={hotel.website}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={s.cardWebsiteBtn}
-                                title={hotel.website}
-                              >
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                  <circle cx="12" cy="12" r="10"/>
-                                  <line x1="2" y1="12" x2="22" y2="12"/>
-                                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                                </svg>
-                                Visit website
-                              </a>
-                            )}
-                            {hotel.instagram && (
-                              <button style={s.cardActionBtn} onClick={() => openIgDm(hotel)}>Send DM</button>
-                            )}
-                            {contacted && (
-                              <button
-                                style={{ ...s.cardActionBtn, ...(replied ? s.cardActionActive : {}) }}
-                                onClick={() => markIgReplied(hotel, !replied)}
-                                title={replied ? "Mark as not replied" : "Mark as replied"}
-                              >
-                                {replied ? "\u2713 Replied" : "Replied?"}
-                              </button>
-                            )}
-                            <button
-                              style={s.cardActionBtn}
-                              onClick={() => toggleContacted(hotel)}
-                              title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}
-                            >
-                              {hotel.ig_contacted ? "Undo sent" : "Mark sent"}
-                            </button>
-                            <button
-                              style={s.cardActionBtn}
-                              onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}
-                            >
-                              {hotel.notes ? "Edit note" : "+ Note"}
-                            </button>
-                            <button style={s.cardRemoveBtn} onClick={() => removeHotel(hotel.id)} title="Remove from list">
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                              {/* Actions */}
+                              <td style={{ ...s.td, textAlign:"right" }}>
+                                <div style={s.tActions}>
+                                  {hotel.website && (
+                                    <a href={hotel.website} target="_blank" rel="noreferrer" style={s.cardWebsiteBtn} title={hotel.website}>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="2" y1="12" x2="22" y2="12"/>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                      </svg>
+                                      Visit website
+                                    </a>
+                                  )}
+                                  {hotel.instagram && (
+                                    <button style={s.cardActionBtn} onClick={() => openIgDm(hotel)}>Send DM</button>
+                                  )}
+                                  {contacted && (
+                                    <button style={{ ...s.cardActionBtn, ...(replied ? s.cardActionActive : {}) }} onClick={() => markIgReplied(hotel, !replied)} title={replied ? "Mark as not replied" : "Mark as replied"}>
+                                      {replied ? "✓ Replied" : "Replied?"}
+                                    </button>
+                                  )}
+                                  <button style={s.cardActionBtn} onClick={() => toggleContacted(hotel)} title={hotel.ig_contacted ? "Mark as not sent" : "Mark as DM sent"}>
+                                    {hotel.ig_contacted ? "Undo sent" : "Mark sent"}
+                                  </button>
+                                  <button style={s.cardActionBtn} onClick={() => { setEditingNote(hotel.id); setNoteText(hotel.notes || ""); }}>
+                                    {hotel.notes ? "Edit note" : "+ Note"}
+                                  </button>
+                                  <button style={s.cardRemoveBtn} onClick={() => removeHotel(hotel.id)} title="Remove from list">Remove</button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
@@ -970,6 +966,18 @@ const s = {
   // wrapper is gone, per the design.
   detailPanel: { minHeight:300 },
   toolbar: { display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:18 },
+
+  // Table view (mirrors the job board / applicants table)
+  tableCard: { background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-card)", boxShadow:"var(--shadow-low)", overflow:"hidden" },
+  tableScroll: { width:"100%", overflowX:"auto" },
+  table: { width:"100%", minWidth:780, borderCollapse:"collapse" },
+  th: { textAlign:"left", fontSize:12, fontWeight:700, color:"var(--color-ink-muted)", padding:"13px 16px", background:"var(--color-ground-sand)", borderBottom:"1px solid var(--color-border)", whiteSpace:"nowrap" },
+  tr: { borderBottom:"1px solid var(--color-border)", verticalAlign:"top" },
+  td: { padding:"14px 16px", fontSize:13, color:"var(--color-ink-primary)", verticalAlign:"top" },
+  hotelCell: { display:"flex", gap:12, alignItems:"flex-start", minWidth:0 },
+  tThumbWrap: { width:52, height:52, flex:"none", borderRadius:10, overflow:"hidden", background:"var(--color-ground-sand)", display:"flex", alignItems:"center", justifyContent:"center" },
+  tNote: { fontSize:11.5, color:"var(--color-ink-mid)", fontStyle:"italic", marginTop:3, maxWidth:240, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  tActions: { display:"flex", gap:6, flexWrap:"wrap", justifyContent:"flex-end", maxWidth:300 },
 
   cardGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, alignItems:"start" },
   hotelCard: { display:"flex", gap:14, padding:16, background:"var(--color-ground-card)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-card)", boxShadow:"var(--shadow-low)" },
