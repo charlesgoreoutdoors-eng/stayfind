@@ -159,7 +159,7 @@ export default function PortfolioPage() {
       <div style={s.header}>
         <div>
           <h1 style={s.title}>Portfolio</h1>
-          <p style={s.subtitle}>Upload your PDF portfolios to attach to outreach emails</p>
+          <p style={s.subtitle}>Upload your PDF portfolios and media kits here.</p>
         </div>
       </div>
 
