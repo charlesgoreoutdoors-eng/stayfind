@@ -169,6 +169,20 @@ export default function JobDetailPage() {
         </div>
       )}
 
+      {/* Property photos */}
+      {Array.isArray(o.image_urls) && o.image_urls.length > 0 && (
+        <div style={s.galleryCard}>
+          <h3 style={s.galleryTitle}>Property photos</h3>
+          <div style={s.gallery}>
+            {o.image_urls.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noreferrer" style={s.galleryTile}>
+                <img src={url} alt="" style={s.galleryImg} />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Two columns */}
       <div style={s.cols}>
         {/* Left — structured detail cards */}
@@ -262,6 +276,12 @@ const s = {
   applyActions: { marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10 },
   ghostBtn: { background: "transparent", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   submitBtn: { background: "var(--color-action-forest)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-md)", padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
+
+  galleryCard: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", padding: "18px 20px", boxShadow: "var(--shadow-low)", marginBottom: 20 },
+  galleryTitle: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "var(--color-ink-primary)", marginBottom: 14 },
+  gallery: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 },
+  galleryTile: { aspectRatio: "4 / 3", borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--color-border)", background: "var(--color-ground-sand)", display: "block" },
+  galleryImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
 
   cols: { display: "grid", gridTemplateColumns: "minmax(280px, 1fr) minmax(280px, 1.2fr)", gap: 20, alignItems: "start" },
   colLeft: { display: "flex", flexDirection: "column", gap: 16, minWidth: 0 },

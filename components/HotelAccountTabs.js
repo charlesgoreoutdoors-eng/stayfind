@@ -4,16 +4,18 @@ import { usePathname } from "next/navigation";
 
 const PATHS = {
   account:  "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  photos:   "M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M21 15l-5-5L5 21",
   contact:  "M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M22 7l-10 6L2 7",
   bell:     "M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9z M13.73 21a2 2 0 0 1-3.46 0",
   security: "M12.65 10A6 6 0 1 0 7 14l-5 5 2 2 2-2 2 2 2-2-2-2 .35-.35A6 6 0 0 0 18 10z M16.5 7.5h.01",
 };
 
 const TABS = [
-  { href: "/hotel/profile",               label: "Profile",       d: PATHS.account },
-  { href: "/hotel/profile/contact",       label: "Contact",       d: PATHS.contact },
-  { href: "/hotel/profile/notifications", label: "Notifications", d: PATHS.bell },
-  { href: "/hotel/profile/security",      label: "Security",      d: PATHS.security },
+  { href: "/hotel/profile",               label: "Profile",         d: PATHS.account },
+  { href: "/hotel/profile/photos",        label: "Property photos", d: PATHS.photos },
+  { href: "/hotel/profile/contact",       label: "Contact",         d: PATHS.contact },
+  { href: "/hotel/profile/notifications", label: "Notifications",   d: PATHS.bell },
+  { href: "/hotel/profile/security",      label: "Security",        d: PATHS.security },
 ];
 
 function Icon({ d }) {

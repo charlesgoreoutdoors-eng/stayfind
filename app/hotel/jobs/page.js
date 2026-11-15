@@ -10,7 +10,7 @@ const EMPTY = {
   short_description: "", description: "", whats_included: "", deliverables: "",
   service: "", location: "", social_handles: "", cta_link: "",
   application_deadline: "", completion_deadline: "", content_license_until: "",
-  brief_url: "", brief_name: "",
+  brief_url: "", brief_name: "", image_urls: [],
 };
 
 const STATUS_BADGE = {
@@ -25,6 +25,7 @@ export default function HotelJobsPage() {
   const [noProfile, setNoProfile] = useState(false);
   const [opps, setOpps] = useState([]);
   const [appCounts, setAppCounts] = useState({});   // opportunity_id -> count
+  const [propertyPhotos, setPropertyPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [needsMigration, setNeedsMigration] = useState(false);
 
@@ -47,6 +48,10 @@ export default function HotelJobsPage() {
     if (!hp) { setNoProfile(true); setLoading(false); return; }
     setHotel(hp);
     setNoProfile(false);
+
+    // Property photo library — selectable when creating/editing a job.
+    const { data: photos } = await supabase.from("property_images").select("id, url, file_name").eq("hotel_id", hp.id).order("created_at", { ascending: false });
+    setPropertyPhotos(photos || []);
 
     // RLS returns only this hotel's own opportunities.
     const { data: rows, error: oErr } = await supabase
@@ -80,6 +85,7 @@ export default function HotelJobsPage() {
       application_deadline: o.application_deadline || "", completion_deadline: o.completion_deadline || "",
       content_license_until: o.content_license_until || "",
       brief_url: o.brief_url || "", brief_name: o.brief_name || "",
+      image_urls: Array.isArray(o.image_urls) ? o.image_urls : [],
     });
     setError("");
     setFormOpen(true);
@@ -96,6 +102,10 @@ export default function HotelJobsPage() {
     const { data } = supabase.storage.from("briefs").getPublicUrl(path);
     setForm(f => ({ ...f, brief_url: data.publicUrl, brief_name: file.name }));
     setUploadingBrief(false);
+  };
+
+  const togglePhoto = (url) => {
+    setForm(f => ({ ...f, image_urls: f.image_urls.includes(url) ? f.image_urls.filter(u => u !== url) : [...f.image_urls, url] }));
   };
 
   const buildPayload = (status) => {
@@ -120,6 +130,7 @@ export default function HotelJobsPage() {
       content_license_until: form.content_license_until || null,
       brief_url: form.brief_url || null,
       brief_name: form.brief_name || null,
+      image_urls: Array.isArray(form.image_urls) ? form.image_urls : [],
       status,
     };
   };
@@ -310,6 +321,30 @@ export default function HotelJobsPage() {
             )}
           </div>
 
+          <div style={s.field}>
+            <label style={s.label}>Property photos <span style={s.hint}>— shown to creators reviewing this job</span></label>
+            {propertyPhotos.length === 0 ? (
+              <div style={s.photoEmpty}>
+                No property photos yet. <Link href="/hotel/profile/photos" style={s.inlineLink}>Upload photos</Link> to attach them to jobs.
+              </div>
+            ) : (
+              <>
+                <div style={s.photoGrid}>
+                  {propertyPhotos.map(ph => {
+                    const on = form.image_urls.includes(ph.url);
+                    return (
+                      <button key={ph.id} type="button" style={{ ...s.photoTile, ...(on ? s.photoTileOn : {}) }} onClick={() => togglePhoto(ph.url)}>
+                        <img src={ph.url} alt={ph.file_name || ""} style={s.photoImg} />
+                        {on && <span style={s.photoCheck}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={s.photoHint}>{form.image_urls.length} selected · <Link href="/hotel/profile/photos" style={s.inlineLink}>Manage photos</Link></div>
+              </>
+            )}
+          </div>
+
           {error && <p style={s.error}>{error}</p>}
 
           <div style={s.formActions}>
@@ -336,46 +371,60 @@ export default function HotelJobsPage() {
           <button style={s.newBtn} onClick={openNew}>+ Create your first opportunity</button>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {opps.map(o => {
-            const badge = STATUS_BADGE[o.status] || STATUS_BADGE.draft;
-            return (
-              <div key={o.id} style={s.oppCard}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                    <h3 style={s.oppTitle}>{o.title}</h3>
-                    <span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span>
-                    <span style={s.typePill}>{compensationLabel(o)}</span>
-                    {o.service && <span style={s.servicePill}>{SERVICE_LABELS[o.service] || o.service}</span>}
-                  </div>
-                  {o.short_description && <p style={s.oppDesc}>{o.short_description}</p>}
-                  {o.other_compensation && <p style={s.otherComp}>🎁 {o.other_compensation}</p>}
-                  <div style={s.metaRow}>
-                    {o.location && <span>📍 {o.location}</span>}
-                    {o.application_deadline && <span>Apply by {fmtDate(o.application_deadline)}</span>}
-                    {o.completion_deadline && <span>Content due {fmtDate(o.completion_deadline)}</span>}
-                    {o.content_license_until && <span>License till {fmtDate(o.content_license_until)}</span>}
-                    {o.brief_url && <a href={o.brief_url} target="_blank" rel="noreferrer" style={s.briefChip}>📄 Brief</a>}
-                  </div>
-                </div>
-                <div style={s.oppActions}>
-                  <Link href={`/hotel/jobs/${o.id}`} style={s.applicantsLink}>
-                    {(appCounts[o.id] || 0)} applicant{(appCounts[o.id] || 0) === 1 ? "" : "s"}
-                  </Link>
-                  <button style={s.smallGhost} onClick={() => openEdit(o)}>Edit</button>
-                  {o.status === "draft" && (
-                    <button style={{ ...s.smallPrimary, ...(approved ? {} : s.disabledBtn) }} onClick={() => setStatus(o, "open")} disabled={!approved} title={approved ? "" : "Approval required to publish"}>Publish</button>
-                  )}
-                  {o.status === "open" && (
-                    <button style={s.smallGhost} onClick={() => setStatus(o, "closed")}>Close</button>
-                  )}
-                  {o.status === "closed" && (
-                    <button style={{ ...s.smallPrimary, ...(approved ? {} : s.disabledBtn) }} onClick={() => setStatus(o, "open")} disabled={!approved}>Reopen</button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div style={s.tableCard}>
+          <div style={s.tableScroll}>
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={{ ...s.th, ...s.thFirst }}>Opportunity</th>
+                  <th style={s.th}>Type</th>
+                  <th style={s.th}>Apply by</th>
+                  <th style={s.th}>Status</th>
+                  <th style={{ ...s.th, textAlign: "center" }}>Applicants</th>
+                  <th style={{ ...s.th, ...s.thLast, textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {opps.map(o => {
+                  const badge = STATUS_BADGE[o.status] || STATUS_BADGE.draft;
+                  const count = appCounts[o.id] || 0;
+                  return (
+                    <tr key={o.id} style={s.tr}>
+                      <td style={{ ...s.td, ...s.tdFirst }}>
+                        <Link href={`/hotel/jobs/${o.id}`} style={s.titleLink}>{o.title}</Link>
+                        {o.short_description && <div style={s.tdDesc}>{o.short_description}</div>}
+                        <div style={s.tdMeta}>
+                          {o.service && <span style={s.servicePill}>{SERVICE_LABELS[o.service] || o.service}</span>}
+                          {o.location && <span style={s.metaBit}>📍 {o.location}</span>}
+                          {o.brief_url && <a href={o.brief_url} target="_blank" rel="noreferrer" style={s.briefChip}>📄 Brief</a>}
+                        </div>
+                      </td>
+                      <td style={s.td}><span style={s.typePill}>{compensationLabel(o)}</span></td>
+                      <td style={{ ...s.td, ...s.tdMuted }}>{o.application_deadline ? fmtDate(o.application_deadline) : "—"}</td>
+                      <td style={s.td}><span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span></td>
+                      <td style={{ ...s.td, textAlign: "center" }}>
+                        <Link href={`/hotel/jobs/${o.id}`} style={s.applicantsLink}>{count}</Link>
+                      </td>
+                      <td style={{ ...s.td, ...s.tdLast }}>
+                        <div style={s.rowActions}>
+                          <button style={s.smallGhost} onClick={() => openEdit(o)}>Edit</button>
+                          {o.status === "draft" && (
+                            <button style={{ ...s.smallPrimary, ...(approved ? {} : s.disabledBtn) }} onClick={() => setStatus(o, "open")} disabled={!approved} title={approved ? "" : "Approval required to publish"}>Publish</button>
+                          )}
+                          {o.status === "open" && (
+                            <button style={s.smallGhost} onClick={() => setStatus(o, "closed")}>Close</button>
+                          )}
+                          {o.status === "closed" && (
+                            <button style={{ ...s.smallPrimary, ...(approved ? {} : s.disabledBtn) }} onClick={() => setStatus(o, "open")} disabled={!approved}>Reopen</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
@@ -427,4 +476,31 @@ const s = {
   applicantsLink: { fontSize: 12.5, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none", padding: "7px 10px", whiteSpace: "nowrap" },
   smallGhost: { background: "transparent", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   smallPrimary: { background: "var(--color-action-forest)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },
+
+  // Property photo picker (in form)
+  photoEmpty: { background: "var(--color-ground-sand)", borderRadius: "var(--radius-md)", padding: "12px 14px", fontSize: 13, color: "var(--color-ink-mid)" },
+  photoGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 8 },
+  photoTile: { position: "relative", aspectRatio: "4 / 3", borderRadius: "var(--radius-md)", overflow: "hidden", border: "2px solid var(--color-border)", background: "var(--color-ground-sand)", cursor: "pointer", padding: 0 },
+  photoTileOn: { borderColor: "var(--color-action-forest)" },
+  photoImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  photoCheck: { position: "absolute", top: 5, right: 5, width: 22, height: 22, borderRadius: "50%", background: "var(--color-action-forest)", color: "var(--color-ground-page)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
+  photoHint: { fontSize: 12, color: "var(--color-ink-muted)", marginTop: 8 },
+
+  // Table
+  tableCard: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-low)", overflow: "hidden" },
+  tableScroll: { overflowX: "auto" },
+  table: { width: "100%", borderCollapse: "collapse", minWidth: 720 },
+  th: { textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--color-ink-muted)", textTransform: "uppercase", letterSpacing: "0.04em", padding: "13px 14px", borderBottom: "1px solid var(--color-border)", background: "var(--color-ground-sand)", whiteSpace: "nowrap" },
+  thFirst: { paddingLeft: 20 },
+  thLast: { paddingRight: 20 },
+  tr: { borderBottom: "1px solid var(--color-border)" },
+  td: { padding: "14px 14px", fontSize: 13.5, color: "var(--color-ink-primary)", verticalAlign: "middle" },
+  tdFirst: { paddingLeft: 20, minWidth: 240, maxWidth: 360 },
+  tdLast: { paddingRight: 20 },
+  tdMuted: { color: "var(--color-ink-muted)", fontSize: 13, whiteSpace: "nowrap" },
+  titleLink: { fontSize: 14.5, fontWeight: 700, color: "var(--color-ink-primary)", textDecoration: "none" },
+  tdDesc: { fontSize: 12.5, color: "var(--color-ink-muted)", marginTop: 3, lineHeight: 1.45, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" },
+  tdMeta: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 7 },
+  metaBit: { fontSize: 11.5, color: "var(--color-ink-muted)", fontWeight: 600 },
+  rowActions: { display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" },
 };
