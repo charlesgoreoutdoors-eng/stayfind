@@ -5,6 +5,9 @@ import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { useAuth } from "../../../../lib/auth";
 
+const CREATOR_TYPES = ["Photographer", "Videographer", "Blogger", "Influencer", "Vlogger", "UGC Creator"];
+const EXPERIENCE = ["Beginner", "Intermediate", "Advanced", "Professional"];
+
 const APP_STATUS = {
   invited:     { label: "Invited",      bg: "rgba(224,149,74,0.16)",    ink: "var(--color-accent-amber-deep)" },
   new:         { label: "New",          bg: "var(--status-sent-bg)",    ink: "var(--status-sent-ink)" },
@@ -34,7 +37,13 @@ export default function OpportunityApplicantsPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [savingId, setSavingId] = useState(null);
-  const [expanded, setExpanded] = useState(null);
+  const [pitchApp, setPitchApp] = useState(null);   // application whose pitch modal is open
+  const [fQ, setFQ] = useState("");
+  const [fType, setFType] = useState("");
+  const [fExp, setFExp] = useState("");
+  const [fStatus, setFStatus] = useState("");
+  const [fFrom, setFFrom] = useState("");
+  const [fTo, setFTo] = useState("");
   const [profiles, setProfiles] = useState({});   // creator_id -> profile
   const [ratings, setRatings] = useState({});   // creator_id -> { avg, count }
 
@@ -52,7 +61,7 @@ export default function OpportunityApplicantsPage() {
     // collaborations before actioning. Reviews are readable by all signed-in users.
     const creatorIds = [...new Set((rows || []).map(r => r.creator_id).filter(Boolean))];
     if (creatorIds.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, city, state, country, experience_level, socials").in("id", creatorIds);
+      const { data: profs } = await supabase.from("profiles").select("id, city, state, country, experience_level, creator_type, socials").in("id", creatorIds);
       const pm = {}; (profs || []).forEach(x => { pm[x.id] = x; }); setProfiles(pm);
       const { data: revs } = await supabase
         .from("reviews").select("reviewee_id, rating").in("reviewee_id", creatorIds);
@@ -95,6 +104,18 @@ export default function OpportunityApplicantsPage() {
     }
   };
 
+  const filtered = apps.filter(a => {
+    const p = profiles[a.creator_id] || {};
+    if (fQ && !(a.creator_name || "").toLowerCase().includes(fQ.trim().toLowerCase())) return false;
+    if (fType && (p.creator_type || "") !== fType) return false;
+    if (fExp && (p.experience_level || "").toLowerCase() !== fExp) return false;
+    if (fStatus && (a.status || "new") !== fStatus) return false;
+    const d = (a.created_at || "").slice(0, 10);
+    if (fFrom && d < fFrom) return false;
+    if (fTo && d > fTo) return false;
+    return true;
+  });
+
   const linkIsUrl = (v) => v && /^https?:\/\//i.test(v);
 
   return (
@@ -115,7 +136,30 @@ export default function OpportunityApplicantsPage() {
             </div>
           </div>
 
-          <h2 style={s.sectionTitle}>Applicants <span style={s.count}>{apps.length}</span></h2>
+          <h2 style={s.sectionTitle}>Applicants <span style={s.count}>{filtered.length === apps.length ? apps.length : `${filtered.length} of ${apps.length}`}</span></h2>
+
+          {apps.length > 0 && (
+            <div style={s.filters}>
+              <input style={{ ...s.fInput, minWidth: 200 }} placeholder="Search creator…" value={fQ} onChange={e => setFQ(e.target.value)} />
+              <select style={s.fInput} value={fType} onChange={e => setFType(e.target.value)}>
+                <option value="">All creator types</option>
+                {CREATOR_TYPES.map(x => <option key={x} value={x}>{x}</option>)}
+              </select>
+              <select style={s.fInput} value={fExp} onChange={e => setFExp(e.target.value)}>
+                <option value="">All experience</option>
+                {EXPERIENCE.map(x => <option key={x} value={x.toLowerCase()}>{x}</option>)}
+              </select>
+              <select style={s.fInput} value={fStatus} onChange={e => setFStatus(e.target.value)}>
+                <option value="">All statuses</option>
+                {Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+              <label style={s.fDate}>Applied from <input type="date" style={s.fInput} value={fFrom} onChange={e => setFFrom(e.target.value)} /></label>
+              <label style={s.fDate}>to <input type="date" style={s.fInput} value={fTo} onChange={e => setFTo(e.target.value)} /></label>
+              {(fQ || fType || fExp || fStatus || fFrom || fTo) && (
+                <button style={s.clearBtn} onClick={() => { setFQ(""); setFType(""); setFExp(""); setFStatus(""); setFFrom(""); setFTo(""); }}>Clear</button>
+              )}
+            </div>
+          )}
 
           {apps.length === 0 ? (
             <div style={s.empty}>No applications yet. They’ll appear here as creators apply.</div>
@@ -125,8 +169,8 @@ export default function OpportunityApplicantsPage() {
                 <table style={s.table}>
                   <thead>
                     <tr>
-                      <th style={{ ...s.th, width: 28 }}></th>
                       <th style={s.th}>Creator</th>
+                      <th style={s.th}>Type</th>
                       <th style={s.th}>Followers</th>
                       <th style={s.th}>Location</th>
                       <th style={s.th}>Experience</th>
@@ -137,14 +181,13 @@ export default function OpportunityApplicantsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {apps.map(a => {
+                    {filtered.length === 0 && <tr><td colSpan={9} style={{ ...s.td, textAlign: "center", color: "var(--color-ink-muted)", padding: 28 }}>No applicants match these filters.</td></tr>}
+                    {filtered.map(a => {
                       const badge = APP_STATUS[a.status] || APP_STATUS.new;
-                      const isOpen = expanded === a.id;
                       const busy = savingId === a.id;
                       return (
                         <Fragment key={a.id}>
-                          <tr style={s.tr} onClick={() => setExpanded(isOpen ? null : a.id)}>
-                            <td style={{ ...s.td, color: "var(--color-ink-muted)" }}>{isOpen ? "▾" : "▸"}</td>
+                          <tr style={s.tr}>
                             <td style={s.td}>
                               <Link href={`/hotel/creators/${a.id}`} style={s.nameLink} onClick={e => e.stopPropagation()}>{a.creator_name || "Creator"}</Link>
                               {ratings[a.creator_id]
@@ -154,10 +197,11 @@ export default function OpportunityApplicantsPage() {
                                 ? <a href={a.creator_link} target="_blank" rel="noreferrer" style={s.link} onClick={e => e.stopPropagation()}>{a.creator_link}</a>
                                 : <span style={s.linkPlain}>{a.creator_link}</span>)}
                             </td>
+                            <td style={s.td}>{profiles[a.creator_id]?.creator_type || "—"}</td>
                             <td style={s.td}>{fmtFollowers(profiles[a.creator_id]?.socials?.followers)}</td>
                             <td style={s.td}>{[profiles[a.creator_id]?.city, profiles[a.creator_id]?.country].filter(Boolean).join(", ") || "—"}</td>
                             <td style={s.td}>{profiles[a.creator_id]?.experience_level || "—"}</td>
-                            <td style={{ ...s.td, maxWidth: 360 }}><div style={s.pitchClip}>{a.pitch || "—"}</div></td>
+                            <td style={s.td}><button style={s.pitchBtn} onClick={() => setPitchApp(a)}>View pitch</button></td>
                             <td style={s.td}>{fmtDate(a.created_at)}</td>
                             <td style={s.td}><span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span></td>
                             <td style={{ ...s.td, textAlign: "right" }} onClick={e => e.stopPropagation()}>
@@ -168,15 +212,6 @@ export default function OpportunityApplicantsPage() {
                               </div>
                             </td>
                           </tr>
-                          {isOpen && (
-                            <tr>
-                              <td />
-                              <td colSpan={8} style={s.expandCell}>
-                                <div style={s.expandLabel}>Full pitch</div>
-                                <p style={s.expandPitch}>{a.pitch || "No pitch provided."}</p>
-                              </td>
-                            </tr>
-                          )}
                         </Fragment>
                       );
                     })}
@@ -187,11 +222,40 @@ export default function OpportunityApplicantsPage() {
           )}
         </>
       )}
+
+      {pitchApp && (
+        <div style={s.overlay} onClick={() => setPitchApp(null)}>
+          <div style={s.modal} onClick={e => e.stopPropagation()}>
+            <div style={s.modalHead}>
+              <div>
+                <div style={s.modalTitle}>{pitchApp.creator_name || "Creator"}’s pitch</div>
+                <div style={s.modalSub}>Applied {fmtDate(pitchApp.created_at)}</div>
+              </div>
+              <button style={s.modalClose} onClick={() => setPitchApp(null)} aria-label="Close">×</button>
+            </div>
+            <p style={s.expandPitch}>{pitchApp.pitch || "No pitch provided."}</p>
+            {pitchApp.creator_link && (linkIsUrl(pitchApp.creator_link)
+              ? <a href={pitchApp.creator_link} target="_blank" rel="noreferrer" style={s.link}>{pitchApp.creator_link}</a>
+              : <span style={s.linkPlain}>{pitchApp.creator_link}</span>)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 const s = {
+  filters: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 14 },
+  fInput: { border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", color: "var(--color-ink-primary)", background: "var(--color-ground-card)" },
+  fDate: { display: "flex", flexDirection: "column", gap: 3, fontSize: 11, fontWeight: 700, color: "var(--color-ink-muted)" },
+  clearBtn: { background: "transparent", border: "none", color: "var(--color-accent-amber-deep)", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "9px 6px", fontFamily: "inherit" },
+  pitchBtn: { background: "var(--color-ground-card)", color: "var(--color-ink-primary)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", padding: "7px 13px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 1000 },
+  modal: { background: "var(--color-ground-card)", borderRadius: "var(--radius-card)", padding: "24px 26px", width: "100%", maxWidth: 560, maxHeight: "80vh", overflowY: "auto", boxShadow: "var(--shadow-low)" },
+  modalHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14 },
+  modalTitle: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--color-ink-primary)" },
+  modalSub: { fontSize: 12.5, color: "var(--color-ink-muted)", marginTop: 3 },
+  modalClose: { background: "transparent", border: "none", fontSize: 26, lineHeight: 1, cursor: "pointer", color: "var(--color-ink-muted)" },
   wrap: { maxWidth: 940, margin: "0 auto", padding: "32px 24px 64px" },
   back: { display: "inline-block", fontSize: 13, fontWeight: 600, color: "var(--color-ink-mid)", textDecoration: "none", marginBottom: 20 },
   loadingRow: { display: "flex", alignItems: "center", gap: 10, color: "var(--color-ink-muted)", fontSize: 14, padding: "40px 0" },
@@ -208,7 +272,7 @@ const s = {
 
   card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-low)", overflow: "hidden" },
   tableScroll: { width: "100%", overflowX: "auto" },
-  table: { width: "100%", minWidth: 900, borderCollapse: "collapse" },
+  table: { width: "100%", minWidth: 960, borderCollapse: "collapse" },
   th: { textAlign: "left", fontSize: 12, fontWeight: 700, color: "var(--color-ink-muted)", padding: "14px 16px", background: "var(--color-ground-sand)", borderBottom: "1px solid var(--color-border)", whiteSpace: "nowrap" },
   tr: { cursor: "pointer", borderBottom: "1px solid var(--color-border)" },
   td: { padding: "14px 16px", fontSize: 13.5, color: "var(--color-ink-primary)", verticalAlign: "middle" },
