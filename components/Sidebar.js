@@ -1,4 +1,5 @@
 "use client";
+import SiteFooter from "./SiteFooter";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -86,7 +87,7 @@ export default function Sidebar({ children }) {
   // No creator app chrome on the public marketing/auth surfaces, for logged-out
   // visitors (who see the waitlist landing at the root), or anywhere in the
   // hotel site — /hotel/* is a separate shell with its own layout + sidebar.
-  if (pathname === "/login" || pathname === "/waitlist" || pathname === "/privacy" || pathname === "/terms" || pathname.startsWith("/hotel") || !user) return <>{children}</>;
+  if (pathname === "/login" || pathname === "/waitlist" || pathname === "/privacy" || pathname === "/terms" || pathname === "/contact" || pathname.startsWith("/hotel") || !user) return <>{children}{!pathname.startsWith("/hotel") && <SiteFooter />}</>;
 
   const isAdmin = (user?.email || "").toLowerCase() === ADMIN_EMAIL;
   const navItems = isAdmin
@@ -182,7 +183,8 @@ export default function Sidebar({ children }) {
           background: var(--color-action-forest); display: flex; align-items: center;
           padding: 0 16px; gap: 14px; z-index: 200;
         }
-        .sf-main { flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; background: var(--color-ground-page); }
+        .sf-page { flex: 1; min-width: 0; }
+        .sf-main { display: flex; flex-direction: column; flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; background: var(--color-ground-page); }
         .sf-overlay { position: fixed; inset: 0; background: rgba(43,39,34,0.55); z-index: 149; }
 
         .sf-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s; }
@@ -282,7 +284,7 @@ export default function Sidebar({ children }) {
           </div>
         </div>
 
-        <main className="sf-main">{children}</main>
+        <main className="sf-main"><div className="sf-page">{children}</div><SiteFooter /></main>
       </div>
     </>
   );

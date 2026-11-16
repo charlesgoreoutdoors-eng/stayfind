@@ -1,4 +1,5 @@
 "use client";
+import SiteFooter from "./SiteFooter";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -49,7 +50,7 @@ export default function HotelSidebar({ children }) {
 
   // Logged-out visitors are redirected to /login by AuthGuard; render nothing
   // extra here in the meantime.
-  if (!user) return <>{children}</>;
+  if (!user) return <>{children}<SiteFooter /></>;
 
   return (
     <>
@@ -78,7 +79,8 @@ export default function HotelSidebar({ children }) {
           background: var(--color-action-forest); display: flex; align-items: center;
           padding: 0 16px; gap: 14px; z-index: 200;
         }
-        .hs-main { flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; background: var(--color-ground-page); }
+        .hs-page { flex: 1; min-width: 0; }
+        .hs-main { display: flex; flex-direction: column; flex: 1; padding-top: 52px; min-width: 0; overflow-x: hidden; background: var(--color-ground-page); }
         .hs-overlay { position: fixed; inset: 0; background: rgba(43,39,34,0.55); z-index: 149; }
 
         .hs-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s; }
@@ -170,7 +172,7 @@ export default function HotelSidebar({ children }) {
           </div>
         </div>
 
-        <main className="hs-main">{children}</main>
+        <main className="hs-main"><div className="hs-page">{children}</div><SiteFooter /></main>
       </div>
     </>
   );
