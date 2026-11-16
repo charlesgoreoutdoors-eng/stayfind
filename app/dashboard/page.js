@@ -3,8 +3,25 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import Link from "next/link";
+import FreeDashboard from "../../components/FreeDashboard";
+import { hasOutreachAccess } from "../../lib/access";
 
+// Free (Spark) creators get the marketplace dashboard; paid creators get the
+// outreach dashboard below. The profile loads in the background, so wait for it
+// (with a short fallback so a failed profile fetch never leaves a blank page).
 export default function DashboardPage() {
+  const { profile } = useAuth();
+  const [waited, setWaited] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setWaited(true), 4000); return () => clearTimeout(t); }, []);
+
+  if (!profile && !waited) {
+    return <div style={s.root}><div style={s.loadingWrap}><div style={s.spinner} /></div></div>;
+  }
+  if (profile && !hasOutreachAccess(profile) && profile.role !== "hotel") return <FreeDashboard />;
+  return <OutreachDashboard />;
+}
+
+function OutreachDashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
