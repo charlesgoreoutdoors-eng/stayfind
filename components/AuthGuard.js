@@ -2,13 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/auth";
-import { isHotel } from "../lib/access";
+import { isHotel, homePathFor } from "../lib/access";
 
 export default function AuthGuard({ children }) {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [timedOut, setTimedOut] = useState(false);
+  const [profileWaited, setProfileWaited] = useState(false);
+  const isWelcome = pathname === "/welcome";
 
   // Safety timeout — if auth takes more than 4 seconds, give up and redirect to login
   useEffect(() => {
@@ -17,6 +19,15 @@ export default function AuthGuard({ children }) {
     }, 4000);
     return () => clearTimeout(timer);
   }, [loading]);
+
+  // /welcome is the post-login hub: wait for the profile (plan + role), then
+  // send the user to the right home. If the profile never arrives, fall back
+  // to the dashboard rather than hanging.
+  useEffect(() => {
+    if (!isWelcome) return;
+    const t = setTimeout(() => setProfileWaited(true), 4000);
+    return () => clearTimeout(t);
+  }, [isWelcome]);
 
   // Public routes render without an auth gate. /hotel/signup is the hotel
   // sign-up page and must be reachable while logged out. The root "/" is a
@@ -51,7 +62,7 @@ export default function AuthGuard({ children }) {
     if (isPublic) {
       // Bounce logged-in users off the login screen into their home site.
       if (user && pathname === "/login") {
-        router.replace(isHotel(profile) ? "/hotel/profile" : "/dashboard");
+        router.replace(profile ? homePathFor(profile) : "/welcome");
       }
       return;
     }
@@ -61,12 +72,18 @@ export default function AuthGuard({ children }) {
       return;
     }
 
+    if (isWelcome) {
+      if (profile) router.replace(homePathFor(profile));
+      else if (profileWaited) router.replace("/dashboard");
+      return;
+    }
+
     // A logged-in hotel user landing anywhere in the creator app (including the
     // root search page) goes to the hotel site; a non-admin creator who wanders
     // into the hotel site gets sent back.
     if (hotelOnCreatorRoute || (user && hotelUser && isRoot)) { router.replace("/hotel/profile"); return; }
     if (creatorInHotelArea) { router.replace("/dashboard"); return; }
-  }, [user, profile, loading, timedOut, pathname, router, isPublic, isRoot, hotelUser, hotelOnCreatorRoute, creatorInHotelArea]);
+  }, [user, profile, loading, timedOut, pathname, router, isPublic, isRoot, isWelcome, profileWaited, hotelUser, hotelOnCreatorRoute, creatorInHotelArea]);
 
   // Always render login, waitlist, hotel sign-up and auth pages immediately
   if (isPublic) {
@@ -98,6 +115,7 @@ export default function AuthGuard({ children }) {
   // decides). On any other protected route, return null while the redirect
   // to /login fires.
   if (!user && !isRoot) return null;
+  if (isWelcome) return null;   // redirecting to the right home
 
   // While a role-separation redirect is firing, render nothing to avoid a
   // flash of the wrong site.

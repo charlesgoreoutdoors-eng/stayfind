@@ -30,7 +30,7 @@ export default function AuthCallbackPage() {
           return;
         }
         setStatus("Success! Taking you in...");
-        router.replace("/dashboard");
+        router.replace("/welcome");
         return;
       }
 
@@ -40,7 +40,7 @@ export default function AuthCallbackPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setStatus("Success! Taking you in...");
-        router.replace("/dashboard");
+        router.replace("/welcome");
         return;
       }
 
