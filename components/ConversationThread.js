@@ -54,7 +54,12 @@ export default function ConversationThread({ applicationId, backHref }) {
   const loadMessages = useCallback(async () => {
     const { data } = await supabase.from("messages").select("*").eq("application_id", applicationId).order("created_at", { ascending: true });
     setMessages(data || []);
-  }, [applicationId]);
+    // Opening the thread marks the other party's messages as read.
+    if (user && (data || []).some(m => !m.read_at && m.sender_id !== user.id)) {
+      supabase.from("messages").update({ read_at: new Date().toISOString() })
+        .eq("application_id", applicationId).neq("sender_id", user.id).is("read_at", null).then(() => {});
+    }
+  }, [applicationId, user]);
 
   const load = useCallback(async () => {
     if (!user || !applicationId) return;

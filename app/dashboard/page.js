@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import Link from "next/link";
 import FreeDashboard from "../../components/FreeDashboard";
+import NewMessagesCard from "../../components/NewMessagesCard";
 import { hasOutreachAccess } from "../../lib/access";
 
 // Free (Spark) creators get the marketplace dashboard; paid creators get the
@@ -176,6 +177,7 @@ function OutreachDashboard() {
 
         {/* Right column */}
         <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+          <NewMessagesCard />
           {/* Quick actions */}
           <div style={s.card}>
             <h2 style={{ ...s.sectionTitle, marginBottom:14 }}>Quick Actions</h2>

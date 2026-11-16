@@ -4,6 +4,7 @@ import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { compensationLabel } from "../lib/marketplace";
+import NewMessagesCard from "./NewMessagesCard";
 
 const STATUS = {
   invited:     { label: "Invited",      bg: "rgba(224,149,74,0.16)",    ink: "var(--color-accent-amber-deep)" },
@@ -138,6 +139,7 @@ export default function FreeDashboard() {
         </div>
 
         <div style={s.col}>
+          <NewMessagesCard />
           <div style={s.card}>
             <div style={s.sectionHead}>
               <h2 style={s.sectionTitle}>Complete your profile</h2>
