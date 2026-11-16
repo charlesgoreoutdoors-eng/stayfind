@@ -8,6 +8,14 @@ import { useAuth } from "../../../../lib/auth";
 const CREATOR_TYPES = ["Photographer", "Videographer", "Blogger", "Influencer", "Vlogger", "UGC Creator"];
 const EXPERIENCE = ["Beginner", "Intermediate", "Advanced", "Professional"];
 
+const FOLLOWER_RANGES = [
+  { key: "0-5k",   label: "0 – 5K",   min: 0,     max: 5000 },
+  { key: "5-10k",  label: "5K – 10K", min: 5000,  max: 10000 },
+  { key: "10-20k", label: "10K – 20K", min: 10000, max: 20000 },
+  { key: "20-50k", label: "20K – 50K", min: 20000, max: 50000 },
+  { key: "50k+",   label: "50K+",     min: 50000, max: Infinity },
+];
+
 const APP_STATUS = {
   invited:     { label: "Invited",      bg: "rgba(224,149,74,0.16)",    ink: "var(--color-accent-amber-deep)" },
   new:         { label: "New",          bg: "var(--status-sent-bg)",    ink: "var(--status-sent-ink)" },
@@ -42,6 +50,8 @@ export default function OpportunityApplicantsPage() {
   const [fType, setFType] = useState("");
   const [fExp, setFExp] = useState("");
   const [fStatus, setFStatus] = useState("");
+  const [fCountry, setFCountry] = useState("");
+  const [fFollowers, setFFollowers] = useState("");
   const [mediaApp, setMediaApp] = useState(null);   // application whose portfolio modal is open
   const [media, setMedia] = useState({ loading: false, samples: [], kits: [] });
   const [profiles, setProfiles] = useState({});   // creator_id -> profile
@@ -110,6 +120,13 @@ export default function OpportunityApplicantsPage() {
     if (fType && (p.creator_type || "") !== fType) return false;
     if (fExp && (p.experience_level || "").toLowerCase() !== fExp) return false;
     if (fStatus && (a.status || "new") !== fStatus) return false;
+    if (fCountry && (p.country || "") !== fCountry) return false;
+    if (fFollowers) {
+      const n = parseInt(p.socials?.followers, 10);
+      if (!n && n !== 0) return false;
+      const r = FOLLOWER_RANGES.find(x => x.key === fFollowers);
+      if (r && (n < r.min || n >= r.max)) return false;
+    }
     return true;
   });
 
@@ -121,6 +138,8 @@ export default function OpportunityApplicantsPage() {
     ]);
     setMedia({ loading: false, samples: ws || [], kits: (pf || []).filter(x => x.file_url) });
   };
+
+  const countries = [...new Set(Object.values(profiles).map(x => (x.country || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
   const linkIsUrl = (v) => v && /^https?:\/\//i.test(v);
 
@@ -172,8 +191,18 @@ export default function OpportunityApplicantsPage() {
                           {CREATOR_TYPES.map(x => <option key={x} value={x}>{x}</option>)}
                         </select>
                       </th>
-                      <th style={s.fTh} />
-                      <th style={s.fTh} />
+                      <th style={s.fTh}>
+                        <select style={s.fInput} value={fFollowers} onChange={e => setFFollowers(e.target.value)}>
+                          <option value="">All</option>
+                          {FOLLOWER_RANGES.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                        </select>
+                      </th>
+                      <th style={s.fTh}>
+                        <select style={s.fInput} value={fCountry} onChange={e => setFCountry(e.target.value)}>
+                          <option value="">All</option>
+                          {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </th>
                       <th style={s.fTh}>
                         <select style={s.fInput} value={fExp} onChange={e => setFExp(e.target.value)}>
                           <option value="">All</option>
@@ -190,7 +219,7 @@ export default function OpportunityApplicantsPage() {
                         </select>
                       </th>
                       <th style={{ ...s.fTh, textAlign: "right" }}>
-                        {(fQ || fType || fExp || fStatus) && <button style={s.clearBtn} onClick={() => { setFQ(""); setFType(""); setFExp(""); setFStatus(""); }}>Clear filters</button>}
+                        {(fQ || fType || fExp || fStatus || fCountry || fFollowers) && <button style={s.clearBtn} onClick={() => { setFQ(""); setFType(""); setFExp(""); setFStatus(""); setFCountry(""); setFFollowers(""); }}>Clear filters</button>}
                       </th>
                     </tr>
                   </thead>
@@ -213,7 +242,7 @@ export default function OpportunityApplicantsPage() {
                             </td>
                             <td style={s.td}>{profiles[a.creator_id]?.creator_type || "—"}</td>
                             <td style={s.td}>{fmtFollowers(profiles[a.creator_id]?.socials?.followers)}</td>
-                            <td style={s.td}>{[profiles[a.creator_id]?.city, profiles[a.creator_id]?.country].filter(Boolean).join(", ") || "—"}</td>
+                            <td style={s.td}>{profiles[a.creator_id]?.country || "—"}</td>
                             <td style={s.td}>{profiles[a.creator_id]?.experience_level || "—"}</td>
                             <td style={s.td}><button style={s.pitchBtn} onClick={() => setPitchApp(a)}>View pitch</button></td>
                             <td style={s.td}><button style={s.pitchBtn} onClick={() => openMedia(a)}>View work</button></td>
