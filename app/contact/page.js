@@ -14,7 +14,7 @@ export default function ContactPage() {
         <div style={s.card}>
           <div style={s.label}>Email</div>
           <a href="mailto:hello@dapples.io" style={s.email}>hello@dapples.io</a>
-          <p style={s.small}>We usually reply within a couple of business days.</p>
+          <p style={s.small}>We’ll reply within 48 hours.</p>
         </div>
 
         <div style={s.card}>
