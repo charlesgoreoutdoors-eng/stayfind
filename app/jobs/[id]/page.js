@@ -123,6 +123,7 @@ export default function JobDetailPage() {
   }
 
   const hotel = o.hotel || {};
+  const isOwner = !!user && hotel.user_id === user.id;
   const badge = app ? (APP_STATUS[app.status] || APP_STATUS.new) : null;
   const linkIsUrl = (v) => v && /^https?:\/\//i.test(v);
 
@@ -130,10 +131,12 @@ export default function JobDetailPage() {
     <div style={s.wrap}>
       {/* Breadcrumb */}
       <div style={s.crumb}>
-        <Link href="/jobs" style={s.crumbLink}>Job Board</Link>
+        <Link href={isOwner ? "/hotel/jobs" : "/jobs"} style={s.crumbLink}>{isOwner ? "My Jobs" : "Job Board"}</Link>
         <span style={s.crumbSep}>/</span>
         <span style={s.crumbCurrent}>{o.title}</span>
       </div>
+
+      {isOwner && <div style={{ background: "var(--color-ground-sand)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "10px 14px", fontSize: 13, color: "var(--color-ink-mid)", marginBottom: 16 }}>👀 Preview — this is exactly what creators see.</div>}
 
       {/* Header */}
       <div style={s.header}>
@@ -149,7 +152,9 @@ export default function JobDetailPage() {
           </div>
         </div>
         <div style={{ flexShrink: 0 }}>
-          {badge
+          {isOwner
+            ? <Link href={`/hotel/jobs/${o.id}`} style={s.applyBtn}>View applicants</Link>
+            : badge
             ? <span style={{ ...s.statusBadge, background: badge.bg, color: badge.ink }}>{badge.label}</span>
             : !applyOpen && <button style={s.applyBtn} onClick={() => { setError(""); setApplyOpen(true); }}>Apply</button>}
         </div>

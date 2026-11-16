@@ -12,6 +12,14 @@ const APP_STATUS = {
   declined:    { label: "Declined",     bg: "var(--status-error-bg)",   ink: "var(--color-error)" },
 };
 
+function fmtFollowers(v) {
+  const n = parseInt(v, 10);
+  if (!n) return "—";
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
 function fmtDate(iso) {
   if (!iso) return "";
   try { return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); }
@@ -27,6 +35,7 @@ export default function OpportunityApplicantsPage() {
   const [notFound, setNotFound] = useState(false);
   const [savingId, setSavingId] = useState(null);
   const [expanded, setExpanded] = useState(null);
+  const [profiles, setProfiles] = useState({});   // creator_id -> profile
   const [ratings, setRatings] = useState({});   // creator_id -> { avg, count }
 
   const load = useCallback(async () => {
@@ -43,6 +52,8 @@ export default function OpportunityApplicantsPage() {
     // collaborations before actioning. Reviews are readable by all signed-in users.
     const creatorIds = [...new Set((rows || []).map(r => r.creator_id).filter(Boolean))];
     if (creatorIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, city, state, country, experience_level, socials").in("id", creatorIds);
+      const pm = {}; (profs || []).forEach(x => { pm[x.id] = x; }); setProfiles(pm);
       const { data: revs } = await supabase
         .from("reviews").select("reviewee_id, rating").in("reviewee_id", creatorIds);
       const by = {};
@@ -116,6 +127,9 @@ export default function OpportunityApplicantsPage() {
                     <tr>
                       <th style={{ ...s.th, width: 28 }}></th>
                       <th style={s.th}>Creator</th>
+                      <th style={s.th}>Followers</th>
+                      <th style={s.th}>Location</th>
+                      <th style={s.th}>Experience</th>
                       <th style={s.th}>Pitch</th>
                       <th style={s.th}>Applied</th>
                       <th style={s.th}>Status</th>
@@ -140,6 +154,9 @@ export default function OpportunityApplicantsPage() {
                                 ? <a href={a.creator_link} target="_blank" rel="noreferrer" style={s.link} onClick={e => e.stopPropagation()}>{a.creator_link}</a>
                                 : <span style={s.linkPlain}>{a.creator_link}</span>)}
                             </td>
+                            <td style={s.td}>{fmtFollowers(profiles[a.creator_id]?.socials?.followers)}</td>
+                            <td style={s.td}>{[profiles[a.creator_id]?.city, profiles[a.creator_id]?.country].filter(Boolean).join(", ") || "—"}</td>
+                            <td style={s.td}>{profiles[a.creator_id]?.experience_level || "—"}</td>
                             <td style={{ ...s.td, maxWidth: 360 }}><div style={s.pitchClip}>{a.pitch || "—"}</div></td>
                             <td style={s.td}>{fmtDate(a.created_at)}</td>
                             <td style={s.td}><span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span></td>
@@ -154,7 +171,7 @@ export default function OpportunityApplicantsPage() {
                           {isOpen && (
                             <tr>
                               <td />
-                              <td colSpan={5} style={s.expandCell}>
+                              <td colSpan={8} style={s.expandCell}>
                                 <div style={s.expandLabel}>Full pitch</div>
                                 <p style={s.expandPitch}>{a.pitch || "No pitch provided."}</p>
                               </td>
@@ -191,7 +208,7 @@ const s = {
 
   card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-low)", overflow: "hidden" },
   tableScroll: { width: "100%", overflowX: "auto" },
-  table: { width: "100%", minWidth: 720, borderCollapse: "collapse" },
+  table: { width: "100%", minWidth: 900, borderCollapse: "collapse" },
   th: { textAlign: "left", fontSize: 12, fontWeight: 700, color: "var(--color-ink-muted)", padding: "14px 16px", background: "var(--color-ground-sand)", borderBottom: "1px solid var(--color-border)", whiteSpace: "nowrap" },
   tr: { cursor: "pointer", borderBottom: "1px solid var(--color-border)" },
   td: { padding: "14px 16px", fontSize: 13.5, color: "var(--color-ink-primary)", verticalAlign: "middle" },

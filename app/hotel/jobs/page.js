@@ -391,7 +391,7 @@ export default function HotelJobsPage() {
                   return (
                     <tr key={o.id} style={s.tr}>
                       <td style={{ ...s.td, ...s.tdFirst }}>
-                        <Link href={`/hotel/jobs/${o.id}`} style={s.titleLink}>{o.title}</Link>
+                        <Link href={`/jobs/${o.id}`} style={s.titleLink} title="See this job as creators see it">{o.title}</Link>
                         {o.short_description && <div style={s.tdDesc}>{o.short_description}</div>}
                         <div style={s.tdMeta}>
                           {o.service && <span style={s.servicePill}>{SERVICE_LABELS[o.service] || o.service}</span>}
@@ -407,6 +407,7 @@ export default function HotelJobsPage() {
                       </td>
                       <td style={{ ...s.td, ...s.tdLast }}>
                         <div style={s.rowActions}>
+                          <Link href={`/hotel/jobs/${o.id}`} style={s.viewApplicantsBtn}>View applicants{count ? ` (${count})` : ""}</Link>
                           <button style={s.smallGhost} onClick={() => openEdit(o)}>Edit</button>
                           {o.status === "draft" && (
                             <button style={{ ...s.smallPrimary, ...(approved ? {} : s.disabledBtn) }} onClick={() => setStatus(o, "open")} disabled={!approved} title={approved ? "" : "Approval required to publish"}>Publish</button>
@@ -473,6 +474,7 @@ const s = {
   briefChip: { fontSize: 12, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none" },
   metaRow: { display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12, color: "var(--color-ink-muted)" },
   oppActions: { display: "flex", gap: 8, alignItems: "center", flexShrink: 0 },
+  viewApplicantsBtn: { background: "var(--color-action-forest)", color: "var(--color-ground-page)", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap", fontFamily: "var(--font-display)" },
   applicantsLink: { fontSize: 12.5, fontWeight: 700, color: "var(--color-accent-amber-deep)", textDecoration: "none", padding: "7px 10px", whiteSpace: "nowrap" },
   smallGhost: { background: "transparent", color: "var(--color-ink-mid)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   smallPrimary: { background: "var(--color-action-forest)", color: "var(--color-ground-page)", border: "none", borderRadius: "var(--radius-sm)", padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-display)" },

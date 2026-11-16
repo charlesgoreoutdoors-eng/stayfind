@@ -20,6 +20,8 @@ export default function SocialsPage() {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState(null);
+  const [followers, setFollowers] = useState("");
+  const [fSaved, setFSaved] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -28,6 +30,7 @@ export default function SocialsPage() {
       const { data } = await supabase.from("profiles").select("socials").eq("id", user.id).maybeSingle();
       if (!active) return;
       setSocials(data?.socials || {});
+      setFollowers(data?.socials?.followers || "");
       setLoading(false);
     })();
     return () => { active = false; };
@@ -49,6 +52,14 @@ export default function SocialsPage() {
     setSavingKey(null); setEditing(null);
   };
 
+  const saveFollowers = async () => {
+    const clean = String(followers).replace(/[^0-9]/g, "");
+    const next = { ...socials };
+    if (clean) next.followers = clean; else delete next.followers;
+    const error = await persist(next);
+    if (!error) { setFollowers(clean); setFSaved(true); setTimeout(() => setFSaved(false), 1500); }
+  };
+
   const disconnect = async (key) => {
     const next = { ...socials }; delete next[key];
     setSavingKey(key); await persist(next); setSavingKey(null);
@@ -59,10 +70,23 @@ export default function SocialsPage() {
       <AccountTabs />
       <div style={s.card}>
         <p style={s.intro}>Connect your accounts to show your socials on your profile and applications. Paste your handle or profile link for each platform.</p>
-        <div style={s.banner}>ℹ️ Full stats sync (follower counts, engagement) is coming — for now this links your profiles.</div>
+        <div style={s.banner}>ℹ️ Automatic stats sync is coming — for now, add your handles and your total follower count so hotels can see your reach.</div>
 
         {loading ? <div style={s.loadingRow}><span style={s.spinner} /> Loading…</div> : (
           <div>
+            <div style={s.row}>
+              <div style={s.rowLeft}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={s.pName}>Total followers</div>
+                  <div style={s.pHandle}>Combined across your main platforms — shown to hotels on your applications</div>
+                </div>
+              </div>
+              <div style={s.editRow}>
+                <input style={s.editInput} inputMode="numeric" placeholder="e.g. 25000" value={followers}
+                  onChange={e => setFollowers(e.target.value)} onKeyDown={e => e.key === "Enter" && saveFollowers()} />
+                <button style={s.saveBtn} onClick={saveFollowers}>{fSaved ? "Saved ✓" : "Save"}</button>
+              </div>
+            </div>
             {PLATFORMS.map(p => {
               const connected = !!socials[p.key];
               const isEditing = editing === p.key;
