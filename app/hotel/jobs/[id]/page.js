@@ -42,8 +42,8 @@ export default function OpportunityApplicantsPage() {
   const [fType, setFType] = useState("");
   const [fExp, setFExp] = useState("");
   const [fStatus, setFStatus] = useState("");
-  const [fFrom, setFFrom] = useState("");
-  const [fTo, setFTo] = useState("");
+  const [mediaApp, setMediaApp] = useState(null);   // application whose portfolio modal is open
+  const [media, setMedia] = useState({ loading: false, samples: [], kits: [] });
   const [profiles, setProfiles] = useState({});   // creator_id -> profile
   const [ratings, setRatings] = useState({});   // creator_id -> { avg, count }
 
@@ -110,11 +110,17 @@ export default function OpportunityApplicantsPage() {
     if (fType && (p.creator_type || "") !== fType) return false;
     if (fExp && (p.experience_level || "").toLowerCase() !== fExp) return false;
     if (fStatus && (a.status || "new") !== fStatus) return false;
-    const d = (a.created_at || "").slice(0, 10);
-    if (fFrom && d < fFrom) return false;
-    if (fTo && d > fTo) return false;
     return true;
   });
+
+  const openMedia = async (a) => {
+    setMediaApp(a); setMedia({ loading: true, samples: [], kits: [] });
+    const [{ data: ws }, { data: pf }] = await Promise.all([
+      supabase.from("work_samples").select("*").eq("user_id", a.creator_id).order("created_at", { ascending: false }),
+      supabase.from("portfolios").select("*").eq("user_id", a.creator_id).order("created_at", { ascending: false }),
+    ]);
+    setMedia({ loading: false, samples: ws || [], kits: (pf || []).filter(x => x.file_url) });
+  };
 
   const linkIsUrl = (v) => v && /^https?:\/\//i.test(v);
 
@@ -138,28 +144,6 @@ export default function OpportunityApplicantsPage() {
 
           <h2 style={s.sectionTitle}>Applicants <span style={s.count}>{filtered.length === apps.length ? apps.length : `${filtered.length} of ${apps.length}`}</span></h2>
 
-          {apps.length > 0 && (
-            <div style={s.filters}>
-              <input style={{ ...s.fInput, minWidth: 200 }} placeholder="Search creator…" value={fQ} onChange={e => setFQ(e.target.value)} />
-              <select style={s.fInput} value={fType} onChange={e => setFType(e.target.value)}>
-                <option value="">All creator types</option>
-                {CREATOR_TYPES.map(x => <option key={x} value={x}>{x}</option>)}
-              </select>
-              <select style={s.fInput} value={fExp} onChange={e => setFExp(e.target.value)}>
-                <option value="">All experience</option>
-                {EXPERIENCE.map(x => <option key={x} value={x.toLowerCase()}>{x}</option>)}
-              </select>
-              <select style={s.fInput} value={fStatus} onChange={e => setFStatus(e.target.value)}>
-                <option value="">All statuses</option>
-                {Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-              </select>
-              <label style={s.fDate}>Applied from <input type="date" style={s.fInput} value={fFrom} onChange={e => setFFrom(e.target.value)} /></label>
-              <label style={s.fDate}>to <input type="date" style={s.fInput} value={fTo} onChange={e => setFTo(e.target.value)} /></label>
-              {(fQ || fType || fExp || fStatus || fFrom || fTo) && (
-                <button style={s.clearBtn} onClick={() => { setFQ(""); setFType(""); setFExp(""); setFStatus(""); setFFrom(""); setFTo(""); }}>Clear</button>
-              )}
-            </div>
-          )}
 
           {apps.length === 0 ? (
             <div style={s.empty}>No applications yet. They’ll appear here as creators apply.</div>
@@ -175,13 +159,43 @@ export default function OpportunityApplicantsPage() {
                       <th style={s.th}>Location</th>
                       <th style={s.th}>Experience</th>
                       <th style={s.th}>Pitch</th>
+                      <th style={s.th}>Portfolio</th>
                       <th style={s.th}>Applied</th>
                       <th style={s.th}>Status</th>
                       <th style={{ ...s.th, textAlign: "right" }}>Actions</th>
                     </tr>
+                    <tr style={s.filterRow}>
+                      <th style={s.fTh}><input style={s.fInput} placeholder="Search…" value={fQ} onChange={e => setFQ(e.target.value)} /></th>
+                      <th style={s.fTh}>
+                        <select style={s.fInput} value={fType} onChange={e => setFType(e.target.value)}>
+                          <option value="">All</option>
+                          {CREATOR_TYPES.map(x => <option key={x} value={x}>{x}</option>)}
+                        </select>
+                      </th>
+                      <th style={s.fTh} />
+                      <th style={s.fTh} />
+                      <th style={s.fTh}>
+                        <select style={s.fInput} value={fExp} onChange={e => setFExp(e.target.value)}>
+                          <option value="">All</option>
+                          {EXPERIENCE.map(x => <option key={x} value={x.toLowerCase()}>{x}</option>)}
+                        </select>
+                      </th>
+                      <th style={s.fTh} />
+                      <th style={s.fTh} />
+                      <th style={s.fTh} />
+                      <th style={s.fTh}>
+                        <select style={s.fInput} value={fStatus} onChange={e => setFStatus(e.target.value)}>
+                          <option value="">All</option>
+                          {Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                        </select>
+                      </th>
+                      <th style={{ ...s.fTh, textAlign: "right" }}>
+                        {(fQ || fType || fExp || fStatus) && <button style={s.clearBtn} onClick={() => { setFQ(""); setFType(""); setFExp(""); setFStatus(""); }}>Clear filters</button>}
+                      </th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {filtered.length === 0 && <tr><td colSpan={9} style={{ ...s.td, textAlign: "center", color: "var(--color-ink-muted)", padding: 28 }}>No applicants match these filters.</td></tr>}
+                    {filtered.length === 0 && <tr><td colSpan={10} style={{ ...s.td, textAlign: "center", color: "var(--color-ink-muted)", padding: 28 }}>No applicants match these filters.</td></tr>}
                     {filtered.map(a => {
                       const badge = APP_STATUS[a.status] || APP_STATUS.new;
                       const busy = savingId === a.id;
@@ -202,6 +216,7 @@ export default function OpportunityApplicantsPage() {
                             <td style={s.td}>{[profiles[a.creator_id]?.city, profiles[a.creator_id]?.country].filter(Boolean).join(", ") || "—"}</td>
                             <td style={s.td}>{profiles[a.creator_id]?.experience_level || "—"}</td>
                             <td style={s.td}><button style={s.pitchBtn} onClick={() => setPitchApp(a)}>View pitch</button></td>
+                            <td style={s.td}><button style={s.pitchBtn} onClick={() => openMedia(a)}>View work</button></td>
                             <td style={s.td}>{fmtDate(a.created_at)}</td>
                             <td style={s.td}><span style={{ ...s.badge, background: badge.bg, color: badge.ink }}>{badge.label}</span></td>
                             <td style={{ ...s.td, textAlign: "right" }} onClick={e => e.stopPropagation()}>
@@ -221,6 +236,43 @@ export default function OpportunityApplicantsPage() {
             </div>
           )}
         </>
+      )}
+
+      {mediaApp && (
+        <div style={s.overlay} onClick={() => setMediaApp(null)}>
+          <div style={{ ...s.modal, maxWidth: 760 }} onClick={e => e.stopPropagation()}>
+            <div style={s.modalHead}>
+              <div>
+                <div style={s.modalTitle}>{mediaApp.creator_name || "Creator"}’s work</div>
+                <div style={s.modalSub}>Photos, videos and media kits they’ve uploaded</div>
+              </div>
+              <button style={s.modalClose} onClick={() => setMediaApp(null)} aria-label="Close">×</button>
+            </div>
+            {media.loading ? (
+              <div style={s.loadingRow}><span style={s.spinner} /> Loading…</div>
+            ) : (
+              <>
+                <div style={s.expandLabel}>Content examples{media.samples.length ? ` · ${media.samples.length}` : ""}</div>
+                {media.samples.length === 0 ? <p style={s.expandPitch}>No content examples uploaded yet.</p> : (
+                  <div style={s.gallery}>
+                    {media.samples.map(sm => (
+                      <a key={sm.id} href={sm.url} target="_blank" rel="noreferrer" style={s.galleryTile}>
+                        {sm.file_type === "video"
+                          ? <video src={sm.url} style={s.galleryMedia} muted preload="metadata" />
+                          : <img src={sm.url} alt={sm.file_name || ""} style={s.galleryMedia} />}
+                        {sm.file_type === "video" && <span style={s.playBadge}>▶</span>}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <div style={s.expandLabel}>Media kits{media.kits.length ? ` · ${media.kits.length}` : ""}</div>
+                {media.kits.length === 0 ? <p style={s.expandPitch}>No media kit uploaded yet.</p> : media.kits.map(pf => (
+                  <a key={pf.id} href={pf.file_url} target="_blank" rel="noreferrer" style={s.kitRow}>📄 {pf.name || pf.file_name} <span style={{ marginLeft: "auto", fontWeight: 700 }}>View</span></a>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {pitchApp && (
@@ -245,9 +297,15 @@ export default function OpportunityApplicantsPage() {
 }
 
 const s = {
+  filterRow: { background: "var(--color-ground-card)", borderBottom: "1px solid var(--color-border)" },
+  fTh: { padding: "8px 10px", fontWeight: 400 },
+  gallery: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8 },
+  galleryTile: { position: "relative", display: "block", aspectRatio: "1 / 1", borderRadius: 8, overflow: "hidden", background: "var(--color-ground-sand)" },
+  galleryMedia: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  playBadge: { position: "absolute", right: 6, bottom: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, borderRadius: 999, padding: "3px 7px" },
+  kitRow: { display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", border: "1.5px solid var(--color-border)", borderRadius: 8, fontSize: 13.5, color: "var(--color-ink-primary)", textDecoration: "none", marginBottom: 8 },
   filters: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 14 },
-  fInput: { border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", color: "var(--color-ink-primary)", background: "var(--color-ground-card)" },
-  fDate: { display: "flex", flexDirection: "column", gap: 3, fontSize: 11, fontWeight: 700, color: "var(--color-ink-muted)" },
+  fInput: { width: "100%", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "8px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", color: "var(--color-ink-primary)", background: "var(--color-ground-card)" },
   clearBtn: { background: "transparent", border: "none", color: "var(--color-accent-amber-deep)", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "9px 6px", fontFamily: "inherit" },
   pitchBtn: { background: "var(--color-ground-card)", color: "var(--color-ink-primary)", border: "1.5px solid var(--color-border)", borderRadius: "var(--radius-sm)", padding: "7px 13px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 1000 },
@@ -272,7 +330,7 @@ const s = {
 
   card: { background: "var(--color-ground-card)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-low)", overflow: "hidden" },
   tableScroll: { width: "100%", overflowX: "auto" },
-  table: { width: "100%", minWidth: 960, borderCollapse: "collapse" },
+  table: { width: "100%", minWidth: 1120, borderCollapse: "collapse" },
   th: { textAlign: "left", fontSize: 12, fontWeight: 700, color: "var(--color-ink-muted)", padding: "14px 16px", background: "var(--color-ground-sand)", borderBottom: "1px solid var(--color-border)", whiteSpace: "nowrap" },
   tr: { cursor: "pointer", borderBottom: "1px solid var(--color-border)" },
   td: { padding: "14px 16px", fontSize: 13.5, color: "var(--color-ink-primary)", verticalAlign: "middle" },
