@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 const makeCacheKey = (query, keyword) =>
-  `${query}_${keyword}`.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 200);
+  `v2_${query}_${keyword}`.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 200);
 
 // Geocode city — falls back gracefully if Geocoding API not enabled
 async function geocodeCity(query, key) {
@@ -61,6 +61,21 @@ async function getCentreFromTextSearch(query, keyword, key) {
   } catch {
     return null;
   }
+}
+
+// Keep only hotels whose coordinates fall inside the viewport (+ a small margin),
+// so zooming into an area never returns places from elsewhere in the world.
+function withinViewport(hotel, viewport, margin = 0.1) {
+  if (hotel.lat == null || hotel.lng == null) return false;
+  const { northeast: ne, southwest: sw } = viewport;
+  const padLat = Math.abs(ne.lat - sw.lat) * margin;
+  const padLng = Math.abs(ne.lng - sw.lng) * margin;
+  const inLat = hotel.lat <= ne.lat + padLat && hotel.lat >= sw.lat - padLat;
+  // handle viewports that cross the antimeridian
+  const inLng = sw.lng <= ne.lng
+    ? hotel.lng <= ne.lng + padLng && hotel.lng >= sw.lng - padLng
+    : hotel.lng >= sw.lng - padLng || hotel.lng <= ne.lng + padLng;
+  return inLat && inLng;
 }
 
 function generateGridPoints(viewport, gridRadius) {
@@ -168,8 +183,9 @@ export async function GET(request) {
         const details = await Promise.all(batch.map(p => getPlaceDetails(p.place_id, key)));
         for (let j = 0; j < batch.length; j++) hotels.push(buildHotel(batch[j], details[j], key));
       }
-      hotels.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      return Response.json({ hotels, total: hotels.length });
+      const inView = hotels.filter(h => withinViewport(h, viewport));
+      inView.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return Response.json({ hotels: inView, total: inView.length });
     } catch (err) {
       return Response.json({ error: "Bounds search failed: " + err.message }, { status: 500 });
     }
@@ -194,6 +210,7 @@ export async function GET(request) {
 
     // Step 1 — try to geocode the city for accurate grid placement
     let cityData = await geocodeCity(query, key);
+    const geocoded = !!cityData;
 
     // Step 2 — if geocoding fails, fall back to using text search centre
     if (!cityData) {
@@ -259,7 +276,13 @@ export async function GET(request) {
       }
     }
 
-    // Step 6 — sort by rating
+    // Step 6 — only keep hotels in the searched area (geocoded viewport, or a
+    // looser box around the text-search centre), then sort by rating
+    const clipBox = geocoded
+      ? viewport
+      : { northeast: { lat: lat + 0.3, lng: lng + 0.3 }, southwest: { lat: lat - 0.3, lng: lng - 0.3 } };
+    const inArea = hotels.filter(h => withinViewport(h, clipBox, geocoded ? 0.15 : 0));
+    hotels.length = 0; hotels.push(...inArea);
     hotels.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
     // Save to search cache (fire and forget)

@@ -569,8 +569,13 @@ function SearchApp() {
       }));
       const seen = new Set();
       const seenNames = new Set();
+      const inBox = h => h.lat == null || h.lng == null || (
+        h.lat <= lat_ne && h.lat >= lat_sw &&
+        (lng_sw <= lng_ne ? (h.lng <= lng_ne && h.lng >= lng_sw) : (h.lng >= lng_sw || h.lng <= lng_ne))
+      );
       const hotelList = allResults.flat()
         .filter(h => {
+          if (!inBox(h)) return false;
           if (seen.has(h.placeId)) return false;
           const n = (h.name || "").toLowerCase().trim();
           if (seenNames.has(n)) return false;
