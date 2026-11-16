@@ -46,7 +46,7 @@ export default function SendingPage() {
     setSaving(true); setError("");
     const payload = {
       email_signature: sanitizeText(signature)?.trim() || null,
-      daily_email_limit: dailyLimit ? Math.max(1, Math.min(500, Number(dailyLimit))) : null,
+      daily_email_limit: dailyLimit ? Math.max(1, Math.min(30, Number(dailyLimit))) : null,
     };
     const { error: err } = await supabase.from("profiles").update(payload).eq("id", user.id);
     setSaving(false);
@@ -95,8 +95,8 @@ export default function SendingPage() {
 
             <div style={{ marginBottom: 8, maxWidth: 240 }}>
               <label style={s.label}>Daily send limit</label>
-              <p style={s.hint}>Max outreach emails sent per day (1–500). Default 30.</p>
-              <input style={s.input} type="number" min="1" max="500" placeholder="30" value={dailyLimit} onChange={e => { setDailyLimit(e.target.value); setSaved(false); }} />
+              <p style={s.hint}>Max outreach emails sent per day (1–30). Default 30.</p>
+              <input style={s.input} type="number" min="1" max="30" placeholder="30" value={dailyLimit} onChange={e => { setDailyLimit(e.target.value); setSaved(false); }} />
             </div>
 
             {error && <p style={s.error}>{error}</p>}

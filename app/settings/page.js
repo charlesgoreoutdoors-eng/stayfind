@@ -91,7 +91,7 @@ export default function SettingsPage() {
       .then(({ data }) => {
         setName(data?.full_name || "");
         setOrigName(data?.full_name || "");
-        if (data?.daily_email_limit) setLimit(data.daily_email_limit);
+        if (data?.daily_email_limit) setLimit(Math.min(30, data.daily_email_limit));
         const tz = data?.timezone || detected;
         setTimezone(tz);
         setOrigTimezone(tz);
@@ -346,8 +346,8 @@ export default function SettingsPage() {
               {limit} / day
             </span>
           </div>
-          <input type="range" min={5} max={50} step={1} value={limit} onChange={e => setLimit(Number(e.target.value))} disabled={loading} style={s.slider} />
-          <div style={s.sliderTicks}><span>5</span><span>25</span><span>50</span></div>
+          <input type="range" min={5} max={30} step={1} value={limit} onChange={e => setLimit(Number(e.target.value))} disabled={loading} style={s.slider} />
+          <div style={s.sliderTicks}><span>5</span><span>15</span><span>30</span></div>
           {limit > 30 && (
             <div style={s.warnBox}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-amber-deeper)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
@@ -355,7 +355,7 @@ export default function SettingsPage() {
                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
               <p style={{ fontSize:12, color:"var(--color-accent-amber-deeper)", lineHeight:1.6 }}>
-                Sending more than 30 emails per day increases the risk of Gmail flagging your account as spam. We recommend staying at or below 30.
+                Sending more than 30 emails per day increases the risk of Gmail flagging your account as spam.
               </p>
             </div>
           )}

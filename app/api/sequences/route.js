@@ -47,7 +47,7 @@ export async function POST(request) {
         // Get this user's daily limit and signature from profiles
         const { data: profileData } = await supabase
           .from("profiles").select("daily_email_limit, email_signature").eq("id", userId).single();
-        const MAX_PER_DAY = profileData?.daily_email_limit ?? 30;
+        const MAX_PER_DAY = Math.min(30, profileData?.daily_email_limit ?? 30);   // hard cap: 30/day on all plans
 
         // How many emails already sent today via email_send_log?
         const { count: sentToday } = await supabase
