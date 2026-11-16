@@ -35,6 +35,8 @@ export default function AuthGuard({ children }) {
   const isPublic =
     pathname === "/login" ||
     pathname === "/waitlist" ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
     pathname === "/hotel/signup" ||
     pathname.startsWith("/auth");
   const isRoot = pathname === "/";

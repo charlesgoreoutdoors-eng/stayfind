@@ -86,7 +86,7 @@ export default function Sidebar({ children }) {
   // No creator app chrome on the public marketing/auth surfaces, for logged-out
   // visitors (who see the waitlist landing at the root), or anywhere in the
   // hotel site — /hotel/* is a separate shell with its own layout + sidebar.
-  if (pathname === "/login" || pathname === "/waitlist" || pathname.startsWith("/hotel") || !user) return <>{children}</>;
+  if (pathname === "/login" || pathname === "/waitlist" || pathname === "/privacy" || pathname === "/terms" || pathname.startsWith("/hotel") || !user) return <>{children}</>;
 
   const isAdmin = (user?.email || "").toLowerCase() === ADMIN_EMAIL;
   const navItems = isAdmin

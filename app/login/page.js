@@ -168,6 +168,11 @@ function LoginInner() {
             : mode === "signup" ? "Create Account" : "Sign In"}
         </button>
 
+        {mode === "signup" && (
+          <p style={{ ...s.switchText, marginBottom: 10 }}>
+            By creating an account you agree to our <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: "var(--color-accent-amber-deep)", fontWeight: 600 }}>Privacy Policy</a>.
+          </p>
+        )}
         <p style={s.switchText}>
           {mode === "signin" ? "New here? " : "Already have an account? "}
           <button style={s.switchBtn} onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setSuccess(""); }}>
