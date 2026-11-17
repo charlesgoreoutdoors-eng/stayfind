@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from "../../lib/authFetch";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -144,7 +145,7 @@ export default function AdminPage() {
       try {
         let total = 0;
         for (const kw of keywords) {
-          const res = await fetch(`/api/hotels?query=${encodeURIComponent(city)}&keyword=${encodeURIComponent(kw)}`);
+          const res = await authFetch(`/api/hotels?query=${encodeURIComponent(city)}&keyword=${encodeURIComponent(kw)}`);
           const json = await res.json();
           total += (json.hotels || []).length;
         }

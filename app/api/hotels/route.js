@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { authedUser, unauthorized, useQuota, canUse } from "../../../lib/usage";
 
 const PRICE_LEVEL_MAP = { 0: "Free", 1: "$", 2: "$$", 3: "$$$", 4: "$$$$" };
 
@@ -141,8 +142,18 @@ export async function GET(request) {
   if (!query && !isBoundsSearch) return Response.json({ error: "Missing query" }, { status: 400 });
   if (!key) return Response.json({ error: "API key not configured" }, { status: 500 });
 
+  // Searching costs money, so it needs a signed-in user on a plan that includes it.
+  const caller = await authedUser(request);
+  if (!caller) return unauthorized();
+
   // Bounds-based search — skip cache and geocoding, go straight to grid
   if (isBoundsSearch) {
+    // One "search" per map area (~11 km grid) per month.
+    const clat = (parseFloat(lat_ne) + parseFloat(lat_sw)) / 2;
+    const clng = (parseFloat(lng_ne) + parseFloat(lng_sw)) / 2;
+    const areaRef = `area:${clat.toFixed(1)},${clng.toFixed(1)}`;
+    const q = await useQuota(caller, "search", areaRef);
+    if (!q.ok) return q.response;
     try {
       const viewport = {
         northeast: { lat: parseFloat(lat_ne), lng: parseFloat(lng_ne) },
@@ -187,8 +198,16 @@ export async function GET(request) {
     .gte("created_at", cutoff)
     .maybeSingle();
   if (cached?.results) {
+    // Cached results cost nothing, so they don't use the monthly allowance —
+    // but the user still needs a plan that includes search.
+    const gate = canUse(caller, "search");
+    if (!gate.ok) return gate.response;
     return Response.json({ hotels: cached.results, total: cached.results.length, fromCache: true });
   }
+
+  // Fresh search = one unit of the monthly allowance (shared by all keywords/tabs for this city).
+  const quota = await useQuota(caller, "search", `city:${(query || "").trim().toLowerCase()}`);
+  if (!quota.ok) return quota.response;
 
   try {
     const seen = new Set();

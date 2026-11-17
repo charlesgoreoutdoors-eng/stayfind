@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useGmail } from "../../lib/useGmail";
+import { limitsFor, USAGE_LABELS, PLAN_PRICES, currentPeriod } from "../../lib/plans";
 
 const TIMEZONES = [
   { label: "Pacific/Honolulu — Hawaii (UTC−10)",          value: "Pacific/Honolulu" },
@@ -38,10 +39,10 @@ const SECTIONS = [
 ];
 
 const PLAN_LABELS = {
-  spark:    { label: "Spark Plan",    desc: "Basic search and list features." },
-  glow:     { label: "Glow Plan",     desc: "More searches, sequences, and direct contacts." },
-  radiant:  { label: "Radiant Plan",  desc: "Full access to outreach tools." },
-  founding: { label: "Founding Plan", desc: "Founding member — unlimited access." },
+  spark:    { label: "Spark Plan",    desc: "Free — job board and applications." },
+  glow:     { label: "Glow Plan",     desc: "Hotel search, contact finding and email sequences." },
+  radiant:  { label: "Radiant Plan",  desc: "Everything in Glow, with higher limits and named hotel contacts." },
+  founding: { label: "Founding Plan", desc: "Founding member — Radiant limits, for life." },
 };
 
 export default function SettingsPage() {
@@ -152,6 +153,16 @@ export default function SettingsPage() {
   };
 
   const plan = profile?.plan || "spark";
+  const [usage, setUsage] = useState({});
+  useEffect(() => {
+    if (active !== "plan" || !user) return;
+    (async () => {
+      const { data } = await supabase.from("usage_events").select("kind").eq("user_id", user.id).eq("period", currentPeriod());
+      const counts = {};
+      (data || []).forEach(r => { counts[r.kind] = (counts[r.kind] || 0) + 1; });
+      setUsage(counts);
+    })();
+  }, [active, user]);
   const planInfo = PLAN_LABELS[plan] || PLAN_LABELS.spark;
   const gmailConnected = !!gmailToken;
 
@@ -273,8 +284,32 @@ export default function SettingsPage() {
           </div>
           <span style={s.planBadge}>{plan.toUpperCase()}</span>
         </div>
+        {plan !== "spark" && (
+          <div style={{ marginTop:22 }}>
+            <p style={s.planName}>Usage this month</p>
+            <p style={{ ...s.planDesc, marginBottom:12 }}>Resets on the 1st of each month. Re-checking the same city or hotel doesn&apos;t use more.</p>
+            {Object.keys(USAGE_LABELS).map(kind => {
+              const limit = limitsFor(plan)[kind];
+              if (!limit) return null;
+              const used = usage[kind] || 0;
+              const pct = Math.min(100, Math.round((used / limit) * 100));
+              return (
+                <div key={kind} style={{ marginBottom:14 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:12.5, marginBottom:5 }}>
+                    <span style={{ fontWeight:600, color:"var(--color-ink-primary)" }}>{USAGE_LABELS[kind].label}</span>
+                    <span style={{ color: pct >= 90 ? "var(--color-error)" : "var(--color-ink-muted)" }}>{used} / {limit}</span>
+                  </div>
+                  <div style={{ height:6, borderRadius:3, background:"rgba(43,39,34,0.08)", overflow:"hidden" }}>
+                    <div style={{ width:`${pct}%`, height:"100%", background: pct >= 90 ? "var(--color-error)" : "var(--color-accent-amber)" }} />
+                  </div>
+                </div>
+              );
+            })}
+            {plan === "glow" && <p style={s.hint}>Named hotel contacts are available on Radiant.</p>}
+          </div>
+        )}
         {!["radiant", "founding"].includes(plan) && (
-          <a href="mailto:hello@stayfind.app?subject=Upgrade%20my%20plan" style={s.upgradeBtn}>
+          <a href="mailto:hello@dapples.io?subject=Upgrade%20my%20plan" style={s.upgradeBtn}>
             Upgrade plan
           </a>
         )}

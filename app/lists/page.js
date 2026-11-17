@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from "../../lib/authFetch";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
@@ -176,12 +177,14 @@ export default function ListsPage() {
     setIgScrapeProgress({ done: 0, total: hotelsToScrape.length, found: 0 });
 
     let found = 0;
+    let blockedMsg = "";
     for (let i = 0; i < hotelsToScrape.length; i += 3) {
       const batch = hotelsToScrape.slice(i, i + 3);
       const results = await Promise.all(batch.map(async hotel => {
         try {
-          const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
+          const res = await authFetch(`/api/find-contact?kind=instagram&website=${encodeURIComponent(hotel.website)}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
+          if (res.status === 403 || res.status === 401) blockedMsg = data.message || "You've reached your plan limit.";
           return { id: hotel.id, instagram: data.instagram || null };
         } catch {
           return { id: hotel.id, instagram: null };
@@ -196,11 +199,13 @@ export default function ListsPage() {
         }
       }
       setIgScrapeProgress({ done: Math.min(i + 3, hotelsToScrape.length), total: hotelsToScrape.length, found });
+      if (blockedMsg) break;
     }
 
     setIgScraping(false);
     setIgScrapeProgress({ done: 0, total: 0, found: 0 });
-    alert(`Done! Found ${found} Instagram handle${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
+    if (blockedMsg) alert(`${blockedMsg}\n\nFound ${found} Instagram handle${found !== 1 ? "s" : ""} before stopping.`);
+    else alert(`Done! Found ${found} Instagram handle${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
   };
 
   const saveIgManual = async (hotelId, raw) => {
@@ -230,12 +235,14 @@ export default function ListsPage() {
     setEmailScrapeProgress({ done: 0, total: hotelsToScrape.length, found: 0 });
 
     let found = 0;
+    let blockedMsg = "";
     for (let i = 0; i < hotelsToScrape.length; i += 3) {
       const batch = hotelsToScrape.slice(i, i + 3);
       const results = await Promise.all(batch.map(async hotel => {
         try {
-          const res = await fetch(`/api/find-contact?website=${encodeURIComponent(hotel.website)}&place_id=${encodeURIComponent(hotel.place_id || "")}&name=${encodeURIComponent(hotel.name)}`);
+          const res = await authFetch(`/api/find-contact?kind=email&website=${encodeURIComponent(hotel.website)}&place_id=${encodeURIComponent(hotel.place_id || "")}&name=${encodeURIComponent(hotel.name)}`);
           const data = await res.json();
+          if (res.status === 403 || res.status === 401) blockedMsg = data.message || "You've reached your plan limit.";
           return { id: hotel.id, email: data.email || null };
         } catch {
           return { id: hotel.id, email: null };
@@ -250,11 +257,13 @@ export default function ListsPage() {
         }
       }
       setEmailScrapeProgress({ done: Math.min(i + 3, hotelsToScrape.length), total: hotelsToScrape.length, found });
+      if (blockedMsg) break;
     }
 
     setEmailScraping(false);
     setEmailScrapeProgress({ done: 0, total: 0, found: 0 });
-    alert(`Found ${found} email${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
+    if (blockedMsg) alert(`${blockedMsg}\n\nFound ${found} email${found !== 1 ? "s" : ""} before stopping.`);
+    else alert(`Found ${found} email${found !== 1 ? "s" : ""} out of ${hotelsToScrape.length} hotels scraped.`);
   };
 
   const findHunterEmails = async () => {
@@ -267,18 +276,20 @@ export default function ListsPage() {
     setHunterProgress({ done: 0, total: hotelsToSearch.length, found: 0 });
 
     let found = 0;
+    let blockedMsg = "";
     for (let i = 0; i < hotelsToSearch.length; i += 3) {
       const batch = hotelsToSearch.slice(i, i + 3);
       const results = await Promise.all(batch.map(async hotel => {
         try {
           const url = hotel.website.startsWith("http") ? hotel.website : "https://" + hotel.website;
           const domain = new URL(url).hostname.replace(/^www\./, "");
-          const res = await fetch("/api/hunter", {
+          const res = await authFetch("/api/hunter", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ domain, hotelId: hotel.id, userId: user.id }),
+            body: JSON.stringify({ domain, hotelId: hotel.id }),
           });
           const data = await res.json();
+          if (res.status === 403 || res.status === 401) { blockedMsg = data.message || "You've reached your plan limit."; return { id: hotel.id, contacts: [], skip: true }; }
           return { id: hotel.id, contacts: data.contacts || [] };
         } catch {
           return { id: hotel.id, contacts: [] };
@@ -286,17 +297,20 @@ export default function ListsPage() {
       }));
 
       for (const result of results) {
+        if (result.skip) continue;   // blocked by plan limit — don't mark as searched
         const hunter_contacts = result.contacts.map(c => ({ ...c, selected: false }));
         if (hunter_contacts.length > 0) found++;
         await supabase.from("list_hotels").update({ hunter_contacts }).eq("id", result.id);
         setListHotels(prev => prev.map(h => h.id === result.id ? { ...h, hunter_contacts } : h));
       }
       setHunterProgress({ done: Math.min(i + 3, hotelsToSearch.length), total: hotelsToSearch.length, found });
+      if (blockedMsg) break;
     }
 
     setHunterScraping(false);
     setHunterProgress({ done: 0, total: 0, found: 0 });
-    alert(`Found contacts for ${found} out of ${hotelsToSearch.length} hotels.`);
+    if (blockedMsg) alert(`${blockedMsg}\n\nFound contacts for ${found} hotel${found !== 1 ? "s" : ""} before stopping.`);
+    else alert(`Found contacts for ${found} out of ${hotelsToSearch.length} hotels.`);
   };
 
   const toggleContactSelection = async (hotel, idx) => {

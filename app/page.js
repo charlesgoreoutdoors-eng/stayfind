@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from "../lib/authFetch";
 
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "../lib/supabase";
@@ -467,10 +468,7 @@ function SearchApp() {
     let website = hotel.website || null;
     if (!website && hotel.placeId) {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`/api/hotels/details?place_id=${encodeURIComponent(hotel.placeId)}`, {
-          headers: { Authorization: `Bearer ${session?.access_token || ""}` },
-        });
+        const res = await authFetch(`/api/hotels/details?place_id=${encodeURIComponent(hotel.placeId)}`);
         const d = await res.json();
         website = d.website || null;
       } catch {}
@@ -530,11 +528,18 @@ function SearchApp() {
       const keywords = tab.keywords.map(k => k + amenityStr);
 
       // Run all keyword searches in parallel
+      let blockedMsg = "";
       const allResults = await Promise.all(keywords.map(async kw => {
-        const res = await fetch(`/api/hotels?query=${encodeURIComponent(location)}&keyword=${encodeURIComponent(kw)}`);
+        const res = await authFetch(`/api/hotels?query=${encodeURIComponent(location)}&keyword=${encodeURIComponent(kw)}`);
         const data = await res.json();
+        if ((res.status === 403 || res.status === 401) && data.message) blockedMsg = data.message;
         return data.hotels || [];
       }));
+      if (blockedMsg) {
+        setError(blockedMsg);
+        setTab(tabId, { hotels: [], loading: false, searched: false });
+        return;
+      }
 
       // Collect placeIds already shown in other tabs so we can exclude them
       const otherTabIds = new Set(
@@ -571,12 +576,15 @@ function SearchApp() {
     const kws = (keywords || ["hotel"]).map(k => k + amenityStr);
     setError("");
     try {
+      let blockedMsg = "";
       const allResults = await Promise.all(kws.map(async kw => {
         const params = new URLSearchParams({ lat_ne, lng_ne, lat_sw, lng_sw, keyword: kw });
-        const res = await fetch(`/api/hotels?${params}`);
+        const res = await authFetch(`/api/hotels?${params}`);
         const data = await res.json();
+        if ((res.status === 403 || res.status === 401) && data.message) blockedMsg = data.message;
         return data.hotels || [];
       }));
+      if (blockedMsg) { setError(blockedMsg); return; }
       const seen = new Set();
       const seenNames = new Set();
       const inBox = h => h.lat == null || h.lng == null || (

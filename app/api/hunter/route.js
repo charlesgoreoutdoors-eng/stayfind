@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { authedUser, unauthorized, useQuota, canUse } from "../../../lib/usage";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -31,8 +32,14 @@ function bestContact(contacts) {
 
 export async function POST(request) {
   try {
-    const { domain, hotelId, userId } = await request.json();
-    if (!domain || !userId) return Response.json({ error: "Missing domain or userId" }, { status: 400 });
+    const caller = await authedUser(request);
+    if (!caller) return unauthorized();
+    const userId = caller.user.id;            // never trust a client-supplied user id
+    const { domain, hotelId } = await request.json();
+    if (!domain) return Response.json({ error: "Missing domain" }, { status: 400 });
+
+    const gate = canUse(caller, "hunter");
+    if (!gate.ok) return gate.response;
 
     const cutoff = new Date(Date.now() - CACHE_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
@@ -55,6 +62,10 @@ export async function POST(request) {
       });
       return Response.json({ contacts, cached: true });
     }
+
+    // Fresh Hunter lookup costs credits — counts against the monthly allowance.
+    const quota = await useQuota(caller, "hunter", domain);
+    if (!quota.ok) return quota.response;
 
     // Call Hunter.io Domain Search API
     const hunterRes = await fetch(

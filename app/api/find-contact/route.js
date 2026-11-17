@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { authedUser, unauthorized, useQuota, canUse } from "../../../lib/usage";
 
 const BROWSERLESS_KEY = process.env.BROWSERLESS_API_KEY;
 const supabase = createClient(
@@ -160,6 +161,13 @@ export async function GET(request) {
   const placeId = searchParams.get("place_id");
   if (!website) return Response.json({ email: null, instagram: null });
 
+  const caller = await authedUser(request);
+  if (!caller) return unauthorized();
+  const kind = searchParams.get("kind") === "instagram" ? "ig_find" : "email_find";
+
+  const gate = canUse(caller, kind);
+  if (!gate.ok) return gate.response;
+
   const domain = getDomain(website);
 
   const cacheCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -186,6 +194,10 @@ export async function GET(request) {
       return Response.json({ email: emailCached.email, instagram: igCached.instagram });
     }
   }
+
+  // Fresh lookup (scrapes the site) uses the monthly allowance.
+  const quota = await useQuota(caller, kind, domain || website);
+  if (!quota.ok) return quota.response;
 
   try {
     const base = website.replace(/\/$/, "").replace(/^http:/, "https:");
