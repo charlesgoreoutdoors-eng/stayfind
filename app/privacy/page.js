@@ -81,7 +81,7 @@ export default function PrivacyPage() {
         <p style={s.p}>We share information only as needed to run Dapples:</p>
         <ul style={s.ul}>
           <li><b>Hotels and creators:</b> when a creator applies to a job or messages a hotel, the hotel sees the pitch, profile, portfolio and follower information the creator has provided. Hotels see profiles of creators who have set their profile to discoverable.</li>
-          <li><b>Service providers</b> who process data for us: Supabase (database, authentication and file storage), Vercel (hosting), Google (sign-in, Gmail, Places and Maps), Hunter (business contact data), Browserless (loading hotel websites to find public contact details), ConvertKit (waitlist and email updates). Payment processing will be provided by Stripe when paid plans open.</li>
+          <li><b>Service providers</b> who process data for us: Supabase (database, authentication and file storage), Vercel (hosting), Google (sign-in, Gmail, Places and Maps), Hunter (business contact data), Sentry (error monitoring, which receives technical error reports but not your content), Browserless (loading hotel websites to find public contact details), ConvertKit (waitlist and email updates). Payment processing will be provided by Stripe when paid plans open.</li>
           <li><b>Legal and safety:</b> when required by law, or to protect the rights, safety and security of users or Dapples.</li>
           <li><b>Business transfer:</b> if Dapples is acquired or merges, your information may transfer to the new owner under the same protections.</li>
         </ul>
