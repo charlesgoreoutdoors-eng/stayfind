@@ -146,7 +146,6 @@ function HotelCard({ hotel, lists, onAddToList, onCreateAndAdd, showDropdown, on
           )}
         </div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 12px", marginBottom:2 }}>
-          {hotel.website && <a href={hotel.website} target="_blank" rel="noreferrer" style={s.websiteLink}>Visit website</a>}
           {hotel.instagram && (
             <a href={`https://www.instagram.com/${hotel.instagram.replace("@","")}`} target="_blank" rel="noreferrer" style={s.igLink}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -356,7 +355,6 @@ const MapView = memo(function MapView({ hotels, apiKey, lists, onAddToList, onCr
           <div style={s.popupBody}>
             <h3 style={s.popupName}>{selectedHotel.name}</h3>
             <p style={s.popupAddr}>{selectedHotel.address}</p>
-            {selectedHotel.website && <a href={selectedHotel.website} target="_blank" rel="noreferrer" style={s.popupLink}>Visit website</a>}
             <div style={{ position:"relative", marginTop:10 }}>
               <button
                 style={{ ...s.addToListBtn, ...(mapAddSuccess ? s.addToListBtnSuccess : {}), width:"100%" }}
@@ -465,10 +463,22 @@ function SearchApp() {
         .maybeSingle();
       if (existing) return "Already in this list.";
     }
+    // Website is only looked up now, when the hotel is saved to a list.
+    let website = hotel.website || null;
+    if (!website && hotel.placeId) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`/api/hotels/details?place_id=${encodeURIComponent(hotel.placeId)}`, {
+          headers: { Authorization: `Bearer ${session?.access_token || ""}` },
+        });
+        const d = await res.json();
+        website = d.website || null;
+      } catch {}
+    }
     const { error } = await supabase.from("list_hotels").insert({
       user_id: user?.id,
       list_id: listId, name: hotel.name, address: hotel.address || null,
-      email: hotel.email || null, phone: hotel.phone || null, website: hotel.website || null,
+      email: hotel.email || null, phone: null, website,
       photo_url: hotel.photoUrl || null, rating: hotel.rating || null,
       price_level: hotel.priceLevel || null, place_id: hotel.placeId || null,
       instagram: hotel.instagram || null,

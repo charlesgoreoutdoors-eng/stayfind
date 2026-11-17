@@ -103,18 +103,6 @@ async function searchAtPoint(lat, lng, radius, keyword, key) {
   }
 }
 
-async function getPlaceDetails(placeId, key) {
-  try {
-    // Include url field which sometimes contains social links
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,rating,user_ratings_total,price_level,website,formatted_phone_number,photos,editorial_summary,geometry,url&key=${key}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.result || null;
-  } catch {
-    return null;
-  }
-}
-
 function buildHotel(place, details, apiKey) {
   const d = details || {};
   const geo = d.geometry?.location || place.geometry?.location;
@@ -125,12 +113,12 @@ function buildHotel(place, details, apiKey) {
   }
   return {
     name: d.name || place.name,
-    address: d.formatted_address || place.vicinity || "",
+    address: d.formatted_address || place.formatted_address || place.vicinity || "",
     rating: d.rating || place.rating || null,
     ratingCount: d.user_ratings_total || place.user_ratings_total || null,
     priceLevel: PRICE_LEVEL_MAP[d.price_level] || PRICE_LEVEL_MAP[place.price_level] || null,
     website: d.website || null,
-    phone: d.formatted_phone_number || null,
+    phone: null,
     photoUrl,
     description: d.editorial_summary?.overview || null,
     placeId: place.place_id,
@@ -177,12 +165,10 @@ export async function GET(request) {
           }
         }
       }
-      const hotels = [];
-      for (let i = 0; i < allPlaces.length; i += 10) {
-        const batch = allPlaces.slice(i, i + 10);
-        const details = await Promise.all(batch.map(p => getPlaceDetails(p.place_id, key)));
-        for (let j = 0; j < batch.length; j++) hotels.push(buildHotel(batch[j], details[j], key));
-      }
+      // No per-hotel Place Details call here — the search results already carry
+      // name, address, rating, price level, photo and location. Website is only
+      // fetched when a hotel is added to a list (see /api/hotels/details).
+      const hotels = allPlaces.map(p => buildHotel(p, null, key));
       const inView = hotels.filter(h => withinViewport(h, viewport));
       inView.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       return Response.json({ hotels: inView, total: inView.length });
@@ -267,14 +253,7 @@ export async function GET(request) {
     }
 
     // Step 5 — get full details in batches of 10
-    const hotels = [];
-    for (let i = 0; i < allPlaces.length; i += 10) {
-      const batch = allPlaces.slice(i, i + 10);
-      const details = await Promise.all(batch.map(p => getPlaceDetails(p.place_id, key)));
-      for (let j = 0; j < batch.length; j++) {
-        hotels.push(buildHotel(batch[j], details[j], key));
-      }
-    }
+    const hotels = allPlaces.map(p => buildHotel(p, null, key));
 
     // Step 6 — only keep hotels in the searched area (geocoded viewport, or a
     // looser box around the text-search centre), then sort by rating
