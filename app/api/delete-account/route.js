@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getStripe, stripeConfigured } from "../../../lib/stripe";
 
 // Deletes the CALLER's own account. The user is identified from their JWT, so
 // this can only ever delete the authenticated user themselves.
@@ -16,6 +17,13 @@ export async function POST(request) {
 
   const userId = data.user.id;
   try {
+    // Stop billing first so a deleted account is never charged again.
+    if (stripeConfigured()) {
+      const { data: prof } = await admin.from("profiles").select("stripe_subscription_id").eq("id", userId).maybeSingle();
+      if (prof?.stripe_subscription_id) {
+        try { await getStripe().subscriptions.cancel(prof.stripe_subscription_id); } catch (e) { console.error("[delete-account] stripe cancel", e.message); }
+      }
+    }
     // Remove the profile row explicitly (in case it isn't FK-cascaded), then
     // delete the auth user — FK on delete cascade clears hotel_profiles,
     // applications, lists, sequence_jobs, etc.

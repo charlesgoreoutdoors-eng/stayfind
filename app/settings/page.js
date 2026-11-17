@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useGmail } from "../../lib/useGmail";
+import { authFetch } from "../../lib/authFetch";
 import { limitsFor, USAGE_LABELS, PLAN_PRICES, currentPeriod } from "../../lib/plans";
 
 const TIMEZONES = [
@@ -154,6 +155,27 @@ export default function SettingsPage() {
 
   const plan = profile?.plan || "spark";
   const [usage, setUsage] = useState({});
+  const billingOn = process.env.NEXT_PUBLIC_STRIPE_ENABLED === "true";
+  const [billingNote, setBillingNote] = useState("");
+  useEffect(() => {
+    const b = new URLSearchParams(window.location.search).get("billing");
+    if (!b) return;
+    setActive("plan");
+    setBillingNote(b === "success" ? "Thanks! Your plan will update in a few seconds — refresh the page if it still shows Spark." : "Checkout cancelled — you haven't been charged.");
+  }, []);
+  const [billingBusy, setBillingBusy] = useState("");
+  const [billingErr, setBillingErr] = useState("");
+  const goBilling = async (path, body, key) => {
+    setBillingBusy(key); setBillingErr("");
+    try {
+      const res = await authFetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+      const data = await res.json();
+      if (data.url) { window.location.href = data.url; return; }
+      setBillingErr(data.error || "Something went wrong. Please try again.");
+    } catch { setBillingErr("Something went wrong. Please try again."); }
+    setBillingBusy("");
+  };
+  const fmtDay = (iso) => iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "";
   useEffect(() => {
     if (active !== "plan" || !user) return;
     (async () => {
@@ -308,7 +330,30 @@ export default function SettingsPage() {
             {plan === "glow" && <p style={s.hint}>Named hotel contacts are available on Radiant.</p>}
           </div>
         )}
-        {!["radiant", "founding"].includes(plan) && (
+        {billingNote && <p style={{ ...s.hint, color:"var(--color-ink-primary)", fontWeight:600 }}>{billingNote}</p>}
+        {billingOn && profile?.subscription_status && (
+          <p style={s.hint}>
+            {profile.subscription_status === "trialing" && profile.trial_end ? `Free trial — your card is charged on ${fmtDay(profile.trial_end)}. ` : ""}
+            {profile.subscription_status === "past_due" ? "Your last payment failed — please update your card. " : ""}
+            {profile.cancel_at_period_end && profile.current_period_end ? `Cancels on ${fmtDay(profile.current_period_end)}. ` : (profile.subscription_status === "active" && profile.current_period_end ? `Renews on ${fmtDay(profile.current_period_end)}. ` : "")}
+          </p>
+        )}
+        {billingOn && plan === "spark" && (
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginTop:18 }}>
+            {["glow", "radiant"].map(p => (
+              <button key={p} style={s.upgradeBtn2} disabled={!!billingBusy} onClick={() => goBilling("/api/stripe/checkout", { plan: p }, p)}>
+                {billingBusy === p ? "Opening…" : `Start 14-day free trial — ${p === "glow" ? "Glow" : "Radiant"} (${PLAN_PRICES[p]})`}
+              </button>
+            ))}
+          </div>
+        )}
+        {billingOn && profile?.stripe_customer_id && (
+          <button style={{ ...s.upgradeBtn2, marginTop:14 }} disabled={!!billingBusy} onClick={() => goBilling("/api/stripe/portal", {}, "portal")}>
+            {billingBusy === "portal" ? "Opening…" : "Manage billing"}
+          </button>
+        )}
+        {billingErr && <p style={{ ...s.hint, color:"var(--color-error)" }}>{billingErr}</p>}
+        {!billingOn && !["radiant", "founding"].includes(plan) && (
           <a href="mailto:hello@dapples.io?subject=Upgrade%20my%20plan" style={s.upgradeBtn}>
             Upgrade plan
           </a>
@@ -431,6 +476,7 @@ const s = {
   planName: { fontSize:14, fontWeight:600, color:"var(--color-ink-primary)", marginBottom:3 },
   planDesc: { fontSize:12, color:"var(--color-ink-muted)", lineHeight:1.5 },
   planBadge: { fontSize:11, fontWeight:700, background:"var(--color-ground-sand)", color:"var(--color-ink-mid)", padding:"4px 11px", borderRadius:20, letterSpacing:"0.4px", flexShrink:0 },
+  upgradeBtn2: { padding:"10px 18px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", border:"none", borderRadius:9, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
   upgradeBtn: { display:"inline-block", marginTop:18, padding:"10px 20px", background:"var(--color-ink-primary)", color:"var(--color-ground-page)", borderRadius:9, fontSize:13, fontWeight:600, textDecoration:"none" },
   statusDot: { width:10, height:10, borderRadius:"50%", flexShrink:0 },
 
