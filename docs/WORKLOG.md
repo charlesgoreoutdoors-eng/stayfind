@@ -7,6 +7,45 @@ this repo — it's reference context, not a task list.
 Stack: Next.js 14 (App Router, client components) · Supabase (auth + Postgres + Storage + RLS) · Vercel (dapples.io).
 Two-sided marketplace: **hotels** ↔ **travel creators**.
 
+> **How to keep this current:** when a feature lands, add a short bullet under the right dated
+> section (newest at top). Keep it to what a future session needs to know — files touched, the
+> decision, any gotcha. This file auto-loads via `CLAUDE.md`.
+
+---
+
+## 2026-11 — Billing, monitoring, plan limits, legal (mobile batch)
+
+### Stripe billing — dormant until env vars set (`lib/stripe.js`, `app/api/stripe/`, `docs/STRIPE_SETUP.md`)
+- Checkout with a 14-day trial, customer portal, webhook sync, billing columns on the DB.
+- Gated behind `STRIPE_SECRET_KEY` (`stripeEnabled()`); the app runs fine with Stripe unconfigured.
+- Env needed to turn on: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_GLOW`,
+  `STRIPE_PRICE_RADIANT`, `NEXT_PUBLIC_STRIPE_ENABLED`. Plans: **Glow** and **Radiant**.
+- Migration `0024_billing_columns.sql`.
+
+### Sentry error monitoring — opt-in (`sentry.*.config.js`, global error page)
+- Does nothing unless `NEXT_PUBLIC_SENTRY_DSN` is set. (Note: non-public `SENTRY_DSN` is **not** read by the code.)
+
+### Tiered plan limits (`0022`, `0023_usage_events.sql`)
+- Monthly caps on city searches, email/IG finds, and named contacts — **server-enforced**.
+- Usage meters in Settings. Search + contact APIs now require auth.
+
+### Google API cost cuts
+- No per-hotel Place Details on search; website fetched only when a hotel is added to a list;
+  phone no longer fetched. Search returns only hotels inside the searched/visible map area.
+
+### Legal & site chrome
+- Public Privacy Policy (`/privacy`, incl. Google API limited-use disclosure), Terms of Service,
+  Contact page (reply within 48h), site-wide footer. tawk.to removed.
+
+### Security hardening (`0021_security_hardening.sql`)
+- Lock `plan`/`role`/`is_admin` from client writes, restrict message updates, pin function `search_path`.
+- Only hotels can shortlist/decline/offer. Daily email send capped at 30 on all plans.
+
+### Dashboards & routing
+- Separate dashboards: marketplace (free creators) vs outreach (paid). Login routes free creators →
+  marketplace, paid → dashboard, hotels → hotel site. "New messages" card (unread from hotels);
+  messages marked read when a thread is opened (`0020_messages_mark_read.sql`).
+
 ---
 
 ## 2026-11 — Creator ↔ hotel flows
@@ -73,5 +112,10 @@ Two-sided marketplace: **hotels** ↔ **travel creators**.
   `.impeccable/` are not gitignored. Commit trailer: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 - **Verify builds** with `npm run build` and look for `✓ Compiled successfully`.
 - **Migrations** live in `supabase/migrations/` (…0016 creator search, 0017 creator actions,
-  0018 property images, 0019 property-image position).
+  0018 property images, 0019 position, 0020 mark-read, 0021 security hardening,
+  0022 status/email limits, 0023 usage events, 0024 billing columns). **0020–0024 are already
+  applied to the live DB — don't re-run them.**
+- **Optional env** (features stay dormant without them): Stripe (`STRIPE_*`, `NEXT_PUBLIC_STRIPE_ENABLED`),
+  Sentry (`NEXT_PUBLIC_SENTRY_DSN`), email (`SMTP_*`, `NOTIFY_FROM`), Gmail, ConvertKit, `CRON_SECRET`.
+  Required: Supabase + Google Places + Hunter + Browserless keys.
 - zsh: quote bracketed paths, e.g. `"app/hotel/creators/[id]/page.js"`.
